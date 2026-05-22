@@ -43,9 +43,9 @@
 
 ## `easing`
 
-- `[ ]` Create the public `Easing` type in `src/easing.rs`.
-- `[ ]` Implement normalized progress clamping in `src/easing.rs`.
-- `[ ]` Implement `Easing::Linear`.
+- `[x]` Create the public `Easing` type in `src/easing.rs`.
+- `[x]` Implement normalized progress clamping in `src/easing.rs`.
+- `[x]` Implement `Easing::Linear`.
 - `[ ]` Implement `Easing::EaseIn`.
 - `[ ]` Implement `Easing::EaseOut`.
 - `[ ]` Implement `Easing::EaseInOut`.

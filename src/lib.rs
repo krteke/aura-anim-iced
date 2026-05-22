@@ -12,8 +12,6 @@
 pub mod animated;
 pub mod clock;
 pub mod easing;
-#[cfg(feature = "iced")]
-#[cfg_attr(docsrs, doc(cfg(feature = "iced")))]
 pub mod iced_ext;
 pub mod interpolate;
 pub mod timeline;

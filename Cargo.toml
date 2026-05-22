@@ -21,7 +21,7 @@ default = []
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
 testing = []
-widgets = ["iced"]
+widgets = []
 spring = []
 
 [dependencies]
