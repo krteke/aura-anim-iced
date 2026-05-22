@@ -1,0 +1,1 @@
+//! Single-segment animation primitives.

@@ -2,5 +2,50 @@
 name = "aura-anim-iced"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
+authors = ["krteke"]
+license = "MIT"
+description = "Iced-first animation primitives and integration helpers."
+repository = "https://github.com/krteke/aura-anim-iced"
+documentation = "https://docs.rs/aura-anim-iced"
+readme = "README.md"
+keywords = ["animation", "iced", "gui", "tween", "transition"]
+categories = ["gui", "graphics"]
+
+[lib]
+name = "aura_anim_iced"
+path = "src/lib.rs"
+
+[features]
+default = ["iced"]
+iced = ["dep:iced", "iced/thread-pool", "iced/wayland", "iced/x11"]
+serde = ["dep:serde"]
+tracing = ["dep:tracing"]
+testing = []
+widgets = ["iced"]
+spring = []
 
 [dependencies]
+iced = { version = "0.14", default-features = false, optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+tracing = { version = "0.1", optional = true }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+missing_docs = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unsafe_code = "forbid"
+unreachable_pub = "warn"
+unused_must_use = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+alloc_instead_of_core = "warn"
+std_instead_of_core = "allow"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"

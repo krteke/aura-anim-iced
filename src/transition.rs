@@ -1,0 +1,1 @@
+//! State-driven transition primitives.

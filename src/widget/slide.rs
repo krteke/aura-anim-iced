@@ -1,0 +1,1 @@
+//! Slide widget helper.
