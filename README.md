@@ -2,9 +2,8 @@
 
 `aura-anim-iced` is an Iced-first Rust animation crate.
 
-The crate is intended to provide reusable UI animation primitives for Iced
-applications: easing, interpolation, tweening, state transitions, timelines,
-animation clocks, and optional widget helpers.
+The crate is intended to provide reusable UI animation primitives for Iced applications:
+easing, interpolation, tweening, state transitions, timelines, animation clocks, and optional widget helpers.
 
 ## Scope
 
@@ -34,5 +33,4 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo doc --no-deps --all-features
 ```
 
-The current repository is a scaffold. Public animation APIs will be added as
-the v0.1 milestones are implemented.
+The current repository is a scaffold. Public animation APIs will be added as the v0.1 milestones are implemented.

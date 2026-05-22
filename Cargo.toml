@@ -17,8 +17,7 @@ name = "aura_anim_iced"
 path = "src/lib.rs"
 
 [features]
-default = ["iced"]
-iced = ["dep:iced", "iced/thread-pool", "iced/wayland", "iced/x11"]
+default = []
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
 testing = []
@@ -26,7 +25,11 @@ widgets = ["iced"]
 spring = []
 
 [dependencies]
-iced = { version = "0.14", default-features = false, optional = true }
+iced = { version = "0.14.0", default-features = false, features = [
+    "smol",
+    "wayland",
+    "x11",
+] }
 serde = { version = "1", features = ["derive"], optional = true }
 tracing = { version = "0.1", optional = true }
 
