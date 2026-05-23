@@ -79,9 +79,9 @@
 - `[x]` Implement `Interpolate` for `f64`.
 - `[x]` Implement `Interpolate` for `u8`.
 - `[x]` Implement `Interpolate` for `i32`.
-- `[ ]` Implement `Interpolate` for `(T, T)`.
-- `[ ]` Implement `Interpolate` for `(T, T, T)`.
-- `[ ]` Implement `Interpolate` for `(T, T, T, T)`.
+- `[x]` Implement `Interpolate` for `(T, T)`.
+- `[x]` Implement `Interpolate` for `(T, T, T)`.
+- `[x]` Implement `Interpolate` for `(T, T, T, T)`.
 - `[x]` Implement progress clamping for interpolation.
 - `[x]` Implement documented integer rounding behavior.
 - `[ ]` Add Rustdoc examples for custom `Interpolate` implementations.

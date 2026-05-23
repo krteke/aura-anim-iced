@@ -123,3 +123,30 @@ fn interpolate_with_progress<T>(
         interpolate_between(from, to, progress)
     }
 }
+
+macro_rules! impl_interpolate_tuple {
+    ($($name:ident : $index:tt),+) => {
+        impl<$($name),+> Interpolate for ($($name,)+)
+        where
+            $($name: Interpolate),+
+        {
+            fn interpolate_progress(
+                from: Self,
+                to: Self,
+                progress: InterpolationProgress,
+            ) -> Self {
+                interpolate_with_progress(from, to, progress, |from, to, progress| {
+                    (
+                        $(
+                            $name::interpolate_progress(from.$index, to.$index, progress),
+                        )+
+                    )
+                })
+            }
+        }
+    };
+}
+
+impl_interpolate_tuple!(A: 0, B: 1);
+impl_interpolate_tuple!(A: 0, B: 1, C: 2);
+impl_interpolate_tuple!(A: 0, B: 1, C: 2, D: 3);
