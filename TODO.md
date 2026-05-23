@@ -74,15 +74,15 @@
 
 ## `interpolate`
 
-- `[ ]` Create the public `Interpolate` trait in `src/interpolate.rs`.
-- `[ ]` Implement `Interpolate` for `f32`.
-- `[ ]` Implement `Interpolate` for `f64`.
+- `[x]` Create the public `Interpolate` trait in `src/interpolate.rs`.
+- `[x]` Implement `Interpolate` for `f32`.
+- `[x]` Implement `Interpolate` for `f64`.
 - `[ ]` Implement `Interpolate` for `u8`.
 - `[ ]` Implement `Interpolate` for `i32`.
 - `[ ]` Implement `Interpolate` for `(T, T)`.
 - `[ ]` Implement `Interpolate` for `(T, T, T)`.
 - `[ ]` Implement `Interpolate` for `(T, T, T, T)`.
-- `[ ]` Implement progress clamping for interpolation.
+- `[x]` Implement progress clamping for interpolation.
 - `[ ]` Implement documented integer rounding behavior.
 - `[ ]` Add Rustdoc examples for custom `Interpolate` implementations.
 - `[ ]` Export `Interpolate` from `src/lib.rs`.
