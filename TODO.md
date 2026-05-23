@@ -66,8 +66,8 @@
 - `[x]` Test progress clamping below `0.0`.
 - `[x]` Test progress clamping above `1.0`.
 - `[x]` Test cubic easing endpoints.
-- `[ ]` Test cubic bezier endpoints.
-- `[ ]` Test cubic bezier linear-equivalent curve at midpoint.
+- `[x]` Test cubic bezier endpoints.
+- `[x]` Test cubic bezier linear-equivalent curve at midpoint.
 - `[ ]` Test Material-style easing presets stay finite.
 - `[ ]` Test Sine, Circ, and Expo curves stay within endpoint expectations.
 - `[ ]` Test finite output for all built-in curves.

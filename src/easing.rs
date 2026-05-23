@@ -131,6 +131,12 @@ pub struct CubicBezier {
 
 impl CubicBezier {
     fn sample(self, progress: f32) -> f32 {
+        match progress {
+            0.0 => return 0.0,
+            1.0 => return 1.0,
+            _ => {}
+        }
+
         let x1 = self.x1.clamp(0.0, 1.0);
         let x2 = self.x2.clamp(0.0, 1.0);
         let mut lower = 0.0;
@@ -225,7 +231,7 @@ fn cubic_axis(parameter: f32, first: f32, second: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{Easing, EasingCurve, EasingMode};
+    use super::{CubicBezier, Easing, EasingCurve, EasingMode};
 
     #[test]
     fn sample_clamps_progress_below_zero() {
@@ -251,5 +257,30 @@ mod tests {
             assert_eq!(easing.sample(0.0), 0.0);
             assert_eq!(easing.sample(1.0), 1.0);
         }
+    }
+
+    #[test]
+    fn cubic_bezier_preserves_endpoints() {
+        let easing = Easing::CubicBezier(CubicBezier {
+            x1: 0.2,
+            y1: 0.8,
+            x2: 0.8,
+            y2: 0.2,
+        });
+
+        assert_eq!(easing.sample(0.0), 0.0);
+        assert_eq!(easing.sample(1.0), 1.0);
+    }
+
+    #[test]
+    fn cubic_bezier_linear_equivalent_curve_samples_midpoint() {
+        let easing = Easing::CubicBezier(CubicBezier {
+            x1: 0.0,
+            y1: 0.0,
+            x2: 1.0,
+            y2: 1.0,
+        });
+
+        assert!((easing.sample(0.5) - 0.5).abs() <= 0.0001);
     }
 }
