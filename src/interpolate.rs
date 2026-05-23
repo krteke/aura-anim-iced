@@ -325,4 +325,15 @@ mod tests {
 
         assert_eq!(<(i32, u8)>::interpolate(from, to, f32::NAN), (10, 20));
     }
+
+    #[test]
+    fn interpolates_nested_tuple() {
+        let from = ((0.0_f32, 10.0_f32), (20_i32, 30_u8));
+        let to = ((10.0_f32, 20.0_f32), (40_i32, 50_u8));
+
+        assert_eq!(
+            <((f32, f32), (i32, u8))>::interpolate(from, to, 0.5),
+            ((5.0, 15.0), (30, 40))
+        );
+    }
 }

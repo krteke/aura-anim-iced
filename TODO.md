@@ -107,7 +107,7 @@
 - `[x]` Test endpoint short-circuiting preserves exact integer endpoints.
 - `[x]` Test integer interpolation macro coverage for signed and unsigned types.
 - `[x]` Test tuple interpolation macro coverage for 2-, 3-, and 4-tuples.
-- `[ ]` Test nested tuple interpolation.
+- `[x]` Test nested tuple interpolation.
 
 ## `value`
 
