@@ -34,6 +34,13 @@ const BEZIER_ITERATIONS: usize = 16;
 ///
 /// assert!((0.0..=1.0).contains(&value));
 /// ```
+///
+/// # Performance
+///
+/// Sampling a [`Easing::Linear`] or [`Easing::Standard`] curve performs a fixed
+/// amount of scalar floating-point work and does not allocate. Sampling
+/// [`Easing::CubicBezier`] also does not allocate, but it performs a fixed
+/// binary search over the curve parameter, controlled by `BEZIER_ITERATIONS`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Easing {
     /// A constant-rate easing curve.
@@ -214,4 +221,23 @@ fn cubic_axis(parameter: f32, first: f32, second: f32) -> f32 {
     3.0 * inverse.powi(2) * parameter * first
         + 3.0 * inverse * parameter.powi(2) * second
         + parameter.powi(3)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Easing, EasingCurve, EasingMode};
+
+    #[test]
+    fn sample_clamps_progress_below_zero() {
+        let easing = Easing::standard(EasingCurve::Cubic, EasingMode::In);
+
+        assert_eq!(easing.sample(-0.25), 0.0);
+    }
+
+    #[test]
+    fn sample_clamps_progress_above_one() {
+        let easing = Easing::standard(EasingCurve::Circ, EasingMode::Out);
+
+        assert_eq!(easing.sample(1.25), 1.0);
+    }
 }

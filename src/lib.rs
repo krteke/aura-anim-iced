@@ -22,6 +22,8 @@ pub mod value;
 #[cfg_attr(docsrs, doc(cfg(feature = "widgets")))]
 pub mod widget;
 
+pub use easing::Easing;
+
 #[cfg(feature = "testing")]
 #[cfg_attr(docsrs, doc(cfg(feature = "testing")))]
 pub mod testing;

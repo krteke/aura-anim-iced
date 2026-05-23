@@ -58,18 +58,18 @@
 - `[x]` Implement cubic bezier easing support.
 - `[x]` Implement material-style standard easing curves.
 - `[x]` Add Rustdoc examples for built-in easing curves.
-- `[ ]` Add Rustdoc performance notes for easing sampling.
-- `[ ]` Export `Easing` from `src/lib.rs`.
+- `[x]` Add Rustdoc performance notes for easing sampling.
+- `[x]` Export `Easing` from `src/lib.rs`.
 
 ### `easing` Tests
 
-- `[ ]` Test `Easing::Linear` at progress `0.0`.
-- `[ ]` Test `Easing::Linear` at progress `0.5`.
-- `[ ]` Test `Easing::Linear` at progress `1.0`.
-- `[ ]` Test progress clamping below `0.0`.
-- `[ ]` Test progress clamping above `1.0`.
+- `[x]` Test progress clamping below `0.0`.
+- `[x]` Test progress clamping above `1.0`.
 - `[ ]` Test cubic easing endpoints.
 - `[ ]` Test cubic bezier endpoints.
+- `[ ]` Test cubic bezier linear-equivalent curve at midpoint.
+- `[ ]` Test Material-style easing presets stay finite.
+- `[ ]` Test Sine, Circ, and Expo curves stay within endpoint expectations.
 - `[ ]` Test finite output for all built-in curves.
 
 ## `interpolate`
