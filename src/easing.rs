@@ -240,4 +240,16 @@ mod tests {
 
         assert_eq!(easing.sample(1.25), 1.0);
     }
+
+    #[test]
+    fn cubic_easing_curves_preserve_endpoints() {
+        for easing in [
+            Easing::EASE_IN_CUBIC,
+            Easing::EASE_OUT_CUBIC,
+            Easing::EASE_IN_OUT_CUBIC,
+        ] {
+            assert_eq!(easing.sample(0.0), 0.0);
+            assert_eq!(easing.sample(1.0), 1.0);
+        }
+    }
 }
