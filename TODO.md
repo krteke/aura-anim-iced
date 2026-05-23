@@ -57,7 +57,7 @@
 - `[x]` Implement Expo easing curves.
 - `[x]` Implement cubic bezier easing support.
 - `[x]` Implement material-style standard easing curves.
-- `[ ]` Add Rustdoc examples for built-in easing curves.
+- `[x]` Add Rustdoc examples for built-in easing curves.
 - `[ ]` Add Rustdoc performance notes for easing sampling.
 - `[ ]` Export `Easing` from `src/lib.rs`.
 

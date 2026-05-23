@@ -3,6 +3,37 @@
 const BEZIER_ITERATIONS: usize = 16;
 
 /// Describes how normalized animation progress is transformed before sampling.
+///
+/// # Examples
+///
+/// Sample a built-in linear easing curve:
+///
+/// ```
+/// use aura_anim_iced::easing::Easing;
+///
+/// assert_eq!(Easing::LINEAR.sample(0.5), 0.5);
+/// ```
+///
+/// Build a standard curve from a curve family and mode:
+///
+/// ```
+/// use aura_anim_iced::easing::{Easing, EasingCurve, EasingMode};
+///
+/// let easing = Easing::standard(EasingCurve::Sine, EasingMode::InOut);
+/// let value = easing.sample(0.5);
+///
+/// assert!((0.49..=0.51).contains(&value));
+/// ```
+///
+/// Use a Material-style preset:
+///
+/// ```
+/// use aura_anim_iced::easing::Easing;
+///
+/// let value = Easing::MATERIAL_STANDARD.sample(0.5);
+///
+/// assert!((0.0..=1.0).contains(&value));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Easing {
     /// A constant-rate easing curve.
