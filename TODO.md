@@ -46,14 +46,17 @@
 - `[x]` Create the public `Easing` type in `src/easing.rs`.
 - `[x]` Implement normalized progress clamping in `src/easing.rs`.
 - `[x]` Implement `Easing::Linear`.
-- `[ ]` Implement `Easing::EaseIn`.
-- `[ ]` Implement `Easing::EaseOut`.
-- `[ ]` Implement `Easing::EaseInOut`.
-- `[ ]` Implement `Easing::EaseInCubic`.
-- `[ ]` Implement `Easing::EaseOutCubic`.
-- `[ ]` Implement `Easing::EaseInOutCubic`.
-- `[ ]` Implement cubic bezier easing support.
-- `[ ]` Implement material-style standard easing curves.
+- `[x]` Implement `Easing::EaseIn`.
+- `[x]` Implement `Easing::EaseOut`.
+- `[x]` Implement `Easing::EaseInOut`.
+- `[x]` Implement `Easing::EaseInCubic`.
+- `[x]` Implement `Easing::EaseOutCubic`.
+- `[x]` Implement `Easing::EaseInOutCubic`.
+- `[x]` Implement Sine easing curves.
+- `[x]` Implement Circ easing curves.
+- `[x]` Implement Expo easing curves.
+- `[x]` Implement cubic bezier easing support.
+- `[x]` Implement material-style standard easing curves.
 - `[ ]` Add Rustdoc examples for built-in easing curves.
 - `[ ]` Add Rustdoc performance notes for easing sampling.
 - `[ ]` Export `Easing` from `src/lib.rs`.
