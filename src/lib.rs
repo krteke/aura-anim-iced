@@ -23,6 +23,7 @@ pub mod value;
 pub mod widget;
 
 pub use easing::Easing;
+pub use interpolate::Interpolate;
 
 #[cfg(feature = "testing")]
 #[cfg_attr(docsrs, doc(cfg(feature = "testing")))]

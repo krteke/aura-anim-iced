@@ -84,20 +84,30 @@
 - `[x]` Implement `Interpolate` for `(T, T, T, T)`.
 - `[x]` Implement progress clamping for interpolation.
 - `[x]` Implement documented integer rounding behavior.
-- `[ ]` Add Rustdoc examples for custom `Interpolate` implementations.
-- `[ ]` Export `Interpolate` from `src/lib.rs`.
+- `[x]` Add Rustdoc examples for custom `Interpolate` implementations.
+- `[x]` Export `Interpolate` from `src/lib.rs`.
 
 ### `interpolate` Tests
 
-- `[ ]` Test `f32` interpolation at progress `0.0`.
-- `[ ]` Test `f32` interpolation at progress `0.5`.
-- `[ ]` Test `f32` interpolation at progress `1.0`.
-- `[ ]` Test `f64` interpolation at progress `0.5`.
-- `[ ]` Test `u8` interpolation rounding.
-- `[ ]` Test `i32` interpolation rounding.
-- `[ ]` Test tuple interpolation at progress `0.5`.
-- `[ ]` Test interpolation progress clamping below `0.0`.
-- `[ ]` Test interpolation progress clamping above `1.0`.
+- `[x]` Test `f32` interpolation at progress `0.0`.
+- `[x]` Test `f32` interpolation at progress `0.5`.
+- `[x]` Test `f32` interpolation at progress `1.0`.
+- `[x]` Test `f64` interpolation at progress `0.5`.
+- `[x]` Test `u8` interpolation rounding.
+- `[x]` Test `i8` interpolation rounding.
+- `[x]` Test `u16` interpolation rounding.
+- `[x]` Test `i16` interpolation rounding.
+- `[x]` Test `u32` interpolation rounding.
+- `[x]` Test `i32` interpolation rounding.
+- `[x]` Test tuple interpolation at progress `0.5`.
+- `[x]` Test interpolation progress clamping below `0.0`.
+- `[x]` Test interpolation progress clamping above `1.0`.
+- `[x]` Test `InterpolationProgress::new` converts `NaN` to `0.0`.
+- `[x]` Test `InterpolationProgress::is_start` and `is_end`.
+- `[x]` Test endpoint short-circuiting preserves exact integer endpoints.
+- `[x]` Test integer interpolation macro coverage for signed and unsigned types.
+- `[x]` Test tuple interpolation macro coverage for 2-, 3-, and 4-tuples.
+- `[ ]` Test nested tuple interpolation.
 
 ## `value`
 
