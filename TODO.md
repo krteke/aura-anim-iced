@@ -68,8 +68,8 @@
 - `[x]` Test cubic easing endpoints.
 - `[x]` Test cubic bezier endpoints.
 - `[x]` Test cubic bezier linear-equivalent curve at midpoint.
-- `[ ]` Test Material-style easing presets stay finite.
-- `[ ]` Test Sine, Circ, and Expo curves stay within endpoint expectations.
+- `[x]` Test Material-style easing presets stay finite.
+- `[x]` Test Sine, Circ, and Expo curves stay within endpoint expectations.
 - `[ ]` Test finite output for all built-in curves.
 
 ## `interpolate`

@@ -283,4 +283,29 @@ mod tests {
 
         assert!((easing.sample(0.5) - 0.5).abs() <= 0.0001);
     }
+
+    #[test]
+    fn material_style_presets_stay_finite() {
+        for easing in [
+            Easing::MATERIAL_STANDARD,
+            Easing::MATERIAL_STANDARD_ACCELERATE,
+            Easing::MATERIAL_STANDARD_DECELERATE,
+        ] {
+            assert!(easing.sample(0.25).is_finite());
+            assert!(easing.sample(0.5).is_finite());
+            assert!(easing.sample(0.75).is_finite());
+        }
+    }
+
+    #[test]
+    fn sine_circ_and_expo_curves_preserve_endpoints() {
+        for curve in [EasingCurve::Sine, EasingCurve::Circ, EasingCurve::Expo] {
+            for mode in [EasingMode::In, EasingMode::Out, EasingMode::InOut] {
+                let easing = Easing::standard(curve, mode);
+
+                assert_eq!(easing.sample(0.0), 0.0);
+                assert_eq!(easing.sample(1.0), 1.0);
+            }
+        }
+    }
 }
