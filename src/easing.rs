@@ -308,4 +308,34 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn all_builtin_curves_produce_finite_output() {
+        let standard_curves = [
+            EasingCurve::Quadratic,
+            EasingCurve::Cubic,
+            EasingCurve::Sine,
+            EasingCurve::Circ,
+            EasingCurve::Expo,
+        ];
+        let modes = [EasingMode::In, EasingMode::Out, EasingMode::InOut];
+        let presets = [
+            Easing::LINEAR,
+            Easing::MATERIAL_STANDARD,
+            Easing::MATERIAL_STANDARD_ACCELERATE,
+            Easing::MATERIAL_STANDARD_DECELERATE,
+        ];
+
+        for easing in presets {
+            assert!(easing.sample(0.375).is_finite());
+        }
+
+        for curve in standard_curves {
+            for mode in modes {
+                let easing = Easing::standard(curve, mode);
+
+                assert!(easing.sample(0.375).is_finite());
+            }
+        }
+    }
 }
