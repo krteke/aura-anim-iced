@@ -123,11 +123,167 @@ pub enum UiPropertyCategory {
 pub enum PropertyValue {
     /// A single scalar value.
     Scalar(f32),
+    /// A two-dimensional vector-like value.
+    Vector2(Vector2Value),
+    /// A width and height value.
+    Size(SizeValue),
+    /// A rectangle value.
+    Rectangle(RectangleValue),
+    /// A transform value used by transform-friendly properties.
+    Transform(TransformValue),
+    /// An Iced color value.
+    #[cfg(feature = "iced")]
+    Color(iced::Color),
+    /// An Iced shadow value.
+    #[cfg(feature = "iced")]
+    Shadow(iced::Shadow),
+}
+
+/// A two-dimensional value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Vector2Value {
+    /// Horizontal component.
+    pub x: f32,
+    /// Vertical component.
+    pub y: f32,
+}
+
+impl Vector2Value {
+    /// Creates a two-dimensional value.
+    #[must_use]
+    pub const fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+}
+
+/// A size value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SizeValue {
+    /// Width component.
+    pub width: f32,
+    /// Height component.
+    pub height: f32,
+}
+
+impl SizeValue {
+    /// Creates a size value.
+    #[must_use]
+    pub const fn new(width: f32, height: f32) -> Self {
+        Self { width, height }
+    }
+}
+
+/// A rectangle value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RectangleValue {
+    /// Horizontal origin.
+    pub x: f32,
+    /// Vertical origin.
+    pub y: f32,
+    /// Width component.
+    pub width: f32,
+    /// Height component.
+    pub height: f32,
+}
+
+impl RectangleValue {
+    /// Creates a rectangle value.
+    #[must_use]
+    pub const fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+}
+
+/// A transform-friendly value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TransformValue {
+    /// Horizontal translation.
+    pub translate_x: f32,
+    /// Vertical translation.
+    pub translate_y: f32,
+    /// Uniform scale.
+    pub scale: f32,
+    /// Rotation angle.
+    pub rotate: f32,
+}
+
+impl TransformValue {
+    /// Creates a transform value.
+    #[must_use]
+    pub const fn new(translate_x: f32, translate_y: f32, scale: f32, rotate: f32) -> Self {
+        Self {
+            translate_x,
+            translate_y,
+            scale,
+            rotate,
+        }
+    }
+
+    /// Returns an identity transform value.
+    #[must_use]
+    pub const fn identity() -> Self {
+        Self::new(0.0, 0.0, 1.0, 0.0)
+    }
+}
+
+#[cfg(feature = "iced")]
+impl From<iced::Point> for PropertyValue {
+    fn from(value: iced::Point) -> Self {
+        Self::Vector2(Vector2Value::new(value.x, value.y))
+    }
+}
+
+#[cfg(feature = "iced")]
+impl From<iced::Vector> for PropertyValue {
+    fn from(value: iced::Vector) -> Self {
+        Self::Vector2(Vector2Value::new(value.x, value.y))
+    }
+}
+
+#[cfg(feature = "iced")]
+impl From<iced::Size> for PropertyValue {
+    fn from(value: iced::Size) -> Self {
+        Self::Size(SizeValue::new(value.width, value.height))
+    }
+}
+
+#[cfg(feature = "iced")]
+impl From<iced::Rectangle> for PropertyValue {
+    fn from(value: iced::Rectangle) -> Self {
+        Self::Rectangle(RectangleValue::new(
+            value.x,
+            value.y,
+            value.width,
+            value.height,
+        ))
+    }
+}
+
+#[cfg(feature = "iced")]
+impl From<iced::Color> for PropertyValue {
+    fn from(value: iced::Color) -> Self {
+        Self::Color(value)
+    }
+}
+
+#[cfg(feature = "iced")]
+impl From<iced::Shadow> for PropertyValue {
+    fn from(value: iced::Shadow) -> Self {
+        Self::Shadow(value)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{UiProperty, UiPropertyCategory};
+    use super::{
+        PropertyValue, RectangleValue, SizeValue, TransformValue, UiProperty, UiPropertyCategory,
+        Vector2Value,
+    };
 
     #[test]
     fn property_ids_are_stable() {
@@ -163,6 +319,40 @@ mod tests {
         );
         assert!(
             UiProperty::BorderColor.composition_order() < UiProperty::TextColor.composition_order()
+        );
+    }
+
+    #[test]
+    fn property_values_cover_core_value_shapes() {
+        assert_eq!(PropertyValue::Scalar(0.5), PropertyValue::Scalar(0.5));
+        assert_eq!(
+            PropertyValue::Vector2(Vector2Value::new(1.0, 2.0)),
+            PropertyValue::Vector2(Vector2Value { x: 1.0, y: 2.0 })
+        );
+        assert_eq!(
+            PropertyValue::Size(SizeValue::new(10.0, 20.0)),
+            PropertyValue::Size(SizeValue {
+                width: 10.0,
+                height: 20.0,
+            })
+        );
+        assert_eq!(
+            PropertyValue::Rectangle(RectangleValue::new(1.0, 2.0, 3.0, 4.0)),
+            PropertyValue::Rectangle(RectangleValue {
+                x: 1.0,
+                y: 2.0,
+                width: 3.0,
+                height: 4.0,
+            })
+        );
+        assert_eq!(
+            TransformValue::identity(),
+            TransformValue {
+                translate_x: 0.0,
+                translate_y: 0.0,
+                scale: 1.0,
+                rotate: 0.0,
+            }
         );
     }
 }

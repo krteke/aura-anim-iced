@@ -37,7 +37,7 @@ pub mod timing;
 
 pub use animatable::Animatable;
 pub use keyframes::Keyframes;
-pub use property::{PropertyValue, UiProperty};
+pub use property::{PropertyValue, RectangleValue, SizeValue, TransformValue, UiProperty, Vector2Value};
 pub use runtime::AnimationRuntime;
 pub use timeline::Timeline;
 pub use timing::Timing;

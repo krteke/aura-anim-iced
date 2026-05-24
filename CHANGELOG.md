@@ -16,6 +16,7 @@
 - Added feature-gated shadow interpolation for Iced shadows.
 - Added public `Animatable` tests for scalar rounding, progress clamping, color, geometry, and shadow sampling.
 - Added stable UI property identifiers, visual categories, and default composition order metadata.
+- Added typed property values for scalar, geometry, transform, color, and shadow animation data.
 
 ### Changed
 
