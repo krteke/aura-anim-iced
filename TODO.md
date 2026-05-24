@@ -2,16 +2,16 @@
 
 ## Repository Foundation
 
-- `[ ]` Create the v0.1 crate structure with `src/lib.rs`, module declarations, public re-exports, and a minimal compile path for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
-- `[ ]` Configure `Cargo.toml` with package metadata, Rust edition, initial feature flags, optional `iced` integration, dev dependencies for examples, and benchmark dependencies.
-- `[ ]` Add a `prelude` module that exports the v0.1 public API surface for `Animatable`, `UiProperty`, `PropertyValue`, `Timing`, `Keyframes`, `Timeline`, and `AnimationRuntime`.
-- `[ ]` Write crate-level documentation that states the Iced-first animation model, the v0.1 scope, the runtime integration path, and the example entry points.
-- `[ ]` Add compile-only smoke tests that import the public prelude, construct the core v0.1 types, and verify the crate builds with default features.
+- `[x]` Create the v0.1 crate structure with `src/lib.rs`, module declarations, public re-exports, and a minimal compile path for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
+- `[x]` Configure `Cargo.toml` with package metadata, Rust edition, initial feature flags, optional `iced` integration, dev dependencies for examples, and benchmark dependencies.
+- `[x]` Add a `prelude` module that exports the v0.1 public API surface for `Animatable`, `UiProperty`, `PropertyValue`, `Timing`, `Keyframes`, `Timeline`, and `AnimationRuntime`.
+- `[x]` Write crate-level documentation that states the Iced-first animation model, the v0.1 scope, the runtime integration path, and the example entry points.
+- `[x]` Add compile-only smoke tests that import the public prelude, construct the core v0.1 types, and verify the crate builds with default features.
 
 ## Animatable Values
 
-- `[ ]` Implement `src/animatable.rs` with the `Animatable` trait, a clamped progress helper, and interpolation helpers for copy-friendly primitive values.
-- `[ ]` Implement scalar `Animatable` support for `f32`, `f64`, `i32`, and `u8`, including rounding and clamping behavior for integer outputs.
+- `[x]` Implement `src/animatable.rs` with the `Animatable` trait, a clamped progress helper, and interpolation helpers for copy-friendly primitive values.
+- `[x]` Implement scalar `Animatable` support for `f32`, `f64`, `i32`, and `u8`, including rounding and clamping behavior for integer outputs.
 - `[ ]` Implement color interpolation for the selected Iced color type, covering red, green, blue, and alpha channels with normalized progress.
 - `[ ]` Implement geometry interpolation for point, vector, size, and rectangle value shapes used by Iced-style UI animation.
 - `[ ]` Implement shadow interpolation with offset, blur, spread, and color fields so button and popup examples can animate elevation.

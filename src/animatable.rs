@@ -4,7 +4,7 @@
 pub trait Animatable: Sized {
     /// Returns the value between `from` and `to` at normalized `progress`.
     fn interpolate(from: Self, to: Self, progress: f32) -> Self {
-        Self::interpolate_progress(from, to, InterpolationProgress(progress))
+        Self::interpolate_progress(from, to, InterpolationProgress::new(progress))
     }
 
     /// Interpolates with a pre-normalized progress value.
@@ -119,5 +119,149 @@ fn interpolate_with_progress<T>(
         to
     } else {
         interpolate_between(from, to, progress)
+    }
+}
+
+macro_rules! impl_interpolate_tuple {
+    ($($name:ident : $index:tt),+) => {
+        impl<$($name),+> Animatable for ($($name,)+)
+        where
+            $($name: Animatable),+
+        {
+            fn interpolate_progress(
+                from: Self,
+                to: Self,
+                progress: InterpolationProgress,
+            ) -> Self {
+                interpolate_with_progress(from, to, progress, |from, to, progress| {
+                    (
+                        $(
+                            $name::interpolate_progress(from.$index, to.$index, progress),
+                        )+
+                    )
+                })
+            }
+        }
+    };
+}
+
+impl_interpolate_tuple!(A: 0, B: 1);
+impl_interpolate_tuple!(A: 0, B: 1, C: 2);
+impl_interpolate_tuple!(A: 0, B: 1, C: 2, D: 3);
+
+#[cfg(test)]
+mod tests {
+    use super::{Animatable, InterpolationProgress};
+
+    #[test]
+    fn f32_interpolation_clamps_progress() {
+        assert_eq!(f32::interpolate(10.0, 20.0, -1.0), 10.0);
+        assert_eq!(f32::interpolate(10.0, 20.0, 0.5), 15.0);
+        assert_eq!(f32::interpolate(10.0, 20.0, 2.0), 20.0);
+    }
+
+    #[test]
+    fn f64_interpolation_clamps_progress() {
+        assert_eq!(f64::interpolate(2.0, 6.0, f32::NAN), 2.0);
+        assert_eq!(f64::interpolate(2.0, 6.0, 0.25), 3.0);
+        assert_eq!(f64::interpolate(2.0, 6.0, 1.5), 6.0);
+    }
+
+    #[test]
+    fn i32_interpolation_rounds_to_nearest_integer() {
+        assert_eq!(i32::interpolate(0, 10, 0.24), 2);
+        assert_eq!(i32::interpolate(0, 10, 0.25), 3);
+        assert_eq!(i32::interpolate(10, 0, 0.25), 8);
+    }
+
+    #[test]
+    fn u8_interpolation_rounds_and_uses_endpoint_clamping() {
+        assert_eq!(u8::interpolate(0, 255, -0.5), 0);
+        assert_eq!(u8::interpolate(0, 255, 0.5), 128);
+        assert_eq!(u8::interpolate(0, 255, 2.0), 255);
+    }
+
+    #[test]
+    fn interpolation_progress_normalizes_invalid_values() {
+        assert_eq!(InterpolationProgress::new(f32::NAN).value(), 0.0);
+        assert_eq!(InterpolationProgress::new(-0.25).value(), 0.0);
+        assert_eq!(InterpolationProgress::new(1.25).value(), 1.0);
+    }
+
+    #[test]
+    fn preserves_i32_from_endpoint() {
+        assert_eq!(i32::interpolate(16_777_217, 20_000_000, 0.0), 16_777_217);
+    }
+
+    #[test]
+    fn preserves_i32_to_endpoint() {
+        assert_eq!(i32::interpolate(16_777_217, 20_000_001, 1.0), 20_000_001);
+    }
+
+    #[test]
+    fn interpolates_large_i32_values() {
+        assert_eq!(i32::interpolate(16_777_217, 16_777_219, 0.5), 16_777_218);
+    }
+
+    #[test]
+    fn interpolates_tuple_2() {
+        let from = (0.0_f32, 10.0_f32);
+        let to = (10.0_f32, 20.0_f32);
+
+        assert_eq!(<(f32, f32)>::interpolate(from, to, 0.5), (5.0, 15.0));
+    }
+
+    #[test]
+    fn interpolates_tuple_3() {
+        let from = (0_u8, 10_i32, 100.0_f32);
+        let to = (10_u8, 20_i32, 200.0_f32);
+
+        assert_eq!(<(u8, i32, f32)>::interpolate(from, to, 0.5), (5, 15, 150.0));
+    }
+
+    #[test]
+    fn interpolates_tuple_4() {
+        let from = (0_u8, 10_i32, 100.0_f32, 1000.0_f64);
+        let to = (10_u8, 20_i32, 200.0_f32, 2000.0_f64);
+
+        assert_eq!(
+            <(u8, i32, f32, f64)>::interpolate(from, to, 0.5),
+            (5, 15, 150.0, 1500.0)
+        );
+    }
+
+    #[test]
+    fn tuple_start_returns_from() {
+        let from = (16_777_217_i32, 10_u8);
+        let to = (20_000_000_i32, 20_u8);
+
+        assert_eq!(<(i32, u8)>::interpolate(from, to, 0.0), (16_777_217, 10));
+    }
+
+    #[test]
+    fn tuple_end_returns_to() {
+        let from = (16_777_217_i32, 10_u8);
+        let to = (20_000_001_i32, 20_u8);
+
+        assert_eq!(<(i32, u8)>::interpolate(from, to, 1.0), (20_000_001, 20));
+    }
+
+    #[test]
+    fn tuple_nan_returns_from() {
+        let from = (10_i32, 20_u8);
+        let to = (30_i32, 40_u8);
+
+        assert_eq!(<(i32, u8)>::interpolate(from, to, f32::NAN), (10, 20));
+    }
+
+    #[test]
+    fn interpolates_nested_tuple() {
+        let from = ((0.0_f32, 10.0_f32), (20_i32, 30_u8));
+        let to = ((10.0_f32, 20.0_f32), (40_i32, 50_u8));
+
+        assert_eq!(
+            <((f32, f32), (i32, u8))>::interpolate(from, to, 0.5),
+            ((5.0, 15.0), (30, 40))
+        );
     }
 }

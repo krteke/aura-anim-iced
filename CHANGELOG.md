@@ -10,6 +10,7 @@
 - Added crate-level documentation for the Iced-first model, v0.1 scope, runtime integration path, and planned examples.
 - Added a compile-only prelude smoke test for the default feature build path.
 - Added core interpolation helpers for clamped progress and copy-friendly primitive sampling.
+- Added scalar `Animatable` coverage for floating-point and integer interpolation behavior.
 
 ### Changed
 

@@ -1,3 +1,5 @@
+//! Compile-only smoke tests for the public prelude.
+
 use aura_anim_iced::prelude::*;
 
 #[test]
@@ -5,8 +7,12 @@ fn public_prelude_constructs_core_v01_types() {
     struct LocalValue(f32);
 
     impl Animatable for LocalValue {
-        fn interpolate(&self, target: &Self, progress: f32) -> Self {
-            Self(self.0 + (target.0 - self.0) * progress)
+        fn interpolate_progress(
+            from: Self,
+            to: Self,
+            progress: aura_anim_iced::animatable::InterpolationProgress,
+        ) -> Self {
+            Self(from.0 + (to.0 - from.0) * progress.value())
         }
     }
 
@@ -16,7 +22,7 @@ fn public_prelude_constructs_core_v01_types() {
     let keyframes = Keyframes::<PropertyValue>::new();
     let timeline = Timeline::new();
     let runtime = AnimationRuntime::new();
-    let sampled = LocalValue(0.0).interpolate(&LocalValue(10.0), 0.5);
+    let sampled = LocalValue::interpolate(LocalValue(0.0), LocalValue(10.0), 0.5);
 
     assert_eq!(property, UiProperty::Opacity);
     assert_eq!(value, PropertyValue::Scalar(1.0));
