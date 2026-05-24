@@ -15,6 +15,7 @@
 - Added feature-gated Iced geometry interpolation for points, vectors, sizes, and rectangles.
 - Added feature-gated shadow interpolation for Iced shadows.
 - Added public `Animatable` tests for scalar rounding, progress clamping, color, geometry, and shadow sampling.
+- Added stable UI property identifiers, visual categories, and default composition order metadata.
 
 ### Changed
 
