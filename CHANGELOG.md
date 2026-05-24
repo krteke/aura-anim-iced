@@ -11,6 +11,7 @@
 - Added a compile-only prelude smoke test for the default feature build path.
 - Added core interpolation helpers for clamped progress and copy-friendly primitive sampling.
 - Added scalar `Animatable` coverage for floating-point and integer interpolation behavior.
+- Added feature-gated `iced::Color` interpolation across red, green, blue, and alpha channels.
 
 ### Changed
 

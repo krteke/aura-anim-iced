@@ -12,7 +12,7 @@
 
 - `[x]` Implement `src/animatable.rs` with the `Animatable` trait, a clamped progress helper, and interpolation helpers for copy-friendly primitive values.
 - `[x]` Implement scalar `Animatable` support for `f32`, `f64`, `i32`, and `u8`, including rounding and clamping behavior for integer outputs.
-- `[ ]` Implement color interpolation for the selected Iced color type, covering red, green, blue, and alpha channels with normalized progress.
+- `[x]` Implement color interpolation for the selected Iced color type, covering red, green, blue, and alpha channels with normalized progress.
 - `[ ]` Implement geometry interpolation for point, vector, size, and rectangle value shapes used by Iced-style UI animation.
 - `[ ]` Implement shadow interpolation with offset, blur, spread, and color fields so button and popup examples can animate elevation.
 - `[ ]` Add `Animatable` unit tests for scalar rounding, color midpoint sampling, geometry midpoint sampling, shadow sampling, and progress clamping.

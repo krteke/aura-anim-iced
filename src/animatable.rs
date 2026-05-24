@@ -1,5 +1,8 @@
 //! Core interpolation contracts and primitive helper functions.
 
+#[cfg(feature = "iced")]
+pub mod color;
+
 /// A value that can produce an interpolated sample toward a target value.
 pub trait Animatable: Sized {
     /// Returns the value between `from` and `to` at normalized `progress`.
