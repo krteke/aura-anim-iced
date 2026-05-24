@@ -4,6 +4,8 @@
 pub mod color;
 #[cfg(feature = "iced")]
 pub mod geometry;
+#[cfg(feature = "iced")]
+pub mod shadow;
 
 /// A value that can produce an interpolated sample toward a target value.
 pub trait Animatable: Sized {

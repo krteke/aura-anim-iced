@@ -13,6 +13,7 @@
 - Added scalar `Animatable` coverage for floating-point and integer interpolation behavior.
 - Added feature-gated `iced::Color` interpolation across red, green, blue, and alpha channels.
 - Added feature-gated Iced geometry interpolation for points, vectors, sizes, and rectangles.
+- Added feature-gated shadow interpolation for Iced shadows.
 
 ### Changed
 

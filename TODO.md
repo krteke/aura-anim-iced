@@ -14,7 +14,7 @@
 - `[x]` Implement scalar `Animatable` support for `f32`, `f64`, `i32`, and `u8`, including rounding and clamping behavior for integer outputs.
 - `[x]` Implement color interpolation for the selected Iced color type, covering red, green, blue, and alpha channels with normalized progress.
 - `[x]` Implement geometry interpolation for point, vector, size, and rectangle value shapes used by Iced-style UI animation.
-- `[ ]` Implement shadow interpolation with offset, blur, spread, and color fields so button and popup examples can animate elevation.
+- `[x]` Implement shadow interpolation with offset, blur, and color fields so button and popup examples can animate elevation.
 - `[ ]` Add `Animatable` unit tests for scalar rounding, color midpoint sampling, geometry midpoint sampling, shadow sampling, and progress clamping.
 
 ## Property Model
