@@ -1,352 +1,100 @@
-# aura-anim-iced v0.1 TODO
+# aura-anim-iced v0.1
 
-## Release Target
+## Repository Foundation
 
-- `[ ]` Implement easing curves for UI animation.
-- `[ ]` Implement type interpolation for core scalar and UI value types.
-- `[ ]` Implement `Tween<T>` for single-segment animation.
-- `[ ]` Implement `Transition<T>` for state-driven animation.
-- `[ ]` Implement animation clock helpers.
-- `[ ]` Implement Iced subscription helpers.
-- `[ ]` Create three runnable examples.
-- `[ ]` Write unit tests for core boundary behavior.
-- `[ ]` Write public API documentation for docs.rs.
-- `[ ]` Package the crate for crates.io.
+- `[ ]` Create the v0.1 crate structure with `src/lib.rs`, module declarations, public re-exports, and a minimal compile path for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
+- `[ ]` Configure `Cargo.toml` with package metadata, Rust edition, initial feature flags, optional `iced` integration, dev dependencies for examples, and benchmark dependencies.
+- `[ ]` Add a `prelude` module that exports the v0.1 public API surface for `Animatable`, `UiProperty`, `PropertyValue`, `Timing`, `Keyframes`, `Timeline`, and `AnimationRuntime`.
+- `[ ]` Write crate-level documentation that states the Iced-first animation model, the v0.1 scope, the runtime integration path, and the example entry points.
+- `[ ]` Add compile-only smoke tests that import the public prelude, construct the core v0.1 types, and verify the crate builds with default features.
 
-## Project Shell
+## Animatable Values
 
-- `[x]` Configure feature flags: `iced`, `std`, `serde`, `tracing`, `testing`, `widgets`, and `spring`.
-- `[x]` Configure optional dependencies for `iced`, `serde`, and `tracing`.
-- `[x]` Configure Iced `0.14` as the initial target version.
-- `[x]` Configure Rust `1.88` as the MSRV.
-- `[x]` Configure Rust lint rules.
-- `[x]` Configure Clippy lint rules.
-- `[x]` Configure rustfmt.
-- `[x]` Create the CI workflow.
-- `[x]` Create the release workflow.
-- `[x]` Create the changelog file.
+- `[ ]` Implement `src/animatable.rs` with the `Animatable` trait, a clamped progress helper, and interpolation helpers for copy-friendly primitive values.
+- `[ ]` Implement scalar `Animatable` support for `f32`, `f64`, `i32`, and `u8`, including rounding and clamping behavior for integer outputs.
+- `[ ]` Implement color interpolation for the selected Iced color type, covering red, green, blue, and alpha channels with normalized progress.
+- `[ ]` Implement geometry interpolation for point, vector, size, and rectangle value shapes used by Iced-style UI animation.
+- `[ ]` Implement shadow interpolation with offset, blur, spread, and color fields so button and popup examples can animate elevation.
+- `[ ]` Add `Animatable` unit tests for scalar rounding, color midpoint sampling, geometry midpoint sampling, shadow sampling, and progress clamping.
 
-## API Specification
+## Property Model
 
-- `[ ]` Write `docs/api-v0.1.md` with final public names for `Easing`, `Tween`, `Transition`, and clock helpers.
-- `[ ]` Write `docs/api-v0.1.md` entries for duration helper functions.
-- `[ ]` Write `docs/api-v0.1.md` entries for `Tween::sample`.
-- `[ ]` Write `docs/api-v0.1.md` entries for `Transition::set_target`.
-- `[ ]` Write `docs/api-v0.1.md` entries for `Transition::value_at`.
-- `[ ]` Write `docs/api-v0.1.md` entries for transition retarget behavior.
-- `[ ]` Write `docs/api-v0.1.md` entries for zero-duration tween behavior.
-- `[ ]` Write `docs/api-v0.1.md` entries for zero-duration transition behavior.
-- `[ ]` Write `docs/api-v0.1.md` entries for delay behavior.
-- `[ ]` Write `docs/api-v0.1.md` entries for completion queries.
-- `[ ]` Write `docs/api-v0.1.md` entries for Iced subscription helper names.
-- `[ ]` Add crate-level documentation links to `docs/api-v0.1.md`.
+- `[ ]` Implement `src/property.rs` with `UiProperty`, stable property IDs, and the core visual properties needed for opacity, transform, size, radius, color, and shadow.
+- `[ ]` Implement `PropertyValue` as a typed enum for v0.1 values, including scalar, color, geometry, shadow, and transform-friendly variants.
+- `[ ]` Add property-to-value matching helpers that accept valid property/value pairs and return typed errors for mismatched animation input.
+- `[ ]` Add property composition ordering for opacity, transform, size, radius, background, border color, text color, and shadow.
+- `[ ]` Write property tests for stable IDs, property ordering, value matching, mismatch errors, and parallel property storage.
 
-## `easing`
+## Timing and Easing
 
-- `[x]` Create the public `Easing` type in `src/easing.rs`.
-- `[x]` Implement normalized progress clamping in `src/easing.rs`.
-- `[x]` Implement `Easing::Linear`.
-- `[x]` Implement `Easing::EaseIn`.
-- `[x]` Implement `Easing::EaseOut`.
-- `[x]` Implement `Easing::EaseInOut`.
-- `[x]` Implement `Easing::EaseInCubic`.
-- `[x]` Implement `Easing::EaseOutCubic`.
-- `[x]` Implement `Easing::EaseInOutCubic`.
-- `[x]` Implement Sine easing curves.
-- `[x]` Implement Circ easing curves.
-- `[x]` Implement Expo easing curves.
-- `[x]` Implement cubic bezier easing support.
-- `[x]` Implement material-style standard easing curves.
-- `[x]` Add Rustdoc examples for built-in easing curves.
-- `[x]` Add Rustdoc performance notes for easing sampling.
-- `[x]` Export `Easing` from `src/lib.rs`.
+- `[ ]` Implement `src/timing.rs` with `Timing`, `Duration`, `Delay`, `Direction`, `FillMode`, iteration count, playback rate, and elapsed-time normalization.
+- `[ ]` Add easing support that bridges to Iced easing where available and supplies v0.1 helpers for linear, ease-in, ease-out, and ease-in-out sampling.
+- `[ ]` Implement fill behavior for before-start, active, after-end, forwards, backwards, and both-filled sampling states.
+- `[ ]` Implement direction sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations.
+- `[ ]` Write timing tests for delay, duration normalization, fill mode output, playback rate, repeat iteration, and reverse direction sampling.
 
-### `easing` Tests
+## Keyframes
 
-- `[x]` Test progress clamping below `0.0`.
-- `[x]` Test progress clamping above `1.0`.
-- `[x]` Test cubic easing endpoints.
-- `[x]` Test cubic bezier endpoints.
-- `[x]` Test cubic bezier linear-equivalent curve at midpoint.
-- `[x]` Test Material-style easing presets stay finite.
-- `[x]` Test Sine, Circ, and Expo curves stay within endpoint expectations.
-- `[x]` Test finite output for all built-in curves.
+- `[ ]` Implement `src/keyframes.rs` with `Keyframes<T>`, keyframe offset storage, timing attachment, builder-style `at` insertion, and sorted keyframe normalization.
+- `[ ]` Implement keyframe segment lookup with edge handling for empty tracks, single-frame tracks, exact offsets, and between-frame sampling.
+- `[ ]` Implement keyframe value sampling by interpolating neighboring `Animatable` values through segment progress and easing.
+- `[ ]` Add multi-property keyframe support by mapping `UiProperty` to `PropertyValue` snapshots across normalized offsets.
+- `[ ]` Add keyframe builder helpers for opacity, scale, translation, background color, border color, text color, and shadow.
+- `[ ]` Write keyframe tests for offset normalization, segment lookup, easing application, fill mode output, and multi-property sampling.
 
-## `interpolate`
+## Timeline
 
-- `[x]` Create the public `Interpolate` trait in `src/interpolate.rs`.
-- `[x]` Implement `Interpolate` for `f32`.
-- `[x]` Implement `Interpolate` for `f64`.
-- `[x]` Implement `Interpolate` for `u8`.
-- `[x]` Implement `Interpolate` for `i32`.
-- `[x]` Implement `Interpolate` for `(T, T)`.
-- `[x]` Implement `Interpolate` for `(T, T, T)`.
-- `[x]` Implement `Interpolate` for `(T, T, T, T)`.
-- `[x]` Implement progress clamping for interpolation.
-- `[x]` Implement documented integer rounding behavior.
-- `[x]` Add Rustdoc examples for custom `Interpolate` implementations.
-- `[x]` Export `Interpolate` from `src/lib.rs`.
+- `[ ]` Implement `src/timeline.rs` with `Timeline`, `TimelineStep`, `Track`, `Sequence`, `Parallel`, `Hold`, named markers, and total-duration calculation.
+- `[ ]` Implement sequence sampling that advances through ordered steps, accounts for hold segments, and returns the active property snapshot.
+- `[ ]` Implement parallel sampling that merges active tracks, resolves property collisions by insertion order, and emits a composed snapshot.
+- `[ ]` Implement timeline builder helpers for `sequence`, `parallel`, `hold`, `then`, `track`, `from`, `to`, `duration`, and `easing`.
+- `[ ]` Add playback controls for seek, pause, resume, cancel, finish, and completion state snapshots without runtime ownership.
+- `[ ]` Write timeline tests for sequence duration, parallel duration, hold sampling, property merge ordering, seek output, and completion output.
 
-### `interpolate` Tests
+## Runtime
 
-- `[x]` Test `f32` interpolation at progress `0.0`.
-- `[x]` Test `f32` interpolation at progress `0.5`.
-- `[x]` Test `f32` interpolation at progress `1.0`.
-- `[x]` Test `f64` interpolation at progress `0.5`.
-- `[x]` Test `u8` interpolation rounding.
-- `[x]` Test `i8` interpolation rounding.
-- `[x]` Test `u16` interpolation rounding.
-- `[x]` Test `i16` interpolation rounding.
-- `[x]` Test `u32` interpolation rounding.
-- `[x]` Test `i32` interpolation rounding.
-- `[x]` Test tuple interpolation at progress `0.5`.
-- `[x]` Test interpolation progress clamping below `0.0`.
-- `[x]` Test interpolation progress clamping above `1.0`.
-- `[x]` Test `InterpolationProgress::new` converts `NaN` to `0.0`.
-- `[x]` Test `InterpolationProgress::is_start` and `is_end`.
-- `[x]` Test endpoint short-circuiting preserves exact integer endpoints.
-- `[x]` Test integer interpolation macro coverage for signed and unsigned types.
-- `[x]` Test tuple interpolation macro coverage for 2-, 3-, and 4-tuples.
-- `[x]` Test nested tuple interpolation.
-
-## `value`
-
-- `[ ]` Implement Iced `Color` interpolation in `src/value/color.rs`.
-- `[ ]` Write RGB color interpolation documentation in `src/value/color.rs`.
-- `[ ]` Implement opacity interpolation helper in `src/value/style.rs`.
-- `[ ]` Implement radius interpolation helper in `src/value/style.rs`.
-- `[ ]` Implement size interpolation helper in `src/value/geometry.rs`.
-- `[ ]` Implement point interpolation helper in `src/value/geometry.rs`.
-- `[ ]` Implement vector interpolation helper in `src/value/geometry.rs`.
-- `[ ]` Export value helpers from `src/value/mod.rs`.
-- `[ ]` Add Rustdoc examples for color interpolation.
-- `[ ]` Add Rustdoc examples for geometry interpolation.
-
-### `value` Tests
-
-- `[ ]` Test Iced `Color` interpolation at progress `0.0`.
-- `[ ]` Test Iced `Color` interpolation at progress `0.5`.
-- `[ ]` Test Iced `Color` interpolation at progress `1.0`.
-- `[ ]` Test opacity interpolation endpoints.
-- `[ ]` Test radius interpolation endpoints.
-- `[ ]` Test size interpolation endpoints.
-- `[ ]` Test point interpolation endpoints.
-- `[ ]` Test vector interpolation endpoints.
-
-## `tween`
-
-- `[ ]` Create the public `Tween<T>` type in `src/tween.rs`.
-- `[ ]` Implement `Tween::new`.
-- `[ ]` Implement duration configuration for `Tween<T>`.
-- `[ ]` Implement delay configuration for `Tween<T>`.
-- `[ ]` Implement easing configuration for `Tween<T>`.
-- `[ ]` Implement `Tween::sample`.
-- `[ ]` Implement `Tween::progress`.
-- `[ ]` Implement `Tween::is_complete`.
-- `[ ]` Implement zero-duration sampling behavior.
-- `[ ]` Implement delayed sampling behavior.
-- `[ ]` Implement elapsed-over-duration sampling behavior.
-- `[ ]` Add Rustdoc examples for numeric tween usage.
-- `[ ]` Add Rustdoc examples for delayed tween usage.
-- `[ ]` Export `Tween` from `src/lib.rs`.
-
-### `tween` Tests
-
-- `[ ]` Test `Tween::new` initial sampling.
-- `[ ]` Test sampling before delay.
-- `[ ]` Test sampling at delay boundary.
-- `[ ]` Test sampling at half duration.
-- `[ ]` Test sampling at full duration.
-- `[ ]` Test sampling after full duration.
-- `[ ]` Test zero-duration sampling.
-- `[ ]` Test `Tween::progress` before delay.
-- `[ ]` Test `Tween::progress` at half duration.
-- `[ ]` Test `Tween::progress` after full duration.
-- `[ ]` Test `Tween::is_complete` before completion.
-- `[ ]` Test `Tween::is_complete` after completion.
-- `[ ]` Test easing application in `Tween::sample`.
-
-## `transition`
-
-- `[ ]` Create the public `Transition<T>` type in `src/transition.rs`.
-- `[ ]` Implement `Transition::new`.
-- `[ ]` Implement duration configuration for `Transition<T>`.
-- `[ ]` Implement easing configuration for `Transition<T>`.
-- `[ ]` Implement `Transition::set_target`.
-- `[ ]` Implement `Transition::value_at`.
-- `[ ]` Implement `Transition::tick`.
-- `[ ]` Implement `Transition::is_animating`.
-- `[ ]` Implement `Transition::current`.
-- `[ ]` Implement `Transition::target`.
-- `[ ]` Implement active retargeting from the sampled current value.
-- `[ ]` Implement same-target handling.
-- `[ ]` Implement zero-duration transition behavior.
-- `[ ]` Add Rustdoc examples for visibility transitions.
-- `[ ]` Add Rustdoc examples for hover transitions.
-- `[ ]` Add Rustdoc examples for expanded-state transitions.
-- `[ ]` Export `Transition` from `src/lib.rs`.
-
-### `transition` Tests
-
-- `[ ]` Test inactive state after `Transition::new`.
-- `[ ]` Test active state after `Transition::set_target`.
-- `[ ]` Test same-target handling.
-- `[ ]` Test midpoint value with linear easing.
-- `[ ]` Test completion state after duration.
-- `[ ]` Test active retargeting from the sampled current value.
-- `[ ]` Test zero-duration transition.
-- `[ ]` Test repeated `value_at` calls for the same timestamp.
-- `[ ]` Test `current` after `tick`.
-- `[ ]` Test `target` after `set_target`.
-
-## `clock`
-
-- `[ ]` Create the public animation clock type in `src/clock.rs`.
-- `[ ]` Implement fixed 16 ms tick interval support.
-- `[ ]` Implement active animation count tracking.
-- `[ ]` Implement clock activation.
-- `[ ]` Implement clock deactivation.
-- `[ ]` Implement deterministic time advancement under the `testing` feature.
-- `[ ]` Add Rustdoc examples for clock usage.
-- `[ ]` Export clock types from `src/lib.rs`.
-
-### `clock` Tests
-
-- `[ ]` Test fixed tick interval creation.
-- `[ ]` Test active animation count increment.
-- `[ ]` Test active animation count decrement.
-- `[ ]` Test clock activation.
-- `[ ]` Test clock deactivation.
-- `[ ]` Test deterministic time advancement under the `testing` feature.
+- `[ ]` Implement `src/runtime.rs` with `AnimationRuntime`, `AnimationRegistry`, animation handles, active entries, clock abstraction, and motion policy storage.
+- `[ ]` Implement runtime registration for keyframe and timeline instances with start time, playback state, property snapshot output, and completion tracking.
+- `[ ]` Implement runtime tick processing that advances active animations, removes completed entries, and returns an aggregated snapshot for view code.
+- `[ ]` Implement idle detection that reports zero active animations and exposes a subscription gate for stopping animation ticks.
+- `[ ]` Add testing clock support that injects deterministic timestamps for unit tests and example-level runtime checks.
+- `[ ]` Write runtime tests for handle registration, tick sampling, completion removal, idle detection, and deterministic clock progression.
 
 ## Iced Integration
 
-- `[ ]` Implement the Iced subscription helper in `src/iced_ext.rs`.
-- `[ ]` Implement inactive subscription behavior.
-- `[ ]` Implement active subscription behavior with a 16 ms interval.
-- `[ ]` Implement message mapping examples in Rustdoc.
-- `[ ]` Gate Iced integration with the `iced` feature.
-- `[ ]` Export Iced helpers from `src/lib.rs`.
-
-### Iced Integration Tests
-
-- `[ ]` Test Iced helper compilation with default features.
-- `[ ]` Test Iced helper compilation with `--all-features`.
-- `[ ]` Test core crate compilation with `--no-default-features`.
-- `[ ]` Test subscription helper type signatures in an integration test.
+- `[ ]` Implement `src/iced_ext.rs` with a subscription helper that maps runtime activity into an Iced `Subscription` tick stream.
+- `[ ]` Add update helper functions that route tick messages into `AnimationRuntime` and return view-friendly effect snapshots.
+- `[ ]` Add effect snapshot conversion helpers for opacity, translate, scale, radius, color, and shadow values consumed by Iced widgets.
+- `[ ]` Add compile checks for Iced integration behind the `iced` feature and a core-only build path with that feature disabled.
+- `[ ]` Write integration tests for subscription gating, tick forwarding, active runtime updates, idle runtime output, and feature-gated compilation.
 
 ## Examples
 
-- `[ ]` Create `examples/basic_tween.rs`.
-- `[ ]` Implement a numeric tween demo in `examples/basic_tween.rs`.
-- `[ ]` Create `examples/fade_panel.rs`.
-- `[ ]` Implement an opacity transition demo in `examples/fade_panel.rs`.
-- `[ ]` Create `examples/slide_panel.rs`.
-- `[ ]` Implement an offset transition demo in `examples/slide_panel.rs`.
-- `[ ]` Add README commands for running `basic_tween`.
-- `[ ]` Add README commands for running `fade_panel`.
-- `[ ]` Add README commands for running `slide_panel`.
-- `[ ]` Test all examples with `cargo check --examples`.
+- `[ ]` Build the `examples/animated_button.rs` demo with hover, pressed, focus, background, border, shadow, and scale animation using parallel tracks.
+- `[ ]` Build the `examples/keyframes_popup.rs` demo with popup opacity, scale overshoot, settle timing, and keyframe-driven effect snapshots.
+- `[ ]` Build the `examples/timeline_toast.rs` demo with enter, hold, exit, opacity, translate-y, and completion cleanup through the runtime.
+- `[ ]` Add shared example helpers for app state, runtime storage, tick messages, and minimal reusable animated style mapping.
+- `[ ]` Add example README snippets that show the run commands and the purpose of each v0.1 example.
 
-## Tests
+## Testing and Benchmarks
 
-- `[ ]` Create integration test directory `tests/`.
-- `[ ]` Create `tests/public_api.rs`.
-- `[ ]` Write public API smoke tests in `tests/public_api.rs`.
-- `[ ]` Create `tests/feature_matrix.rs`.
-- `[ ]` Add module-level unit tests for `easing`.
-- `[ ]` Add module-level unit tests for `interpolate`.
-- `[ ]` Add module-level unit tests for `tween`.
-- `[ ]` Add module-level unit tests for `transition`.
-- `[ ]` Add module-level unit tests for `clock`.
-- `[ ]` Add module-level unit tests for `value`.
-- `[ ]` Run `cargo test --all-features`.
-- `[ ]` Run `cargo check --all-targets`.
-- `[ ]` Run `cargo check --all-targets --all-features`.
-- `[ ]` Run `cargo check --no-default-features`.
-- `[ ]` Run `cargo check --examples`.
-
-## Benchmarks
-
-- `[ ]` Add benchmark harness configuration.
-- `[ ]` Create `benches/tween.rs`.
-- `[ ]` Benchmark single `Tween::sample` calls.
-- `[ ]` Create `benches/transition.rs`.
-- `[ ]` Benchmark single `Transition::value_at` calls.
-- `[ ]` Benchmark 1000 transition value queries.
-- `[ ]` Create `benches/easing.rs`.
-- `[ ]` Benchmark built-in easing sampling.
-- `[ ]` Record benchmark command output in `CHANGELOG.md`.
-- `[ ]` Add benchmark instructions to README.
+- `[ ]` Add unit test modules for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
+- `[ ]` Add integration tests that run keyframes, timeline sequence, timeline parallel, runtime tick, and idle subscription behavior together.
+- `[ ]` Configure benchmark targets for 100, 1,000, and 10,000 property track samples with zero-allocation sampling assertions.
+- `[ ]` Add benchmark fixtures for scalar tracks, color tracks, geometry tracks, shadow tracks, and mixed-property timeline snapshots.
+- `[ ]` Add CI-friendly commands for `cargo fmt`, `cargo clippy`, `cargo test`, `cargo check --examples`, and benchmark compilation.
 
 ## Documentation
 
-- `[ ]` Expand README project positioning.
-- `[ ]` Add README installation instructions.
-- `[ ]` Add README minimal tween example.
-- `[ ]` Add README transition example.
-- `[ ]` Add README Iced integration example.
-- `[ ]` Add README feature flag table.
-- `[ ]` Add README examples section.
-- `[ ]` Add README supported Iced version.
-- `[ ]` Add README MSRV.
-- `[ ]` Add README crates.io release instructions.
-- `[ ]` Add crate-level Rustdoc overview in `src/lib.rs`.
-- `[ ]` Add public item Rustdoc for `Easing`.
-- `[ ]` Add public item Rustdoc for `Interpolate`.
-- `[ ]` Add public item Rustdoc for `Tween`.
-- `[ ]` Add public item Rustdoc for `Transition`.
-- `[ ]` Add public item Rustdoc for clock helpers.
-- `[ ]` Add public item Rustdoc for Iced helpers.
-- `[ ]` Add public item Rustdoc for value helpers.
+- `[ ]` Update `README.md` with the project positioning, the relationship to Iced `Animation<T>`, installation commands, and a minimal runtime example.
+- `[ ]` Add README sections for animatable values, property tracks, keyframes, timeline orchestration, runtime ticking, and Iced subscription wiring.
+- `[ ]` Add docs.rs examples to public types showing one compact usage snippet per core v0.1 module.
+- `[ ]` Add `CHANGELOG.md` with the `0.1.0-alpha.1` scope, implemented modules, example names, and benchmark entry points.
+- `[ ]` Add `LICENSE`, repository metadata, badges, and documentation links required for a clean crates.io package page.
 
-## Feature Flags
+## Release
 
-- `[ ]` Test default features with `cargo check --all-targets`.
-- `[ ]` Test all features with `cargo check --all-targets --all-features`.
-- `[ ]` Test `serde` with `cargo check --features serde`.
-- `[ ]` Test `tracing` with `cargo check --features tracing`.
-- `[ ]` Test `testing` with `cargo check --features testing`.
-- `[ ]` Test `widgets` with `cargo check --features widgets`.
-- `[ ]` Test `spring` with `cargo check --features spring`.
-- `[ ]` Test core features with `cargo check --no-default-features`.
-- `[ ]` Add CI entries for required feature combinations.
-
-## CI
-
-- `[ ]` Add `cargo check --examples` to `.github/workflows/ci.yml`.
-- `[ ]` Add `cargo check --no-default-features` to `.github/workflows/ci.yml`.
-- `[ ]` Add feature-specific check commands to `.github/workflows/ci.yml`.
-- `[ ]` Run `cargo fmt --all --check`.
-- `[ ]` Run `cargo clippy --all-targets --all-features -- -D warnings`.
-- `[ ]` Run `cargo doc --no-deps --all-features`.
-- `[ ]` Run `cargo package --all-features`.
-- `[ ]` Fix every CI failure.
-
-## Release Preparation
-
-- `[ ]` Update `CHANGELOG.md` with v0.1.0 changes.
-- `[ ]` Update package metadata in `Cargo.toml`.
-- `[ ]` Run `cargo package --all-features`.
-- `[ ]` Inspect package files with `cargo package --list`.
-- `[ ]` Run `cargo publish --dry-run --all-features`.
-- `[ ]` Tag the release with `v0.1.0`.
-- `[ ]` Push the release tag.
-- `[ ]` Publish the crate to crates.io.
-
-## v0.1 Release Gate
-
-- `[ ]` Run `cargo fmt --all --check`.
-- `[ ]` Run `cargo check --all-targets`.
-- `[ ]` Run `cargo check --all-targets --all-features`.
-- `[ ]` Run `cargo check --no-default-features`.
-- `[ ]` Run `cargo check --examples`.
-- `[ ]` Run `cargo test --all-features`.
-- `[ ]` Run `cargo clippy --all-targets --all-features -- -D warnings`.
-- `[ ]` Run `cargo doc --no-deps --all-features`.
-- `[ ]` Run `cargo package --all-features`.
-- `[ ]` Run `cargo publish --dry-run --all-features`.
-- `[ ]` Run `examples/basic_tween.rs`.
-- `[ ]` Run `examples/fade_panel.rs`.
-- `[ ]` Run `examples/slide_panel.rs`.
-- `[ ]` Record manual example verification in `CHANGELOG.md`.
+- `[ ]` Run the v0.1 release gate with formatting, linting, tests, example checks, docs generation, and benchmark compilation.
+- `[ ]` Package the crate with `cargo package` and inspect the generated archive contents for source files, examples, README, changelog, and license.
+- `[ ]` Publish `0.1.0-alpha.1` to crates.io after the release gate passes and the package archive contains the documented v0.1 scope.
+- `[ ]` Tag the repository with `v0.1.0-alpha.1` and write release notes covering Animatable, PropertyValue, Timing, Keyframes, Timeline, Runtime, Iced integration, examples, tests, and benchmarks.

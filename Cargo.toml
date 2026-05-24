@@ -1,54 +1,53 @@
 [package]
 name = "aura-anim-iced"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2024"
 rust-version = "1.88"
 authors = ["krteke"]
+description = "Iced-first animation primitives."
 license = "MIT"
-description = "Iced-first animation primitives and integration helpers."
+readme = "README.md"
 repository = "https://github.com/krteke/aura-anim-iced"
 documentation = "https://docs.rs/aura-anim-iced"
-readme = "README.md"
-keywords = ["animation", "iced", "gui", "tween", "transition"]
+keywords = ["iced", "animation", "ui", "motion"]
 categories = ["gui", "graphics"]
+include = [
+    "src/**/*.rs",
+    "examples/**/*.rs",
+    "benches/**/*.rs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "Cargo.toml",
+]
 
 [lib]
 name = "aura_anim_iced"
 path = "src/lib.rs"
 
 [features]
-default = []
+default = ["runtime"]
+runtime = []
+widgets = ["iced"]
+theme = ["iced"]
+spring = []
+gesture = ["iced"]
+layout = ["iced"]
+inspector = ["tracing"]
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
 testing = []
-widgets = []
-spring = []
+iced = ["dep:iced"]
 
 [dependencies]
-iced = { version = "0.14.0", default-features = false, features = [
-    "smol",
-    "wayland",
-    "x11",
-] }
-serde = { version = "1", features = ["derive"], optional = true }
+iced = { version = "0.14", optional = true }
+serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }
+
+[dev-dependencies]
+criterion = { version = "0.8.2", default-features = false }
+iced = "0.14"
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-[lints.rust]
-missing_docs = "warn"
-rust_2018_idioms = { level = "warn", priority = -1 }
-unsafe_code = "forbid"
-unreachable_pub = "warn"
-unused_must_use = "deny"
-
-[lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-alloc_instead_of_core = "warn"
-std_instead_of_core = "allow"
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"

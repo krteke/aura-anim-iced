@@ -1,1 +1,0 @@
-//! Fade widget helper.
