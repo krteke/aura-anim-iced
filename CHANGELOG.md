@@ -14,6 +14,7 @@
 - Added feature-gated `iced::Color` interpolation across red, green, blue, and alpha channels.
 - Added feature-gated Iced geometry interpolation for points, vectors, sizes, and rectangles.
 - Added feature-gated shadow interpolation for Iced shadows.
+- Added public `Animatable` tests for scalar rounding, progress clamping, color, geometry, and shadow sampling.
 
 ### Changed
 
