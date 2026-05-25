@@ -99,6 +99,46 @@ impl UiProperty {
             Self::Shadow => 90,
         }
     }
+
+    /// Returns the expected value kind for this property.
+    #[must_use]
+    pub const fn expected_value_kind(self) -> PropertyValueKind {
+        match self {
+            Self::Opacity
+            | Self::TranslateX
+            | Self::TranslateY
+            | Self::Scale
+            | Self::Rotate
+            | Self::Width
+            | Self::Height
+            | Self::Padding
+            | Self::Radius => PropertyValueKind::Scalar,
+            Self::Background | Self::BorderColor | Self::TextColor => PropertyValueKind::Color,
+            Self::Shadow => PropertyValueKind::Shadow,
+        }
+    }
+
+    /// Returns whether `value` can be used for this property.
+    #[must_use]
+    pub fn accepts_value(self, value: &PropertyValue) -> bool {
+        self.expected_value_kind().matches(value)
+    }
+
+    /// Validates that `value` can be used for this property.
+    pub fn validate_value(self, value: &PropertyValue) -> Result<(), PropertyValueError> {
+        let expected = self.expected_value_kind();
+        let actual = value.kind();
+
+        if expected.matches(value) {
+            Ok(())
+        } else {
+            Err(PropertyValueError {
+                property: self,
+                expected,
+                actual,
+            })
+        }
+    }
 }
 
 /// Broad visual property categories.
@@ -137,6 +177,62 @@ pub enum PropertyValue {
     /// An Iced shadow value.
     #[cfg(feature = "iced")]
     Shadow(iced::Shadow),
+}
+
+impl PropertyValue {
+    /// Returns the kind represented by this value.
+    #[must_use]
+    pub const fn kind(&self) -> PropertyValueKind {
+        match self {
+            Self::Scalar(_) => PropertyValueKind::Scalar,
+            Self::Vector2(_) => PropertyValueKind::Vector2,
+            Self::Size(_) => PropertyValueKind::Size,
+            Self::Rectangle(_) => PropertyValueKind::Rectangle,
+            Self::Transform(_) => PropertyValueKind::Transform,
+            #[cfg(feature = "iced")]
+            Self::Color(_) => PropertyValueKind::Color,
+            #[cfg(feature = "iced")]
+            Self::Shadow(_) => PropertyValueKind::Shadow,
+        }
+    }
+}
+
+/// The high-level kind of a property value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PropertyValueKind {
+    /// Scalar values.
+    Scalar,
+    /// Two-dimensional vector values.
+    Vector2,
+    /// Size values.
+    Size,
+    /// Rectangle values.
+    Rectangle,
+    /// Transform values.
+    Transform,
+    /// Color values.
+    Color,
+    /// Shadow values.
+    Shadow,
+}
+
+impl PropertyValueKind {
+    /// Returns whether this kind matches `value`.
+    #[must_use]
+    pub fn matches(self, value: &PropertyValue) -> bool {
+        self == value.kind()
+    }
+}
+
+/// A typed property/value mismatch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PropertyValueError {
+    /// The property being validated.
+    pub property: UiProperty,
+    /// The expected value kind.
+    pub expected: PropertyValueKind,
+    /// The actual value kind.
+    pub actual: PropertyValueKind,
 }
 
 /// A two-dimensional value.
@@ -281,8 +377,8 @@ impl From<iced::Shadow> for PropertyValue {
 #[cfg(test)]
 mod tests {
     use super::{
-        PropertyValue, RectangleValue, SizeValue, TransformValue, UiProperty, UiPropertyCategory,
-        Vector2Value,
+        PropertyValue, PropertyValueError, PropertyValueKind, RectangleValue, SizeValue,
+        TransformValue, UiProperty, UiPropertyCategory, Vector2Value,
     };
 
     #[test]
@@ -353,6 +449,45 @@ mod tests {
                 scale: 1.0,
                 rotate: 0.0,
             }
+        );
+    }
+
+    #[test]
+    fn property_accepts_matching_scalar_values() {
+        let scalar = PropertyValue::Scalar(0.5);
+
+        assert!(UiProperty::Opacity.accepts_value(&scalar));
+        assert!(UiProperty::TranslateX.accepts_value(&scalar));
+        assert!(UiProperty::Scale.accepts_value(&scalar));
+        assert!(UiProperty::Width.accepts_value(&scalar));
+        assert!(UiProperty::Radius.accepts_value(&scalar));
+        assert_eq!(UiProperty::Opacity.validate_value(&scalar), Ok(()));
+    }
+
+    #[test]
+    fn property_rejects_mismatched_values() {
+        let value = PropertyValue::Size(SizeValue::new(10.0, 20.0));
+
+        assert_eq!(
+            UiProperty::Opacity.validate_value(&value),
+            Err(PropertyValueError {
+                property: UiProperty::Opacity,
+                expected: PropertyValueKind::Scalar,
+                actual: PropertyValueKind::Size,
+            })
+        );
+    }
+
+    #[test]
+    fn property_value_kind_reports_shape() {
+        assert_eq!(PropertyValue::Scalar(1.0).kind(), PropertyValueKind::Scalar);
+        assert_eq!(
+            PropertyValue::Vector2(Vector2Value::new(1.0, 2.0)).kind(),
+            PropertyValueKind::Vector2
+        );
+        assert_eq!(
+            PropertyValue::Transform(TransformValue::identity()).kind(),
+            PropertyValueKind::Transform
         );
     }
 }

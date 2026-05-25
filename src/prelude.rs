@@ -3,7 +3,8 @@
 pub use crate::animatable::Animatable;
 pub use crate::keyframes::Keyframes;
 pub use crate::property::{
-    PropertyValue, RectangleValue, SizeValue, TransformValue, UiProperty, Vector2Value,
+    PropertyValue, PropertyValueError, PropertyValueKind, RectangleValue, SizeValue,
+    TransformValue, UiProperty, Vector2Value,
 };
 pub use crate::runtime::AnimationRuntime;
 pub use crate::timeline::Timeline;
