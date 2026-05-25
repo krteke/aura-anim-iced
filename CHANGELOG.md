@@ -20,6 +20,7 @@
 - Added property/value validation helpers with typed mismatch errors.
 - Added deterministic property composition keys and sorting helpers for applying property snapshots in visual order.
 - Added property model tests for stable IDs, composition order, value validation, mismatch diagnostics, and parallel property storage.
+- Added structured timing primitives for duration, delay, direction, fill mode, iteration count, playback rate, and elapsed-time normalization.
 
 ### Changed
 

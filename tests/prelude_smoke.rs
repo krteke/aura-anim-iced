@@ -26,7 +26,7 @@ fn public_prelude_constructs_core_v01_types() {
 
     assert_eq!(property, UiProperty::Opacity);
     assert_eq!(value, PropertyValue::Scalar(1.0));
-    assert_eq!(timing.duration_ms, 120.0);
+    assert_eq!(timing.duration.as_millis(), 120.0);
     assert!(keyframes.frames.is_empty());
     assert_eq!(timeline.name, None);
     assert!(runtime.is_idle());

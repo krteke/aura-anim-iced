@@ -9,4 +9,6 @@ pub use crate::property::{
 };
 pub use crate::runtime::AnimationRuntime;
 pub use crate::timeline::Timeline;
-pub use crate::timing::Timing;
+pub use crate::timing::{
+    Delay, Direction, Duration, FillMode, IterationCount, NormalizedTiming, Timing, TimingPhase,
+};

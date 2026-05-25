@@ -27,7 +27,7 @@
 
 ## Timing and Easing
 
-- `[ ]` Implement `src/timing.rs` with `Timing`, `Duration`, `Delay`, `Direction`, `FillMode`, iteration count, playback rate, and elapsed-time normalization.
+- `[x]` Implement `src/timing.rs` with `Timing`, `Duration`, `Delay`, `Direction`, `FillMode`, iteration count, playback rate, and elapsed-time normalization.
 - `[ ]` Add easing support that bridges to Iced easing where available and supplies v0.1 helpers for linear, ease-in, ease-out, and ease-in-out sampling.
 - `[ ]` Implement fill behavior for before-start, active, after-end, forwards, backwards, and both-filled sampling states.
 - `[ ]` Implement direction sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations.

@@ -44,4 +44,6 @@ pub use property::{
 };
 pub use runtime::AnimationRuntime;
 pub use timeline::Timeline;
-pub use timing::Timing;
+pub use timing::{
+    Delay, Direction, Duration, FillMode, IterationCount, NormalizedTiming, Timing, TimingPhase,
+};
