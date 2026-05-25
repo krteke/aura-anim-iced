@@ -29,9 +29,9 @@
 
 - `[x]` Implement `src/timing.rs` with `Timing`, `Duration`, `Delay`, `Direction`, `FillMode`, iteration count, playback rate, and elapsed-time normalization.
 - `[x]` Add easing support using `iced::animation::Easing` directly.
-- `[ ]` Implement fill behavior for before-start, active, after-end, forwards, backwards, and both-filled sampling states.
-- `[ ]` Implement direction sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations.
-- `[ ]` Write timing tests for delay, duration normalization, fill mode output, playback rate, repeat iteration, and reverse direction sampling.
+- `[x]` Implement fill behavior for before-start, active, after-end, forwards, backwards, and both-filled sampling states.
+- `[x]` Implement direction sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations.
+- `[x]` Write timing tests for delay, duration normalization, fill mode output, playback rate, repeat iteration, and reverse direction sampling.
 
 ## Keyframes
 

@@ -1,0 +1,70 @@
+use crate::timing::utils::clamp_progress;
+
+/// Playback direction applied to repeated iterations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Direction {
+    /// Play each iteration from start to end.
+    #[default]
+    Normal,
+    /// Play each iteration from end to start.
+    Reverse,
+    /// Alternate forward and reverse iterations.
+    Alternate,
+    /// Alternate reverse and forward iterations.
+    AlternateReverse,
+}
+
+impl Direction {
+    pub(crate) fn sample_progress(self, iteration_index: u32, raw_progress: f64) -> f64 {
+        let progress = clamp_progress(raw_progress);
+
+        if self.is_reversed_iteration(iteration_index) {
+            1.0 - progress
+        } else {
+            progress
+        }
+    }
+
+    pub(crate) fn start_progress(self) -> f64 {
+        self.sample_progress(0, 0.0)
+    }
+
+    pub(crate) fn end_progress(self, iteration_count: u32) -> f64 {
+        let last_iteration = iteration_count.saturating_sub(1);
+
+        self.sample_progress(last_iteration, 1.0)
+    }
+
+    fn is_reversed_iteration(self, iteration_index: u32) -> bool {
+        match self {
+            Self::Normal => false,
+            Self::Reverse => true,
+            Self::Alternate => iteration_index % 2 == 1,
+            Self::AlternateReverse => iteration_index.is_multiple_of(2),
+        }
+    }
+}
+
+/// How samples outside the active interval should be filled.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FillMode {
+    /// Do not fill before or after the active interval.
+    #[default]
+    None,
+    /// Fill with the first active sample before the delay completes.
+    Backwards,
+    /// Fill with the final active sample after completion.
+    Forwards,
+    /// Fill both before the delay and after completion.
+    Both,
+}
+
+impl FillMode {
+    pub(crate) const fn fills_before_start(self) -> bool {
+        matches!(self, Self::Backwards | Self::Both)
+    }
+
+    pub(crate) const fn fills_after_end(self) -> bool {
+        matches!(self, Self::Forwards | Self::Both)
+    }
+}

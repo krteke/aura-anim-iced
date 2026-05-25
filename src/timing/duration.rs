@@ -1,0 +1,65 @@
+use std::time::Duration as StdDuration;
+
+use crate::timing::utils::std_duration_from_secs;
+
+/// A non-negative animation duration.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Duration(StdDuration);
+
+impl Duration {
+    /// A zero-length duration.
+    pub const ZERO: Self = Self(StdDuration::ZERO);
+
+    /// Creates a duration from milliseconds.
+    #[must_use]
+    pub fn from_millis(millis: f64) -> Self {
+        Self(std_duration_from_secs(millis / 1000.0))
+    }
+
+    /// Creates a duration from seconds.
+    #[must_use]
+    pub fn from_secs(seconds: f64) -> Self {
+        Self(std_duration_from_secs(seconds))
+    }
+
+    /// Returns this duration in milliseconds.
+    #[must_use]
+    pub const fn as_millis(self) -> f64 {
+        self.0.as_secs_f64() * 1000.0
+    }
+
+    pub(crate) fn checked_mul(self, rhs: u32) -> Option<Self> {
+        self.0.checked_mul(rhs).map(Self)
+    }
+
+    pub(crate) fn checked_add_delay(self, rhs: Delay) -> Option<Self> {
+        self.0.checked_add(rhs.0).map(Self)
+    }
+}
+
+/// A non-negative animation start delay.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Delay(StdDuration);
+
+impl Delay {
+    /// No start delay.
+    pub const ZERO: Self = Self(StdDuration::ZERO);
+
+    /// Creates a delay from milliseconds.
+    #[must_use]
+    pub fn from_millis(millis: f64) -> Self {
+        Self(std_duration_from_secs(millis / 1000.0))
+    }
+
+    /// Creates a delay from seconds.
+    #[must_use]
+    pub fn from_secs(seconds: f64) -> Self {
+        Self(std_duration_from_secs(seconds))
+    }
+
+    /// Returns this delay in milliseconds.
+    #[must_use]
+    pub const fn as_millis(self) -> f64 {
+        self.0.as_secs_f64() * 1000.0
+    }
+}

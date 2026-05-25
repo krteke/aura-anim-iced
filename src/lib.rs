@@ -46,5 +46,5 @@ pub use runtime::AnimationRuntime;
 pub use timeline::Timeline;
 pub use timing::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
-    TimingPhase,
+    TimingPhase, TimingSampleState,
 };

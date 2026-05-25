@@ -10,5 +10,5 @@ pub use crate::runtime::AnimationRuntime;
 pub use crate::timeline::Timeline;
 pub use crate::timing::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
-    TimingPhase,
+    TimingPhase, TimingSampleState,
 };

@@ -23,6 +23,9 @@
 - Added structured timing primitives for duration, delay, direction, fill mode, iteration count, playback rate, and elapsed-time normalization.
 - Added timing easing support using `iced::animation::Easing` directly.
 - Added `PropertySnapshot` as the public sampled-property container used by keyframes and timelines.
+- Added fill-mode-aware timing sample states for active samples, skipped before/after intervals, backwards fill, forwards fill, and both-filled timing.
+- Added direction-aware timing sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations and fill endpoints.
+- Added timing regression tests for delay boundaries, zero-duration completion, fill output, playback rate scaling, repeated iteration completion, and reverse playback.
 
 ### Changed
 
@@ -32,3 +35,4 @@
 - Exposed Iced interpolation modules and Iced property value variants unconditionally.
 - Removed internal interpolation traits from the public prelude so user-facing APIs stay centered on Iced property snapshots.
 - Changed keyframe placeholders from generic single-value animation storage to sampled Iced property snapshots.
+- Split timing internals by duration, iteration, mode, normalization, sampling, and utility responsibilities without changing existing timing builders.
