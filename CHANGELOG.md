@@ -18,7 +18,9 @@
 - Added stable UI property identifiers, visual categories, and default composition order metadata.
 - Added typed property values for scalar, geometry, transform, color, and shadow animation data.
 - Added property/value validation helpers with typed mismatch errors.
+- Added deterministic property composition keys and sorting helpers for applying property snapshots in visual order.
 
 ### Changed
 
 - Aligned optional Iced integration with Iced's default feature set instead of maintaining a partial native feature selection.
+- Split the property module by responsibility while preserving the public property API.

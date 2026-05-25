@@ -38,8 +38,9 @@ pub mod timing;
 pub use animatable::Animatable;
 pub use keyframes::Keyframes;
 pub use property::{
-    PropertyValue, PropertyValueError, PropertyValueKind, RectangleValue, SizeValue,
-    TransformValue, UiProperty, Vector2Value,
+    PropertyCompositionKey, PropertyValue, PropertyValueError, PropertyValueKind, RectangleValue,
+    SizeValue, TransformValue, UiProperty, Vector2Value, sort_properties_by_composition,
+    sort_property_entries_by_composition,
 };
 pub use runtime::AnimationRuntime;
 pub use timeline::Timeline;
