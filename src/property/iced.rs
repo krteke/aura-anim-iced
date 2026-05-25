@@ -1,31 +1,26 @@
-use super::{PropertyValue, RectangleValue, SizeValue, Vector2Value};
+use super::PropertyValue;
 
 impl From<iced::Point> for PropertyValue {
     fn from(value: iced::Point) -> Self {
-        Self::Vector2(Vector2Value::new(value.x, value.y))
+        Self::Vector2(iced::Vector::new(value.x, value.y))
     }
 }
 
 impl From<iced::Vector> for PropertyValue {
     fn from(value: iced::Vector) -> Self {
-        Self::Vector2(Vector2Value::new(value.x, value.y))
+        Self::Vector2(value)
     }
 }
 
 impl From<iced::Size> for PropertyValue {
     fn from(value: iced::Size) -> Self {
-        Self::Size(SizeValue::new(value.width, value.height))
+        Self::Size(value)
     }
 }
 
 impl From<iced::Rectangle> for PropertyValue {
     fn from(value: iced::Rectangle) -> Self {
-        Self::Rectangle(RectangleValue::new(
-            value.x,
-            value.y,
-            value.width,
-            value.height,
-        ))
+        Self::Rectangle(value)
     }
 }
 

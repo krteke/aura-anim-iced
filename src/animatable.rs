@@ -1,14 +1,11 @@
-//! Core interpolation contracts and primitive helper functions.
+//! Internal interpolation contracts and primitive helper functions.
 
-#[cfg(feature = "iced")]
-pub mod color;
-#[cfg(feature = "iced")]
-pub mod geometry;
-#[cfg(feature = "iced")]
-pub mod shadow;
+pub(crate) mod color;
+pub(crate) mod geometry;
+pub(crate) mod shadow;
 
 /// A value that can produce an interpolated sample toward a target value.
-pub trait Animatable: Sized {
+pub(crate) trait Animatable: Sized {
     /// Returns the value between `from` and `to` at normalized `progress`.
     fn interpolate(from: Self, to: Self, progress: f32) -> Self {
         Self::interpolate_progress(from, to, InterpolationProgress::new(progress))
@@ -25,14 +22,14 @@ pub trait Animatable: Sized {
 /// - Values below `0.0` become `0.0`.
 /// - Values above `1.0` become `1.0`.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct InterpolationProgress(f32);
+pub(crate) struct InterpolationProgress(f32);
 
 impl InterpolationProgress {
     /// Creates a new `InterpolationProgress` with the given progress value.
     ///
     /// `NaN` values are replaced with `0.0`, and values are clamped to `[0.0, 1.0]`.
     #[must_use]
-    pub fn new(progress: f32) -> Self {
+    pub(crate) fn new(progress: f32) -> Self {
         if progress.is_nan() {
             Self(0.0)
         } else {
@@ -42,19 +39,19 @@ impl InterpolationProgress {
 
     /// Returns the raw progress value.
     #[must_use]
-    pub fn value(self) -> f32 {
+    pub(crate) fn value(self) -> f32 {
         self.0
     }
 
     /// Returns `true` if the progress is at the start (0.0).
     #[must_use]
-    pub fn is_start(self) -> bool {
+    pub(crate) fn is_start(self) -> bool {
         self.0 == 0.0
     }
 
     /// Returns `true` if the progress is at the end (1.0).
     #[must_use]
-    pub fn is_end(self) -> bool {
+    pub(crate) fn is_end(self) -> bool {
         self.0 >= 1.0
     }
 }

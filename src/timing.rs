@@ -2,6 +2,8 @@
 
 use std::{num::NonZeroU32, time::Duration as StdDuration};
 
+pub use iced::animation::Easing;
+
 #[cfg(test)]
 mod tests;
 
@@ -165,6 +167,8 @@ pub struct Timing {
     pub direction: Direction,
     /// Fill behavior outside the active interval.
     pub fill_mode: FillMode,
+    /// Easing curve applied to normalized iteration progress.
+    pub easing: Easing,
     /// Number of active iterations.
     pub iterations: IterationCount,
     /// Elapsed-time multiplier. Values at or below zero are normalized to `1.0`.
@@ -199,6 +203,13 @@ impl Timing {
     #[must_use]
     pub const fn with_fill_mode(mut self, fill_mode: FillMode) -> Self {
         self.fill_mode = fill_mode;
+        self
+    }
+
+    /// Sets the easing curve.
+    #[must_use]
+    pub const fn with_easing(mut self, easing: Easing) -> Self {
+        self.easing = easing;
         self
     }
 
@@ -263,11 +274,13 @@ impl Timing {
         }
 
         let iteration_elapsed = active_elapsed % duration_ms;
+        let iteration_progress = iteration_elapsed / duration_ms;
 
         NormalizedTiming {
             phase: TimingPhase::Active,
             iteration_index: completed_iterations,
-            iteration_progress: iteration_elapsed / duration_ms,
+            iteration_progress,
+            eased_iteration_progress: sample_easing(self.easing, iteration_progress),
             active_progress: active_elapsed / duration_ms,
         }
     }
@@ -280,6 +293,7 @@ impl Default for Timing {
             delay: Delay::ZERO,
             direction: Direction::default(),
             fill_mode: FillMode::default(),
+            easing: Easing::Linear,
             iterations: IterationCount::default(),
             playback_rate: 1.0,
         }
@@ -306,6 +320,8 @@ pub struct NormalizedTiming {
     pub iteration_index: u32,
     /// Normalized progress inside the current iteration.
     pub iteration_progress: f64,
+    /// Eased progress inside the current iteration.
+    pub eased_iteration_progress: f64,
     /// Unclamped progress across active iterations.
     pub active_progress: f64,
 }
@@ -316,6 +332,7 @@ impl NormalizedTiming {
             phase: TimingPhase::BeforeStart,
             iteration_index: 0,
             iteration_progress: 0.0,
+            eased_iteration_progress: 0.0,
             active_progress: 0.0,
         }
     }
@@ -325,6 +342,7 @@ impl NormalizedTiming {
             phase: TimingPhase::AfterEnd,
             iteration_index: 1,
             iteration_progress: 1.0,
+            eased_iteration_progress: 1.0,
             active_progress: 1.0,
         }
     }
@@ -334,9 +352,22 @@ impl NormalizedTiming {
             phase: TimingPhase::AfterEnd,
             iteration_index: iteration_count,
             iteration_progress: 1.0,
+            eased_iteration_progress: 1.0,
             active_progress: iteration_count as f64,
         }
     }
+}
+
+fn clamp_progress(value: f64) -> f64 {
+    if value.is_finite() {
+        value.clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
+}
+
+fn sample_easing(easing: Easing, progress: f64) -> f64 {
+    f64::from(easing.value(clamp_progress(progress) as f32)).clamp(0.0, 1.0)
 }
 
 fn sanitize_non_negative(value: f64) -> f64 {

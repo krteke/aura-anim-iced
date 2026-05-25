@@ -1,12 +1,12 @@
-use crate::timing::Timing;
+use crate::{property::PropertySnapshot, timing::Timing};
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Keyframes<T> {
-    pub frames: Vec<(f32, T)>,
+pub struct Keyframes {
+    pub frames: Vec<(f32, PropertySnapshot)>,
     pub timing: Timing,
 }
 
-impl<T> Keyframes<T> {
+impl Keyframes {
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -16,7 +16,7 @@ impl<T> Keyframes<T> {
     }
 }
 
-impl<T> Default for Keyframes<T> {
+impl Default for Keyframes {
     fn default() -> Self {
         Self::new()
     }

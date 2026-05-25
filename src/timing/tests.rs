@@ -1,4 +1,4 @@
-use super::{Delay, Direction, Duration, FillMode, IterationCount, Timing, TimingPhase};
+use super::{Delay, Direction, Duration, Easing, FillMode, IterationCount, Timing, TimingPhase};
 
 #[test]
 fn duration_and_delay_sanitize_invalid_values() {
@@ -16,6 +16,7 @@ fn timing_builder_stores_playback_configuration() {
         .with_delay(Delay::from_millis(40.0))
         .with_direction(Direction::AlternateReverse)
         .with_fill_mode(FillMode::Both)
+        .with_easing(Easing::EaseInOut)
         .with_iterations(IterationCount::count(3))
         .with_playback_rate(2.0);
 
@@ -23,8 +24,29 @@ fn timing_builder_stores_playback_configuration() {
     assert_eq!(timing.delay.as_millis(), 40.0);
     assert_eq!(timing.direction, Direction::AlternateReverse);
     assert_eq!(timing.fill_mode, FillMode::Both);
+    assert_eq!(timing.easing, Easing::EaseInOut);
     assert_eq!(timing.iterations, IterationCount::count(3));
     assert_eq!(timing.playback_rate, 2.0);
+}
+
+#[test]
+fn easing_uses_iced_curves() {
+    assert_eq!(super::sample_easing(Easing::Linear, 0.25), 0.25);
+    assert!(super::sample_easing(Easing::EaseIn, 0.5) < 0.5);
+    assert!(super::sample_easing(Easing::EaseOut, 0.5) > 0.5);
+
+    let first_half = super::sample_easing(Easing::EaseInOut, 0.25);
+    let second_half = super::sample_easing(Easing::EaseInOut, 0.75);
+
+    assert!(first_half < 0.25);
+    assert!(second_half > 0.75);
+}
+
+#[test]
+fn easing_clamps_invalid_progress() {
+    assert_eq!(super::sample_easing(Easing::Linear, -1.0), 0.0);
+    assert_eq!(super::sample_easing(Easing::Linear, 2.0), 1.0);
+    assert_eq!(super::sample_easing(Easing::Linear, f64::NAN), 0.0);
 }
 
 #[test]
@@ -79,13 +101,29 @@ fn elapsed_time_normalizes_before_active_and_after_end() {
     assert_eq!(active.phase, TimingPhase::Active);
     assert_eq!(active.iteration_index, 1);
     assert_eq!(active.iteration_progress, 0.25);
+    assert_eq!(active.eased_iteration_progress, 0.25);
     assert_eq!(active.active_progress, 1.25);
 
     let after = timing.normalize_elapsed(250.0);
     assert_eq!(after.phase, TimingPhase::AfterEnd);
     assert_eq!(after.iteration_index, 2);
     assert_eq!(after.iteration_progress, 1.0);
+    assert_eq!(after.eased_iteration_progress, 1.0);
     assert_eq!(after.active_progress, 2.0);
+}
+
+#[test]
+fn elapsed_time_normalization_applies_easing() {
+    let timing = Timing::new(100.0).with_easing(Easing::EaseIn);
+
+    let normalized = timing.normalize_elapsed(50.0);
+
+    assert_eq!(normalized.iteration_progress, 0.5);
+    assert_eq!(
+        normalized.eased_iteration_progress,
+        super::sample_easing(Easing::EaseIn, 0.5)
+    );
+    assert!(normalized.eased_iteration_progress < normalized.iteration_progress);
 }
 
 #[test]

@@ -1,7 +1,6 @@
 //! Visual property identifiers, value containers, and composition helpers.
 
 mod error;
-#[cfg(feature = "iced")]
 mod iced;
 mod order;
 #[cfg(test)]
@@ -12,9 +11,10 @@ pub use error::PropertyValueError;
 pub use order::{
     PropertyCompositionKey, sort_properties_by_composition, sort_property_entries_by_composition,
 };
-pub use value::{
-    PropertyValue, PropertyValueKind, RectangleValue, SizeValue, TransformValue, Vector2Value,
-};
+pub use value::{PropertyValue, PropertyValueKind, TransformValue};
+
+/// A sampled set of property values ready to compose into an Iced view.
+pub type PropertySnapshot = Vec<(UiProperty, PropertyValue)>;
 
 /// A stable visual property that can be animated and sampled.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

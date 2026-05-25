@@ -3,24 +3,24 @@
 ## Repository Foundation
 
 - `[x]` Create the v0.1 crate structure with `src/lib.rs`, module declarations, public re-exports, and a minimal compile path for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
-- `[x]` Configure `Cargo.toml` with package metadata, Rust edition, initial feature flags, optional `iced` integration, dev dependencies for examples, and benchmark dependencies.
-- `[x]` Add a `prelude` module that exports the v0.1 public API surface for `Animatable`, `UiProperty`, `PropertyValue`, `Timing`, `Keyframes`, `Timeline`, and `AnimationRuntime`.
-- `[x]` Write crate-level documentation that states the Iced-first animation model, the v0.1 scope, the runtime integration path, and the example entry points.
-- `[x]` Add compile-only smoke tests that import the public prelude, construct the core v0.1 types, and verify the crate builds with default features.
+- `[x]` Configure `Cargo.toml` with package metadata, Rust edition, initial feature flags, core Iced dependency, dev dependencies for examples, and benchmark dependencies.
+- `[x]` Add a `prelude` module that exports the v0.1 Iced-first API surface for `UiProperty`, `PropertyValue`, `PropertySnapshot`, `Timing`, `Keyframes`, `Timeline`, `AnimationRuntime`, and Iced easing.
+- `[x]` Write crate-level documentation that states the Iced-first animation model, Iced public API boundary, the v0.1 scope, the runtime integration path, and the example entry points.
+- `[x]` Add compile-only smoke tests that import the public prelude, construct the Iced-first v0.1 types, and verify the crate builds with default features.
 
 ## Animatable Values
 
 - `[x]` Implement `src/animatable.rs` with the `Animatable` trait, a clamped progress helper, and interpolation helpers for copy-friendly primitive values.
 - `[x]` Implement scalar `Animatable` support for `f32`, `f64`, `i32`, and `u8`, including rounding and clamping behavior for integer outputs.
-- `[x]` Implement color interpolation for the selected Iced color type, covering red, green, blue, and alpha channels with normalized progress.
+- `[x]` Implement color interpolation for `iced::Color`, covering red, green, blue, and alpha channels with normalized progress.
 - `[x]` Implement geometry interpolation for point, vector, size, and rectangle value shapes used by Iced-style UI animation.
 - `[x]` Implement shadow interpolation with offset, blur, and color fields so button and popup examples can animate elevation.
-- `[x]` Add `Animatable` unit tests for scalar rounding, color midpoint sampling, geometry midpoint sampling, shadow sampling, and progress clamping.
+- `[x]` Add internal `Animatable` unit tests for scalar rounding, color midpoint sampling, geometry midpoint sampling, shadow sampling, and progress clamping.
 
 ## Property Model
 
 - `[x]` Implement `src/property.rs` with `UiProperty`, stable property IDs, and the core visual properties needed for opacity, transform, size, radius, color, and shadow.
-- `[x]` Implement `PropertyValue` as a typed enum for v0.1 values, including scalar, color, geometry, shadow, and transform-friendly variants.
+- `[x]` Implement `PropertyValue` as a typed enum for v0.1 values, including scalar, Iced geometry, Iced color, Iced shadow, and transform-friendly variants.
 - `[x]` Add property-to-value matching helpers that accept valid property/value pairs and return typed errors for mismatched animation input.
 - `[x]` Add property composition ordering for opacity, transform, size, radius, background, border color, text color, and shadow.
 - `[x]` Write property tests for stable IDs, property ordering, value matching, mismatch errors, and parallel property storage.
@@ -28,16 +28,16 @@
 ## Timing and Easing
 
 - `[x]` Implement `src/timing.rs` with `Timing`, `Duration`, `Delay`, `Direction`, `FillMode`, iteration count, playback rate, and elapsed-time normalization.
-- `[ ]` Add easing support that bridges to Iced easing where available and supplies v0.1 helpers for linear, ease-in, ease-out, and ease-in-out sampling.
+- `[x]` Add easing support using `iced::animation::Easing` directly.
 - `[ ]` Implement fill behavior for before-start, active, after-end, forwards, backwards, and both-filled sampling states.
 - `[ ]` Implement direction sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations.
 - `[ ]` Write timing tests for delay, duration normalization, fill mode output, playback rate, repeat iteration, and reverse direction sampling.
 
 ## Keyframes
 
-- `[ ]` Implement `src/keyframes.rs` with `Keyframes<T>`, keyframe offset storage, timing attachment, builder-style `at` insertion, and sorted keyframe normalization.
+- `[ ]` Implement `src/keyframes.rs` with property-snapshot keyframes, keyframe offset storage, timing attachment, builder-style `at` insertion, and sorted keyframe normalization.
 - `[ ]` Implement keyframe segment lookup with edge handling for empty tracks, single-frame tracks, exact offsets, and between-frame sampling.
-- `[ ]` Implement keyframe value sampling by interpolating neighboring `Animatable` values through segment progress and easing.
+- `[ ]` Implement keyframe value sampling by interpolating neighboring `PropertyValue` snapshots through segment progress and Iced easing.
 - `[ ]` Add multi-property keyframe support by mapping `UiProperty` to `PropertyValue` snapshots across normalized offsets.
 - `[ ]` Add keyframe builder helpers for opacity, scale, translation, background color, border color, text color, and shadow.
 - `[ ]` Write keyframe tests for offset normalization, segment lookup, easing application, fill mode output, and multi-property sampling.
@@ -65,8 +65,8 @@
 - `[ ]` Implement `src/iced_ext.rs` with a subscription helper that maps runtime activity into an Iced `Subscription` tick stream.
 - `[ ]` Add update helper functions that route tick messages into `AnimationRuntime` and return view-friendly effect snapshots.
 - `[ ]` Add effect snapshot conversion helpers for opacity, translate, scale, radius, color, and shadow values consumed by Iced widgets.
-- `[ ]` Add compile checks for Iced integration behind the `iced` feature and a core-only build path with that feature disabled.
-- `[ ]` Write integration tests for subscription gating, tick forwarding, active runtime updates, idle runtime output, and feature-gated compilation.
+- `[ ]` Add compile checks for Iced integration, examples, and public prelude usage.
+- `[ ]` Write integration tests for subscription gating, tick forwarding, active runtime updates, and idle runtime output.
 
 ## Examples
 
@@ -88,7 +88,7 @@
 
 - `[ ]` Update `README.md` with the project positioning, the relationship to Iced `Animation<T>`, installation commands, and a minimal runtime example.
 - `[ ]` Add README sections for animatable values, property tracks, keyframes, timeline orchestration, runtime ticking, and Iced subscription wiring.
-- `[ ]` Add docs.rs examples to public types showing one compact usage snippet per core v0.1 module.
+- `[ ]` Add docs.rs examples to public types showing one compact usage snippet per Iced-first v0.1 module.
 - `[ ]` Add `CHANGELOG.md` with the `0.1.0-alpha.1` scope, implemented modules, example names, and benchmark entry points.
 - `[ ]` Add `LICENSE`, repository metadata, badges, and documentation links required for a clean crates.io package page.
 
@@ -97,4 +97,4 @@
 - `[ ]` Run the v0.1 release gate with formatting, linting, tests, example checks, docs generation, and benchmark compilation.
 - `[ ]` Package the crate with `cargo package` and inspect the generated archive contents for source files, examples, README, changelog, and license.
 - `[ ]` Publish `0.1.0-alpha.1` to crates.io after the release gate passes and the package archive contains the documented v0.1 scope.
-- `[ ]` Tag the repository with `v0.1.0-alpha.1` and write release notes covering Animatable, PropertyValue, Timing, Keyframes, Timeline, Runtime, Iced integration, examples, tests, and benchmarks.
+- `[ ]` Tag the repository with `v0.1.0-alpha.1` and write release notes covering PropertyValue, Timing, Keyframes, Timeline, Runtime, Iced integration, examples, tests, and benchmarks.

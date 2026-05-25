@@ -1,16 +1,16 @@
 //! Iced-first animation primitives.
 //!
-//! `aura-anim-iced` models animation as sampled UI properties that can be
-//! applied from normal Iced `update`, `subscription`, and `view` code. The
-//! crate keeps animation state outside widgets: keyframes and timelines produce
-//! property snapshots, the runtime advances active animations, and Iced-specific
-//! helpers turn those snapshots into view-layer effects.
+//! `aura-anim-iced` models advanced animation as sampled Iced UI properties
+//! that can be applied from normal `update`, `subscription`, and `view` code.
+//! The public API is Iced-first: user-facing values use Iced types and Iced's
+//! animation primitives wherever they already exist. The crate keeps its own
+//! pure calculation modules only where they help orchestrate multi-property
+//! keyframes, timelines, snapshots, and diagnostics.
 //!
-//! The v0.1 scope is the foundation layer: animatable values, typed UI
-//! properties, timing, keyframes, timelines, a small runtime, and optional Iced
-//! integration behind the `iced` feature. Higher-level behaviors, gestures,
-//! layout transitions, theme transitions, and inspector tooling are planned as
-//! feature-gated layers on top of this base.
+//! The v0.1 scope is the foundation layer: typed Iced UI properties, timing,
+//! property keyframes, timelines, a small runtime, and Iced integration helpers.
+//! Higher-level behaviors, gestures, layout transitions, theme transitions, and
+//! inspector tooling are planned as layers on top of this base.
 //!
 //! Runtime integration follows a simple loop:
 //!
@@ -26,7 +26,8 @@
 //! - `keyframes_popup.rs` for opacity and scale keyframes.
 //! - `timeline_toast.rs` for enter, hold, exit, and cleanup sequencing.
 
-pub mod animatable;
+#[allow(dead_code)]
+pub(crate) mod animatable;
 pub mod iced_ext;
 pub mod keyframes;
 pub mod prelude;
@@ -35,15 +36,15 @@ pub mod runtime;
 pub mod timeline;
 pub mod timing;
 
-pub use animatable::Animatable;
 pub use keyframes::Keyframes;
 pub use property::{
-    PropertyCompositionKey, PropertyValue, PropertyValueError, PropertyValueKind, RectangleValue,
-    SizeValue, TransformValue, UiProperty, Vector2Value, sort_properties_by_composition,
+    PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,
+    TransformValue, UiProperty, sort_properties_by_composition,
     sort_property_entries_by_composition,
 };
 pub use runtime::AnimationRuntime;
 pub use timeline::Timeline;
 pub use timing::{
-    Delay, Direction, Duration, FillMode, IterationCount, NormalizedTiming, Timing, TimingPhase,
+    Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
+    TimingPhase,
 };

@@ -1,7 +1,7 @@
 use super::{
-    PropertyCompositionKey, PropertyValue, PropertyValueError, PropertyValueKind, RectangleValue,
-    SizeValue, TransformValue, UiProperty, UiPropertyCategory, Vector2Value,
-    sort_properties_by_composition, sort_property_entries_by_composition,
+    PropertyCompositionKey, PropertyValue, PropertyValueError, PropertyValueKind, TransformValue,
+    UiProperty, UiPropertyCategory, sort_properties_by_composition,
+    sort_property_entries_by_composition,
 };
 
 #[test]
@@ -141,19 +141,22 @@ fn parallel_property_storage_preserves_property_value_pairs() {
 fn property_values_cover_core_value_shapes() {
     assert_eq!(PropertyValue::Scalar(0.5), PropertyValue::Scalar(0.5));
     assert_eq!(
-        PropertyValue::Vector2(Vector2Value::new(1.0, 2.0)),
-        PropertyValue::Vector2(Vector2Value { x: 1.0, y: 2.0 })
+        PropertyValue::Vector2(iced::Vector::new(1.0, 2.0)),
+        PropertyValue::Vector2(iced::Vector { x: 1.0, y: 2.0 })
     );
     assert_eq!(
-        PropertyValue::Size(SizeValue::new(10.0, 20.0)),
-        PropertyValue::Size(SizeValue {
+        PropertyValue::Size(iced::Size::new(10.0, 20.0)),
+        PropertyValue::Size(iced::Size {
             width: 10.0,
             height: 20.0,
         })
     );
     assert_eq!(
-        PropertyValue::Rectangle(RectangleValue::new(1.0, 2.0, 3.0, 4.0)),
-        PropertyValue::Rectangle(RectangleValue {
+        PropertyValue::Rectangle(iced::Rectangle::new(
+            iced::Point::new(1.0, 2.0),
+            iced::Size::new(3.0, 4.0),
+        )),
+        PropertyValue::Rectangle(iced::Rectangle {
             x: 1.0,
             y: 2.0,
             width: 3.0,
@@ -185,7 +188,7 @@ fn property_accepts_matching_scalar_values() {
 
 #[test]
 fn property_rejects_mismatched_values() {
-    let value = PropertyValue::Size(SizeValue::new(10.0, 20.0));
+    let value = PropertyValue::Size(iced::Size::new(10.0, 20.0));
 
     assert_eq!(
         UiProperty::Opacity.validate_value(&value),
@@ -201,7 +204,7 @@ fn property_rejects_mismatched_values() {
 fn property_value_kind_reports_shape() {
     assert_eq!(PropertyValue::Scalar(1.0).kind(), PropertyValueKind::Scalar);
     assert_eq!(
-        PropertyValue::Vector2(Vector2Value::new(1.0, 2.0)).kind(),
+        PropertyValue::Vector2(iced::Vector::new(1.0, 2.0)).kind(),
         PropertyValueKind::Vector2
     );
     assert_eq!(
