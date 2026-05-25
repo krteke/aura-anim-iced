@@ -19,6 +19,7 @@
 - Added typed property values for scalar, geometry, transform, color, and shadow animation data.
 - Added property/value validation helpers with typed mismatch errors.
 - Added deterministic property composition keys and sorting helpers for applying property snapshots in visual order.
+- Added property model tests for stable IDs, composition order, value validation, mismatch diagnostics, and parallel property storage.
 
 ### Changed
 

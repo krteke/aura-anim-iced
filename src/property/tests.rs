@@ -112,6 +112,32 @@ fn property_value_entries_sort_by_composition_order() {
 }
 
 #[test]
+fn parallel_property_storage_preserves_property_value_pairs() {
+    let mut entries = vec![
+        (UiProperty::TranslateY, PropertyValue::Scalar(24.0)),
+        (UiProperty::Opacity, PropertyValue::Scalar(0.5)),
+        (UiProperty::Scale, PropertyValue::Scalar(1.2)),
+        (UiProperty::TranslateX, PropertyValue::Scalar(12.0)),
+    ];
+
+    for (property, value) in &entries {
+        assert!(property.accepts_value(value));
+    }
+
+    sort_property_entries_by_composition(&mut entries);
+
+    assert_eq!(
+        entries,
+        vec![
+            (UiProperty::Opacity, PropertyValue::Scalar(0.5)),
+            (UiProperty::TranslateX, PropertyValue::Scalar(12.0)),
+            (UiProperty::TranslateY, PropertyValue::Scalar(24.0)),
+            (UiProperty::Scale, PropertyValue::Scalar(1.2)),
+        ]
+    );
+}
+
+#[test]
 fn property_values_cover_core_value_shapes() {
     assert_eq!(PropertyValue::Scalar(0.5), PropertyValue::Scalar(0.5));
     assert_eq!(

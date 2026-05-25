@@ -23,7 +23,7 @@
 - `[x]` Implement `PropertyValue` as a typed enum for v0.1 values, including scalar, color, geometry, shadow, and transform-friendly variants.
 - `[x]` Add property-to-value matching helpers that accept valid property/value pairs and return typed errors for mismatched animation input.
 - `[x]` Add property composition ordering for opacity, transform, size, radius, background, border color, text color, and shadow.
-- `[ ]` Write property tests for stable IDs, property ordering, value matching, mismatch errors, and parallel property storage.
+- `[x]` Write property tests for stable IDs, property ordering, value matching, mismatch errors, and parallel property storage.
 
 ## Timing and Easing
 
