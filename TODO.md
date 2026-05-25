@@ -35,7 +35,7 @@
 
 ## Keyframes
 
-- `[ ]` Implement `src/keyframes.rs` with property-snapshot keyframes, keyframe offset storage, timing attachment, builder-style `at` insertion, and sorted keyframe normalization.
+- `[x]` Implement `src/keyframes.rs` with property-snapshot keyframes, keyframe offset storage, timing attachment, builder-style `at` insertion, and sorted keyframe normalization.
 - `[ ]` Implement keyframe segment lookup with edge handling for empty tracks, single-frame tracks, exact offsets, and between-frame sampling.
 - `[ ]` Implement keyframe value sampling by interpolating neighboring `PropertyValue` snapshots through segment progress and Iced easing.
 - `[ ]` Add multi-property keyframe support by mapping `UiProperty` to `PropertyValue` snapshots across normalized offsets.

@@ -26,6 +26,7 @@
 - Added fill-mode-aware timing sample states for active samples, skipped before/after intervals, backwards fill, forwards fill, and both-filled timing.
 - Added direction-aware timing sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations and fill endpoints.
 - Added timing regression tests for delay boundaries, zero-duration completion, fill output, playback rate scaling, repeated iteration completion, and reverse playback.
+- Added property-snapshot keyframe storage with normalized offsets, timing attachment, builder-style insertion, and sorted snapshot composition.
 
 ### Changed
 

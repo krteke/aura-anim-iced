@@ -36,7 +36,7 @@ pub mod runtime;
 pub mod timeline;
 pub mod timing;
 
-pub use keyframes::Keyframes;
+pub use keyframes::{Keyframe, Keyframes};
 pub use property::{
     PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,
     TransformValue, UiProperty, sort_properties_by_composition,
