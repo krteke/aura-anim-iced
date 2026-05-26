@@ -47,6 +47,7 @@
 - Added a deterministic runtime test clock for unit tests and example-level animation checks.
 - Added runtime regression coverage for handle registration, tick sampling, completion removal, idle detection, and deterministic clock progression.
 - Added an Iced subscription helper that maps active runtime animations into a tick stream.
+- Added an Iced update helper that routes tick messages into the runtime and returns sampled animation output.
 
 ### Changed
 
