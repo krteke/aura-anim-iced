@@ -11,7 +11,7 @@ mod source;
 mod tests;
 mod tick;
 
-pub use clock::{AnimationClock, SystemClock};
+pub use clock::{AnimationClock, SystemClock, TestClock};
 pub use entry::{ActiveAnimation, AnimationPlaybackState};
 pub use handle::AnimationHandle;
 pub use policy::MotionPolicy;
@@ -41,6 +41,14 @@ impl AnimationRuntime<SystemClock> {
 impl Default for AnimationRuntime<SystemClock> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl AnimationRuntime<TestClock> {
+    /// Creates an empty runtime with a deterministic test clock at zero.
+    #[must_use]
+    pub fn testing() -> Self {
+        Self::with_clock(TestClock::new())
     }
 }
 

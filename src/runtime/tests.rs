@@ -2,7 +2,7 @@ use float_cmp::assert_approx_eq;
 
 use super::{
     ActiveAnimation, AnimationClock, AnimationPlaybackState, AnimationRegistry, AnimationRuntime,
-    AnimationSource, MotionPolicy,
+    AnimationSource, MotionPolicy, TestClock,
 };
 use crate::{
     keyframes::Keyframes,
@@ -10,17 +10,6 @@ use crate::{
     timeline::{Timeline, Track},
     timing::{Duration, Timing},
 };
-
-#[derive(Debug, Clone, Copy)]
-struct FixedClock {
-    now: Duration,
-}
-
-impl AnimationClock for FixedClock {
-    fn now(&self) -> Duration {
-        self.now
-    }
-}
 
 fn scalar(snapshot: &PropertySnapshot, target: UiProperty) -> f32 {
     let Some((_, PropertyValue::Scalar(value))) =
@@ -34,9 +23,7 @@ fn scalar(snapshot: &PropertySnapshot, target: UiProperty) -> f32 {
 
 #[test]
 fn runtime_stores_registry_clock_and_motion_policy() {
-    let clock = FixedClock {
-        now: Duration::from_millis(250.0),
-    };
+    let clock = TestClock::at(Duration::from_millis(250.0));
     let mut runtime = AnimationRuntime::with_clock(clock);
 
     assert!(runtime.is_idle());
@@ -129,9 +116,7 @@ fn registry_removes_and_clears_entries() {
 
 #[test]
 fn runtime_registers_keyframes_with_start_time_and_initial_snapshot() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::from_millis(250.0),
-    });
+    let mut runtime = AnimationRuntime::with_clock(TestClock::at(Duration::from_millis(250.0)));
     let keyframes = Keyframes::new()
         .with_timing(Timing::new(100.0))
         .opacity(0.0, 0.25)
@@ -157,9 +142,7 @@ fn runtime_registers_keyframes_with_start_time_and_initial_snapshot() {
 
 #[test]
 fn runtime_registers_timelines_with_initial_snapshot_output() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::from_millis(80.0),
-    });
+    let mut runtime = AnimationRuntime::with_clock(TestClock::at(Duration::from_millis(80.0)));
     let timeline = Timeline::track(
         Track::from(UiProperty::Opacity, 0.0)
             .to(1.0)
@@ -183,9 +166,7 @@ fn runtime_registers_timelines_with_initial_snapshot_output() {
 
 #[test]
 fn runtime_marks_zero_duration_sources_completed_at_registration() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::from_millis(400.0),
-    });
+    let mut runtime = AnimationRuntime::with_clock(TestClock::at(Duration::from_millis(400.0)));
     let keyframes = Keyframes::new().opacity(0.0, 0.0).opacity(1.0, 1.0);
 
     let registration = runtime.register_keyframes(keyframes);
@@ -210,9 +191,7 @@ fn runtime_marks_zero_duration_sources_completed_at_registration() {
 
 #[test]
 fn runtime_tick_advances_active_animations_and_aggregates_properties() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::ZERO,
-    });
+    let mut runtime = AnimationRuntime::testing();
     runtime.register_keyframes(
         Keyframes::new()
             .with_timing(Timing::new(100.0))
@@ -231,7 +210,7 @@ fn runtime_tick_advances_active_animations_and_aggregates_properties() {
             .opacity(1.0, 20.0),
     );
 
-    runtime.clock_mut().now = Duration::from_millis(50.0);
+    runtime.clock_mut().set_now(Duration::from_millis(50.0));
     let tick = runtime.tick();
 
     assert_eq!(tick.timestamp(), Duration::from_millis(50.0));
@@ -260,9 +239,7 @@ fn runtime_tick_advances_active_animations_and_aggregates_properties() {
 
 #[test]
 fn runtime_tick_emits_completion_snapshot_and_removes_completed_entries() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::ZERO,
-    });
+    let mut runtime = AnimationRuntime::testing();
     let registration = runtime.register_keyframes(
         Keyframes::new()
             .with_timing(Timing::new(100.0))
@@ -270,7 +247,7 @@ fn runtime_tick_emits_completion_snapshot_and_removes_completed_entries() {
             .opacity(1.0, 1.0),
     );
 
-    runtime.clock_mut().now = Duration::from_millis(100.0);
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
     let tick = runtime.tick();
 
     assert_eq!(tick.completed(), &[registration.handle()]);
@@ -285,9 +262,7 @@ fn runtime_tick_emits_completion_snapshot_and_removes_completed_entries() {
 
 #[test]
 fn runtime_idle_detection_separates_active_entries_from_tick_gate() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::ZERO,
-    });
+    let mut runtime = AnimationRuntime::testing();
 
     assert_eq!(runtime.active_count(), 0);
     assert!(runtime.is_idle());
@@ -331,9 +306,7 @@ fn runtime_idle_detection_separates_active_entries_from_tick_gate() {
 
 #[test]
 fn runtime_completed_registration_is_idle_until_cleanup_tick() {
-    let mut runtime = AnimationRuntime::with_clock(FixedClock {
-        now: Duration::from_millis(10.0),
-    });
+    let mut runtime = AnimationRuntime::with_clock(TestClock::at(Duration::from_millis(10.0)));
 
     runtime.register_keyframes(Keyframes::new().opacity(0.0, 0.0).opacity(1.0, 1.0));
 
@@ -341,4 +314,17 @@ fn runtime_completed_registration_is_idle_until_cleanup_tick() {
     assert_eq!(runtime.active_count(), 0);
     assert!(runtime.is_idle());
     assert!(!runtime.should_subscribe());
+}
+
+#[test]
+fn test_clock_injects_and_advances_deterministic_runtime_time() {
+    let mut runtime = AnimationRuntime::testing();
+
+    assert_eq!(runtime.clock().now(), Duration::ZERO);
+
+    runtime.clock_mut().set_now(Duration::from_millis(25.0));
+    assert_eq!(runtime.clock().now(), Duration::from_millis(25.0));
+
+    runtime.clock_mut().advance_by(Duration::from_millis(75.0));
+    assert_eq!(runtime.clock().now(), Duration::from_millis(100.0));
 }

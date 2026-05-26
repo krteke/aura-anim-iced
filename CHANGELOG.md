@@ -44,6 +44,7 @@
 - Added runtime registration for keyframes and timelines with start timestamps, initial snapshots, and completion tracking.
 - Added runtime tick processing that advances active animations, merges property snapshots, emits completion output, and removes completed entries.
 - Added runtime idle detection and a subscription gate for stopping animation ticks when no playing animations remain.
+- Added a deterministic runtime test clock for unit tests and example-level animation checks.
 
 ### Changed
 
