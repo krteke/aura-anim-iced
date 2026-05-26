@@ -1,9 +1,11 @@
 //! Timeline orchestration primitives.
 
 mod duration;
+mod error;
 mod hold;
 mod marker;
 mod parallel;
+mod playback;
 mod sequence;
 mod step;
 #[cfg(test)]
@@ -13,6 +15,7 @@ mod track;
 pub use hold::Hold;
 pub use marker::TimelineMarker;
 pub use parallel::Parallel;
+pub use playback::{TimelinePlayback, TimelinePlaybackSnapshot, TimelinePlaybackState};
 pub use sequence::Sequence;
 pub use step::TimelineStep;
 pub use track::Track;
@@ -119,5 +122,11 @@ impl Timeline {
     #[must_use]
     pub fn sample_at(&self, offset: impl Into<Duration>) -> Option<PropertySnapshot> {
         self.root.sample_at(offset.into())
+    }
+
+    /// Samples the final visual state of this timeline.
+    #[must_use]
+    pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
+        self.root.completion_snapshot()
     }
 }

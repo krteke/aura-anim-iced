@@ -8,7 +8,8 @@ pub use crate::property::{
 };
 pub use crate::runtime::AnimationRuntime;
 pub use crate::timeline::{
-    Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
+    Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,
+    TimelinePlaybackState, TimelineStep, Track,
 };
 pub use crate::timing::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,

@@ -106,4 +106,13 @@ impl Sequence {
 
         None
     }
+
+    /// Samples the final visual state from the last step that can produce one.
+    #[must_use]
+    pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
+        self.steps
+            .iter()
+            .rev()
+            .find_map(TimelineStep::completion_snapshot)
+    }
 }

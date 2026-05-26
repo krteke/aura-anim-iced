@@ -99,6 +99,25 @@ impl Parallel {
             Some(merged)
         }
     }
+
+    /// Samples the final visual state of all child steps.
+    #[must_use]
+    pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
+        let mut merged = PropertySnapshot::new();
+
+        for step in &self.steps {
+            if let Some(snapshot) = step.completion_snapshot() {
+                merge_snapshot(&mut merged, snapshot);
+            }
+        }
+
+        if merged.is_empty() {
+            None
+        } else {
+            sort_property_entries_by_composition(&mut merged);
+            Some(merged)
+        }
+    }
 }
 
 fn merge_snapshot(target: &mut PropertySnapshot, snapshot: PropertySnapshot) {

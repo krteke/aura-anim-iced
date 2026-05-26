@@ -36,6 +36,17 @@ impl TimelineStep {
             Self::Hold(_) => None,
         }
     }
+
+    /// Samples the final visual state for this step.
+    #[must_use]
+    pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
+        match self {
+            Self::Track(track) => track.completion_snapshot(),
+            Self::Sequence(sequence) => sequence.completion_snapshot(),
+            Self::Parallel(parallel) => parallel.completion_snapshot(),
+            Self::Hold(_) => None,
+        }
+    }
 }
 
 impl From<Track> for TimelineStep {

@@ -106,9 +106,16 @@ impl Track {
         )]
         self.keyframes.sample_at(timing.iteration_progress as f32)
     }
+
+    /// Samples the final keyframe state for this track.
+    #[must_use]
+    pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
+        self.keyframes.sample_at(1.0)
+    }
 }
 
 impl PropertyTrackBuilder {
+    /// Inserts the final value and returns the completed track.
     #[must_use]
     pub fn to(self, value: impl Into<PropertyValue>) -> Track {
         Track::new(self.keyframes.at(1.0, [(self.property, value.into())]))

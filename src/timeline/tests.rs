@@ -1,6 +1,9 @@
 use float_cmp::assert_approx_eq;
 
-use super::{Hold, Parallel, Sequence, Timeline, TimelineMarker, Track};
+use super::{
+    Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackState,
+    Track,
+};
 use crate::{
     keyframes::Keyframes,
     property::{PropertyValue, UiProperty},
@@ -307,6 +310,108 @@ fn parallel_sampling_omits_inactive_tracks() {
         2.5,
         epsilon = 1e-5
     );
+}
+
+#[test]
+fn completion_snapshot_uses_final_visual_state() {
+    let timeline = Timeline::track(
+        Track::from(UiProperty::Opacity, 0.0)
+            .to(1.0)
+            .duration(Duration::from_millis(100.0)),
+    )
+    .then(Hold::new(Duration::from_millis(50.0)));
+
+    let completed = timeline
+        .completion_snapshot()
+        .expect("completion snapshot after hold");
+
+    assert_approx_eq!(f32, opacity(&completed), 1.0, epsilon = 1e-5);
+
+    let parallel = Parallel::new()
+        .track(
+            Track::from(UiProperty::Opacity, 0.0)
+                .to(1.0)
+                .duration(Duration::from_millis(100.0)),
+        )
+        .track(
+            Track::from(UiProperty::Scale, 1.0)
+                .to(2.0)
+                .duration(Duration::from_millis(100.0)),
+        );
+    let completed_parallel = parallel
+        .completion_snapshot()
+        .expect("parallel completion snapshot");
+
+    assert_approx_eq!(f32, opacity(&completed_parallel), 1.0, epsilon = 1e-5);
+    assert_approx_eq!(
+        f32,
+        scalar(&completed_parallel, UiProperty::Scale),
+        2.0,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
+fn timeline_playback_controls_sample_without_runtime_ownership() {
+    let timeline = Timeline::track(
+        Track::from(UiProperty::Opacity, 0.0)
+            .to(1.0)
+            .duration(Duration::from_millis(100.0)),
+    );
+    let mut playback = TimelinePlayback::new();
+
+    playback.seek(Duration::from_millis(50.0));
+    let playing = playback.snapshot(&timeline);
+    assert_eq!(playing.state(), TimelinePlaybackState::Playing);
+    assert_approx_eq!(f64, playing.position().as_millis(), 50.0, epsilon = 1e-10);
+    assert_approx_eq!(
+        f32,
+        opacity(playing.properties().expect("playing snapshot")),
+        0.5,
+        epsilon = 1e-5
+    );
+
+    playback.pause();
+    let paused = playback.snapshot(&timeline);
+    assert_eq!(paused.state(), TimelinePlaybackState::Paused);
+    assert_approx_eq!(
+        f32,
+        opacity(paused.properties().expect("paused snapshot")),
+        0.5,
+        epsilon = 1e-5
+    );
+
+    playback.resume();
+    assert_eq!(playback.state(), TimelinePlaybackState::Playing);
+
+    playback.cancel();
+    let canceled = playback.snapshot(&timeline);
+    assert_eq!(canceled.state(), TimelinePlaybackState::Canceled);
+    assert_eq!(canceled.properties(), None);
+
+    playback.seek(Duration::from_millis(25.0));
+    assert_eq!(playback.state(), TimelinePlaybackState::Playing);
+
+    let finished = playback.finish(&timeline).unwrap();
+    assert_eq!(finished.state(), TimelinePlaybackState::Finished);
+    assert_approx_eq!(f64, finished.position().as_millis(), 100.0, epsilon = 1e-10);
+    assert_approx_eq!(
+        f32,
+        opacity(finished.properties().expect("finished snapshot")),
+        1.0,
+        epsilon = 1e-5
+    );
+
+    let infinite_timeline = Timeline::track(Track::new(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0).with_iterations(IterationCount::infinite()))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    ));
+    let mut playback = TimelinePlayback::new();
+
+    playback.seek(Duration::from_millis(50.0));
+    assert!(playback.finish(&infinite_timeline).is_err());
 }
 
 #[test]
