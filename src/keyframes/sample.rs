@@ -59,7 +59,7 @@ fn sample_property(
         .and_then(|frame| find_property(frame.snapshot(), property));
 
     if let Some((_, value)) = exact {
-        return Some(value.clone());
+        return Some(*value);
     }
 
     let before = frames
@@ -79,7 +79,7 @@ fn sample_property(
     match (before, after) {
         (Some((before_frame, before_value)), Some((after_frame, after_value))) => {
             if nearly_equal_f32(before_frame.offset(), after_frame.offset()) {
-                Some(before_value.clone())
+                Some(*before_value)
             } else {
                 let progress =
                     property_progress(before_frame.offset(), after_frame.offset(), offset);
@@ -87,7 +87,7 @@ fn sample_property(
                 interpolate_value(before_value, after_value, progress)
             }
         }
-        (Some((_, value)), None) | (None, Some((_, value))) => Some(value.clone()),
+        (Some((_, value)), None) | (None, Some((_, value))) => Some(*value),
         (None, None) => None,
     }
 }

@@ -36,12 +36,14 @@ impl AnimationClock for SystemClock {
     }
 }
 
-/// Deterministic clock for tests and example-level runtime checks.
+/// Deterministic clock for tests runtime checks.
+#[cfg(feature = "testing")]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TestClock {
     now: Duration,
 }
 
+#[cfg(feature = "testing")]
 impl TestClock {
     /// Creates a test clock at zero.
     #[must_use]
@@ -68,12 +70,14 @@ impl TestClock {
     }
 }
 
+#[cfg(feature = "testing")]
 impl Default for TestClock {
     fn default() -> Self {
         Self::new()
     }
 }
 
+#[cfg(feature = "testing")]
 impl AnimationClock for TestClock {
     fn now(&self) -> Duration {
         self.now

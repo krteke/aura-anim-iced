@@ -17,8 +17,9 @@ mod tests;
 
 pub(crate) use utils::sample_easing;
 
-use crate::timing::utils::{
-    completed_iterations_from, sanitize_non_negative, sanitize_playback_rate,
+use crate::{
+    nearly_equal_f64,
+    timing::utils::{completed_iterations_from, sanitize_non_negative, sanitize_playback_rate},
 };
 
 /// Timing state for an animation track or timeline step.
@@ -168,7 +169,7 @@ impl Timing {
         let active_elapsed = scaled_elapsed - delay_ms;
         let duration_ms = self.duration.as_millis();
 
-        if duration_ms == 0.0 {
+        if nearly_equal_f64(duration_ms, 0.0) {
             let count = self.iterations.finite_count().unwrap_or(1);
 
             return NormalizedTiming::after_end(

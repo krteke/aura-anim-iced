@@ -8,9 +8,8 @@ pub use crate::property::{
     sort_property_entries_by_composition,
 };
 pub use crate::runtime::{
-    ActiveAnimation, AnimationClock, AnimationHandle, AnimationPlaybackState,
-    AnimationRegistration, AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick,
-    MotionPolicy, SystemClock, TestClock,
+    ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistration,
+    AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick, MotionPolicy,
 };
 pub use crate::timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,

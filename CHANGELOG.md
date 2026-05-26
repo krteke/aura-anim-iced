@@ -51,6 +51,7 @@
 - Added effect snapshot conversion helpers for applying sampled opacity, translation, scale, radius, colors, and shadow values to Iced widgets.
 - Added compile checks for Iced integration helpers, example usage, and public prelude imports.
 - Added integration coverage for subscription gating, tick forwarding, active runtime updates, and idle runtime output.
+- Added an animated button example covering hover, pressed, focus, background, border, shadow, and scale animation with parallel tracks.
 
 ### Changed
 

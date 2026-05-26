@@ -71,7 +71,7 @@
 
 ## Examples
 
-- `[ ]` Build the `examples/animated_button.rs` demo with hover, pressed, focus, background, border, shadow, and scale animation using parallel tracks.
+- `[x]` Build the `examples/animated_button.rs` demo with hover, pressed, focus, background, border, shadow, and scale animation using parallel tracks.
 - `[ ]` Build the `examples/keyframes_popup.rs` demo with popup opacity, scale overshoot, settle timing, and keyframe-driven effect snapshots.
 - `[ ]` Build the `examples/timeline_toast.rs` demo with enter, hold, exit, opacity, translate-y, and completion cleanup through the runtime.
 - `[ ]` Add shared example helpers for app state, runtime storage, tick messages, and minimal reusable animated style mapping.

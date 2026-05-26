@@ -8,10 +8,11 @@ mod registration;
 mod registry;
 mod source;
 #[cfg(test)]
+#[cfg(feature = "testing")]
 mod tests;
 mod tick;
 
-pub use clock::{AnimationClock, SystemClock, TestClock};
+pub use clock::{AnimationClock, SystemClock};
 pub use entry::{ActiveAnimation, AnimationPlaybackState};
 pub use handle::AnimationHandle;
 pub use policy::MotionPolicy;
@@ -20,6 +21,8 @@ pub use registry::AnimationRegistry;
 pub use source::AnimationSource;
 pub use tick::AnimationTick;
 
+#[cfg(feature = "testing")]
+use crate::runtime::clock::TestClock;
 use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 
 /// Runtime state owned by an Iced application.
@@ -44,6 +47,7 @@ impl Default for AnimationRuntime<SystemClock> {
     }
 }
 
+#[cfg(feature = "testing")]
 impl AnimationRuntime<TestClock> {
     /// Creates an empty runtime with a deterministic test clock at zero.
     #[must_use]
@@ -112,11 +116,11 @@ impl<C> AnimationRuntime<C> {
         &self.registry
     }
 
-    /// Returns mutable access to the active animation registry.
-    #[must_use]
-    pub const fn registry_mut(&mut self) -> &mut AnimationRegistry {
-        &mut self.registry
-    }
+    // /// Returns mutable access to the active animation registry.
+    // #[must_use]
+    // pub const fn registry_mut(&mut self) -> &mut AnimationRegistry {
+    //     &mut self.registry
+    // }
 
     /// Returns the runtime clock.
     #[must_use]

@@ -1,5 +1,7 @@
+use std::fmt::Display;
+
 /// A typed value carried by an animation property.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PropertyValue {
     /// A single scalar value.
     Scalar(f32),
@@ -56,6 +58,23 @@ pub enum PropertyValueKind {
     Color,
     /// Shadow values.
     Shadow,
+}
+
+impl Display for PropertyValueKind {
+    #[allow(clippy::uninlined_format_args)]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            PropertyValueKind::Scalar => "Scalar",
+            PropertyValueKind::Vector2 => "Vector2",
+            PropertyValueKind::Size => "Size",
+            PropertyValueKind::Rectangle => "Rectangle",
+            PropertyValueKind::Transform => "Transform",
+            PropertyValueKind::Color => "Color",
+            PropertyValueKind::Shadow => "Shadow",
+        };
+
+        write!(f, "{}", s)
+    }
 }
 
 impl PropertyValueKind {
