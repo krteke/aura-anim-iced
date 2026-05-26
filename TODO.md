@@ -45,7 +45,7 @@
 ## Timeline
 
 - `[x]` Implement `src/timeline.rs` with `Timeline`, `TimelineStep`, `Track`, `Sequence`, `Parallel`, `Hold`, named markers, and total-duration calculation.
-- `[ ]` Implement sequence sampling that advances through ordered steps, accounts for hold segments, and returns the active property snapshot.
+- `[x]` Implement sequence sampling that advances through ordered steps, accounts for hold segments, and returns the active property snapshot.
 - `[ ]` Implement parallel sampling that merges active tracks, resolves property collisions by insertion order, and emits a composed snapshot.
 - `[ ]` Implement timeline builder helpers for `sequence`, `parallel`, `hold`, `then`, `track`, `from`, `to`, `duration`, and `easing`.
 - `[ ]` Add playback controls for seek, pause, resume, cancel, finish, and completion state snapshots without runtime ownership.

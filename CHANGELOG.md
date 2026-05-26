@@ -34,6 +34,7 @@
 - Added keyframe builder helpers for common opacity, scale, translation, color, and shadow tracks.
 - Added keyframe regression tests for normalization, segment lookup, easing, fill behavior, and multi-property sampling.
 - Added timeline structure primitives for tracks, sequences, parallel groups, holds, markers, and total duration calculation.
+- Added sequence timeline sampling with ordered step advancement, hold gaps, and active track snapshots.
 
 ### Changed
 
@@ -46,3 +47,4 @@
 - Split timing internals by duration, iteration, mode, normalization, sampling, and utility responsibilities without changing existing timing builders.
 - Split keyframe storage, segment lookup, track operations, and tests into focused modules.
 - Defined duplicate keyframe offsets as merged snapshots where later values override earlier values for the same property.
+- Split timeline internals into focused modules while preserving the public timeline API.

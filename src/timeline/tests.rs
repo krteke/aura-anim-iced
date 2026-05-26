@@ -1,0 +1,232 @@
+use float_cmp::assert_approx_eq;
+
+use super::{Hold, Parallel, Sequence, Timeline, TimelineMarker, Track};
+use crate::{
+    keyframes::Keyframes,
+    property::{PropertyValue, UiProperty},
+    timing::{Delay, Duration, FillMode, IterationCount, Timing},
+};
+
+fn opacity_track(duration_ms: f64) -> Track {
+    Track::new(
+        Keyframes::new()
+            .with_timing(Timing::new(duration_ms))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    )
+}
+
+fn fixed_opacity_track(duration_ms: f64, from: f32, to: f32) -> Track {
+    Track::new(
+        Keyframes::new()
+            .with_timing(Timing::new(duration_ms))
+            .opacity(0.0, from)
+            .opacity(1.0, to),
+    )
+}
+
+fn opacity(snapshot: &[(UiProperty, PropertyValue)]) -> f32 {
+    let Some((_, PropertyValue::Scalar(value))) = snapshot
+        .iter()
+        .find(|(property, _)| *property == UiProperty::Opacity)
+    else {
+        panic!("expected scalar opacity");
+    };
+
+    *value
+}
+
+#[test]
+fn timeline_starts_empty() {
+    let timeline = Timeline::new();
+
+    assert_eq!(timeline.name(), None);
+    assert!(timeline.root().steps().is_empty());
+    assert!(timeline.markers().is_empty());
+    assert_approx_eq!(
+        f64,
+        timeline
+            .total_duration()
+            .expect("empty timeline duration")
+            .as_millis(),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_eq!(timeline.sample_at(Duration::ZERO), None);
+}
+
+#[test]
+fn tracks_use_keyframe_timing_total_duration() {
+    let track = Track::new(
+        Keyframes::new().with_timing(
+            Timing::new(120.0)
+                .with_delay(Delay::from_millis(30.0))
+                .with_iterations(2),
+        ),
+    )
+    .with_name("fade");
+
+    assert_eq!(track.name(), Some("fade"));
+    assert_approx_eq!(
+        f64,
+        track.total_duration().expect("track duration").as_millis(),
+        270.0,
+        epsilon = 1e-10
+    );
+}
+
+#[test]
+fn sequence_duration_sums_step_durations() {
+    let sequence = Sequence::from_steps([
+        opacity_track(100.0).into(),
+        Hold::new(Duration::from_millis(40.0)).into(),
+        opacity_track(60.0).into(),
+    ]);
+
+    assert_eq!(sequence.steps().len(), 3);
+    assert_approx_eq!(
+        f64,
+        sequence
+            .total_duration()
+            .expect("sequence duration")
+            .as_millis(),
+        200.0,
+        epsilon = 1e-10
+    );
+}
+
+#[test]
+fn parallel_duration_uses_longest_step() {
+    let parallel = Parallel::from_steps([
+        opacity_track(100.0).into(),
+        Hold::new(Duration::from_millis(250.0)).into(),
+        opacity_track(60.0).into(),
+    ]);
+
+    assert_eq!(parallel.steps().len(), 3);
+    assert_approx_eq!(
+        f64,
+        parallel
+            .total_duration()
+            .expect("parallel duration")
+            .as_millis(),
+        250.0,
+        epsilon = 1e-10
+    );
+}
+
+#[test]
+fn timeline_duration_uses_root_sequence_and_markers_are_stored() {
+    let mut timeline = Timeline::new().with_name("toast");
+    timeline.push_step(Parallel::from_steps([
+        opacity_track(80.0).into(),
+        opacity_track(120.0).into(),
+    ]));
+    timeline.push_step(Hold::new(Duration::from_millis(300.0)));
+    timeline.push_marker(TimelineMarker::new("settled", Duration::from_millis(120.0)));
+
+    assert_eq!(timeline.name(), Some("toast"));
+    assert_eq!(timeline.markers()[0].name(), "settled");
+    assert_approx_eq!(
+        f64,
+        timeline.markers()[0].offset().as_millis(),
+        120.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        timeline
+            .total_duration()
+            .expect("timeline duration")
+            .as_millis(),
+        420.0,
+        epsilon = 1e-10
+    );
+}
+
+#[test]
+fn infinite_track_makes_group_duration_infinite() {
+    let infinite = Track::new(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0).with_iterations(IterationCount::infinite())),
+    );
+
+    let sequence = Sequence::from_steps([opacity_track(40.0).into(), infinite.clone().into()]);
+    let parallel = Parallel::from_steps([opacity_track(40.0).into(), infinite.into()]);
+
+    assert_eq!(sequence.total_duration(), None);
+    assert_eq!(parallel.total_duration(), None);
+}
+
+#[test]
+fn sequence_sampling_advances_through_ordered_steps() {
+    let sequence = Sequence::from_steps([
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+        fixed_opacity_track(200.0, 10.0, 20.0).into(),
+    ]);
+
+    let first = sequence
+        .sample_at(Duration::from_millis(25.0))
+        .expect("first sample");
+    let second = sequence
+        .sample_at(Duration::from_millis(150.0))
+        .expect("second sample");
+
+    assert_approx_eq!(f32, opacity(&first), 0.25, epsilon = 1e-5);
+    assert_approx_eq!(f32, opacity(&second), 12.5, epsilon = 1e-5);
+}
+
+#[test]
+fn sequence_sampling_treats_hold_segments_as_silent_time() {
+    let sequence = Sequence::from_steps([
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+        Hold::new(Duration::from_millis(50.0)).into(),
+        fixed_opacity_track(100.0, 10.0, 20.0).into(),
+    ]);
+
+    assert_eq!(sequence.sample_at(Duration::from_millis(125.0)), None);
+
+    let after_hold = sequence
+        .sample_at(Duration::from_millis(175.0))
+        .expect("sample after hold");
+
+    assert_approx_eq!(f32, opacity(&after_hold), 12.5, epsilon = 1e-5);
+}
+
+#[test]
+fn sequence_sampling_uses_next_step_at_boundaries() {
+    let sequence = Sequence::from_steps([
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+        fixed_opacity_track(100.0, 10.0, 20.0).into(),
+    ]);
+
+    let boundary = sequence
+        .sample_at(Duration::from_millis(100.0))
+        .expect("boundary sample");
+
+    assert_approx_eq!(f32, opacity(&boundary), 10.0, epsilon = 1e-5);
+}
+
+#[test]
+fn track_sampling_respects_keyframe_timing_fill_mode() {
+    let track = Track::new(
+        Keyframes::new()
+            .with_timing(
+                Timing::new(100.0)
+                    .with_delay(Delay::from_millis(50.0))
+                    .with_fill_mode(FillMode::Backwards),
+            )
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    );
+
+    let before = track
+        .sample_at(Duration::from_millis(25.0))
+        .expect("backwards fill sample");
+    let active = track
+        .sample_at(Duration::from_millis(75.0))
+        .expect("active sample");
+
+    assert_approx_eq!(f32, opacity(&before), 0.0, epsilon = 1e-5);
+    assert_approx_eq!(f32, opacity(&active), 0.25, epsilon = 1e-5);
+}

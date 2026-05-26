@@ -1,4 +1,7 @@
-use std::time::Duration as StdDuration;
+use std::{
+    ops::{Add, AddAssign},
+    time::Duration as StdDuration,
+};
 
 use crate::timing::utils::std_duration_from_secs;
 
@@ -35,6 +38,34 @@ impl Duration {
     pub(crate) fn checked_add_delay(self, rhs: Delay) -> Option<Self> {
         self.0.checked_add(rhs.0).map(Self)
     }
+
+    pub(crate) fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
+    }
+
+    pub(crate) fn max(self, rhs: Self) -> Self {
+        Self(self.0.max(rhs.0))
+    }
+}
+
+impl AddAssign for Duration {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+    }
+}
+
+impl Add for Duration {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0)
+    }
+}
+
+impl From<StdDuration> for Duration {
+    fn from(value: StdDuration) -> Self {
+        Self(value)
+    }
 }
 
 /// A non-negative animation start delay.
@@ -61,5 +92,11 @@ impl Delay {
     #[must_use]
     pub const fn as_millis(self) -> f64 {
         self.0.as_secs_f64() * 1000.0
+    }
+}
+
+impl From<StdDuration> for Delay {
+    fn from(value: StdDuration) -> Self {
+        Self(value)
     }
 }
