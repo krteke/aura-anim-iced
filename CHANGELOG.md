@@ -41,6 +41,7 @@
 - Added timeline regression coverage for duration, hold sampling, property merge order, seek output, and completion output.
 - Added runtime storage primitives for animation handles, active entries, registries, clocks, and motion policy configuration.
 - Added timeline marker helpers for name lookup, offset-ordered storage, stable same-offset ordering, and offset-based filtering.
+- Added runtime registration for keyframes and timelines with start timestamps, initial snapshots, and completion tracking.
 
 ### Changed
 

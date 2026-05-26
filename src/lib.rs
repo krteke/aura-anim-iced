@@ -43,8 +43,9 @@ pub use property::{
     sort_property_entries_by_composition,
 };
 pub use runtime::{
-    ActiveAnimation, AnimationClock, AnimationHandle, AnimationPlaybackState, AnimationRegistry,
-    AnimationRuntime, AnimationSource, MotionPolicy, SystemClock,
+    ActiveAnimation, AnimationClock, AnimationHandle, AnimationPlaybackState,
+    AnimationRegistration, AnimationRegistry, AnimationRuntime, AnimationSource, MotionPolicy,
+    SystemClock,
 };
 pub use timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,

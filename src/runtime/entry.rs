@@ -23,6 +23,7 @@ pub struct ActiveAnimation {
     started_at: Duration,
     state: AnimationPlaybackState,
     last_snapshot: Option<PropertySnapshot>,
+    completed_at: Option<Duration>,
 }
 
 impl ActiveAnimation {
@@ -39,6 +40,7 @@ impl ActiveAnimation {
             started_at: started_at.into(),
             state: AnimationPlaybackState::Playing,
             last_snapshot: None,
+            completed_at: None,
         }
     }
 
@@ -80,5 +82,23 @@ impl ActiveAnimation {
     /// Stores the last sampled property snapshot.
     pub fn set_last_snapshot(&mut self, snapshot: Option<PropertySnapshot>) {
         self.last_snapshot = snapshot;
+    }
+
+    /// Returns whether this entry has completed.
+    #[must_use]
+    pub const fn is_completed(&self) -> bool {
+        self.completed_at.is_some()
+    }
+
+    /// Returns the runtime timestamp when this entry completed.
+    #[must_use]
+    pub const fn completed_at(&self) -> Option<Duration> {
+        self.completed_at
+    }
+
+    /// Marks this entry as completed.
+    pub const fn mark_completed(&mut self, completed_at: Duration) {
+        self.state = AnimationPlaybackState::Completed;
+        self.completed_at = Some(completed_at);
     }
 }

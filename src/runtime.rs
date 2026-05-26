@@ -4,6 +4,7 @@ mod clock;
 mod entry;
 mod handle;
 mod policy;
+mod registration;
 mod registry;
 mod source;
 #[cfg(test)]
@@ -13,8 +14,11 @@ pub use clock::{AnimationClock, SystemClock};
 pub use entry::{ActiveAnimation, AnimationPlaybackState};
 pub use handle::AnimationHandle;
 pub use policy::MotionPolicy;
+pub use registration::AnimationRegistration;
 pub use registry::AnimationRegistry;
 pub use source::AnimationSource;
+
+use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 
 /// Runtime state owned by an Iced application.
 #[derive(Debug, Clone)]
@@ -47,6 +51,41 @@ impl<C: AnimationClock> AnimationRuntime<C> {
             clock,
             motion_policy: MotionPolicy::default(),
         }
+    }
+
+    /// Registers an animation source and returns its initial runtime output.
+    pub fn register(&mut self, source: impl Into<AnimationSource>) -> AnimationRegistration {
+        let handle = self.registry.allocate_handle();
+        let started_at = self.clock.now();
+        let source = source.into();
+        let initial_snapshot = source.sample_at(Duration::ZERO);
+        let mut entry = ActiveAnimation::new(handle, source, started_at);
+
+        entry.set_last_snapshot(initial_snapshot.clone());
+
+        if entry.source().total_duration() == Some(Duration::ZERO) {
+            let completion_snapshot = entry.source().completion_snapshot();
+
+            entry.set_last_snapshot(completion_snapshot);
+            entry.mark_completed(started_at);
+        }
+
+        let registration =
+            AnimationRegistration::from_entry(entry.handle(), entry.started_at(), &entry);
+
+        self.registry.insert(entry);
+
+        registration
+    }
+
+    /// Registers keyframes and returns their initial runtime output.
+    pub fn register_keyframes(&mut self, keyframes: Keyframes) -> AnimationRegistration {
+        self.register(keyframes)
+    }
+
+    /// Registers a timeline and returns its initial runtime output.
+    pub fn register_timeline(&mut self, timeline: Timeline) -> AnimationRegistration {
+        self.register(timeline)
     }
 }
 
