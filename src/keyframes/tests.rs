@@ -3,7 +3,7 @@ use float_cmp::assert_approx_eq;
 use super::{Keyframe, KeyframeSegment, Keyframes};
 use crate::{
     property::{PropertyValue, TransformValue, UiProperty},
-    timing::{Delay, Easing, Timing},
+    timing::{Delay, Easing, FillMode, Timing},
 };
 
 fn snapshot(entries: &[(UiProperty, f32)]) -> Vec<(UiProperty, PropertyValue)> {
@@ -11,6 +11,23 @@ fn snapshot(entries: &[(UiProperty, f32)]) -> Vec<(UiProperty, PropertyValue)> {
         .iter()
         .map(|(property, value)| (*property, PropertyValue::Scalar(*value)))
         .collect()
+}
+
+fn sample_elapsed(
+    keyframes: &Keyframes,
+    elapsed_ms: f64,
+) -> Option<Vec<(UiProperty, PropertyValue)>> {
+    let timing = keyframes.timing().normalize_elapsed(elapsed_ms);
+
+    if !timing.has_sample() {
+        return None;
+    }
+
+    #[allow(
+        clippy::cast_possible_truncation,
+        reason = "Normalized keyframe offsets are stored as f32 throughout the keyframe module."
+    )]
+    keyframes.sample_at(timing.iteration_progress as f32)
 }
 
 #[test]
@@ -385,6 +402,63 @@ fn sampling_between_keyframes_applies_iced_easing_to_segment_progress() {
     };
 
     assert_approx_eq!(f32, opacity, Easing::EaseIn.value(0.5), epsilon = 1e-5);
+}
+
+#[test]
+fn elapsed_sampling_uses_timing_easing_for_keyframe_output() {
+    let keyframes = Keyframes::new()
+        .with_timing(Timing::new(100.0).with_easing(Easing::EaseIn))
+        .opacity(0.0, 0.0)
+        .opacity(1.0, 1.0);
+
+    let sampled = sample_elapsed(&keyframes, 50.0).expect("active sample");
+    let PropertyValue::Scalar(opacity) = sampled[0].1 else {
+        panic!("expected scalar opacity");
+    };
+
+    assert_approx_eq!(f32, opacity, Easing::EaseIn.value(0.5), epsilon = 1e-5);
+}
+
+#[test]
+fn elapsed_sampling_respects_timing_fill_mode_output() {
+    let base = Keyframes::new().opacity(0.0, 0.0).opacity(1.0, 1.0);
+    let timing = |fill_mode| {
+        Timing::new(100.0)
+            .with_delay(Delay::from_millis(50.0))
+            .with_fill_mode(fill_mode)
+    };
+
+    let none = base.clone().with_timing(timing(FillMode::None));
+    assert_eq!(sample_elapsed(&none, 25.0), None);
+    assert_eq!(sample_elapsed(&none, 150.0), None);
+
+    let backwards = base.clone().with_timing(timing(FillMode::Backwards));
+    assert_eq!(
+        sample_elapsed(&backwards, 25.0),
+        Some(snapshot(&[(UiProperty::Opacity, 0.0)]))
+    );
+    assert_eq!(sample_elapsed(&backwards, 150.0), None);
+
+    let forwards = base.clone().with_timing(timing(FillMode::Forwards));
+    assert_eq!(sample_elapsed(&forwards, 25.0), None);
+    assert_eq!(
+        sample_elapsed(&forwards, 150.0),
+        Some(snapshot(&[(UiProperty::Opacity, 1.0)]))
+    );
+
+    let both = base.with_timing(timing(FillMode::Both));
+    assert_eq!(
+        sample_elapsed(&both, 25.0),
+        Some(snapshot(&[(UiProperty::Opacity, 0.0)]))
+    );
+    assert_eq!(
+        sample_elapsed(&both, 100.0),
+        Some(snapshot(&[(UiProperty::Opacity, 0.5)]))
+    );
+    assert_eq!(
+        sample_elapsed(&both, 150.0),
+        Some(snapshot(&[(UiProperty::Opacity, 1.0)]))
+    );
 }
 
 #[test]

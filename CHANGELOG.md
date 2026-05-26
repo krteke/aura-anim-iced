@@ -32,6 +32,7 @@
 - Added batch keyframe insertion APIs with single-pass normalization and duplicate-offset merging.
 - Added per-property keyframe sampling so each `UiProperty` maps across its own normalized offsets in multi-property snapshots.
 - Added keyframe builder helpers for common opacity, scale, translation, color, and shadow tracks.
+- Added keyframe regression tests for normalization, segment lookup, easing, fill behavior, and multi-property sampling.
 
 ### Changed
 
