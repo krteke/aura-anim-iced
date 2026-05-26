@@ -17,7 +17,7 @@ pub use sequence::Sequence;
 pub use step::TimelineStep;
 pub use track::Track;
 
-use crate::{property::PropertySnapshot, timing::Duration};
+use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 
 /// A root timeline made of sequential steps.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -41,6 +41,39 @@ impl Timeline {
         self
     }
 
+    /// Creates a timeline whose root sequence contains `steps`.
+    #[must_use]
+    pub fn sequence(steps: impl IntoIterator<Item = TimelineStep>) -> Self {
+        Self {
+            root: Sequence::from_steps(steps),
+            ..Self::new()
+        }
+    }
+
+    /// Creates a timeline with a single parallel group in the root sequence.
+    #[must_use]
+    pub fn parallel(steps: impl IntoIterator<Item = TimelineStep>) -> Self {
+        Self::new().then(Parallel::from_steps(steps))
+    }
+
+    /// Creates a timeline with a single keyframe track in the root sequence.
+    #[must_use]
+    pub fn track(track: impl Into<Track>) -> Self {
+        Self::new().then(track.into())
+    }
+
+    /// Creates a timeline with raw keyframes as a single track.
+    #[must_use]
+    pub fn keyframes(keyframes: Keyframes) -> Self {
+        Self::track(keyframes)
+    }
+
+    /// Creates a timeline with a single hold segment.
+    #[must_use]
+    pub fn hold(duration: impl Into<Duration>) -> Self {
+        Self::new().then(Hold::new(duration.into()))
+    }
+
     /// Returns the timeline name.
     #[must_use]
     pub fn name(&self) -> Option<&str> {
@@ -62,6 +95,13 @@ impl Timeline {
     /// Appends a timeline step to the root sequence.
     pub fn push_step(&mut self, step: impl Into<TimelineStep>) {
         self.root.push_step(step);
+    }
+
+    /// Appends a timeline step and returns the updated timeline.
+    #[must_use]
+    pub fn then(mut self, step: impl Into<TimelineStep>) -> Self {
+        self.push_step(step);
+        self
     }
 
     /// Appends a named marker.

@@ -36,6 +36,7 @@
 - Added timeline structure primitives for tracks, sequences, parallel groups, holds, markers, and total duration calculation.
 - Added sequence timeline sampling with ordered step advancement, hold gaps, and active track snapshots.
 - Added parallel timeline sampling with active track merging and insertion-order collision resolution.
+- Added timeline builder helpers for sequence, parallel, hold, track, chained steps, and track keyframe timing.
 
 ### Changed
 

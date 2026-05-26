@@ -1,9 +1,19 @@
-use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
+use crate::{
+    keyframes::Keyframes,
+    property::{PropertySnapshot, PropertyValue, UiProperty},
+    timing::{Duration, Easing, Timing},
+};
 
 /// A keyframe track placed in a timeline.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Track {
     name: Option<String>,
+    keyframes: Keyframes,
+}
+
+/// A builder for creating property tracks.
+pub struct PropertyTrackBuilder {
+    property: UiProperty,
     keyframes: Keyframes,
 }
 
@@ -14,6 +24,15 @@ impl Track {
         Self {
             name: None,
             keyframes,
+        }
+    }
+
+    /// Creates a track with an initial value for `property` at offset `0.0`.
+    #[must_use]
+    pub fn from(property: UiProperty, value: impl Into<PropertyValue>) -> PropertyTrackBuilder {
+        PropertyTrackBuilder {
+            property,
+            keyframes: Keyframes::new().at(0.0, [(property, value.into())]),
         }
     }
 
@@ -34,6 +53,33 @@ impl Track {
     #[must_use]
     pub const fn keyframes(&self) -> &Keyframes {
         &self.keyframes
+    }
+
+    /// Inserts the final value for the track's first property at offset `1.0`.
+    #[must_use]
+    pub fn to(mut self, property: UiProperty, value: impl Into<PropertyValue>) -> Self {
+        self.keyframes = self.keyframes.at(1.0, [(property, value.into())]);
+        self
+    }
+
+    /// Sets the active duration while preserving the rest of the timing configuration.
+    #[must_use]
+    pub fn duration(mut self, duration: impl Into<Duration>) -> Self {
+        let timing = *self.keyframes.timing();
+
+        self.keyframes = self
+            .keyframes
+            .with_timing(with_duration(timing, duration.into()));
+        self
+    }
+
+    /// Sets the easing curve on the track timing.
+    #[must_use]
+    pub fn easing(mut self, easing: Easing) -> Self {
+        let timing = self.keyframes.timing().with_easing(easing);
+
+        self.keyframes = self.keyframes.with_timing(timing);
+        self
     }
 
     /// Returns the finite total duration of the track, or `None` for infinite timing.
@@ -60,4 +106,27 @@ impl Track {
         )]
         self.keyframes.sample_at(timing.iteration_progress as f32)
     }
+}
+
+impl PropertyTrackBuilder {
+    #[must_use]
+    pub fn to(self, value: impl Into<PropertyValue>) -> Track {
+        Track::new(self.keyframes.at(1.0, [(self.property, value.into())]))
+    }
+}
+
+impl From<Keyframes> for Track {
+    fn from(value: Keyframes) -> Self {
+        Self::new(value)
+    }
+}
+
+fn with_duration(timing: Timing, duration: Duration) -> Timing {
+    Timing::new(duration.as_millis())
+        .with_delay(timing.delay())
+        .with_direction(timing.direction())
+        .with_fill_mode(timing.fill_mode())
+        .with_easing(timing.easing())
+        .with_iterations(timing.iterations())
+        .with_playback_rate(timing.playback_rate())
 }

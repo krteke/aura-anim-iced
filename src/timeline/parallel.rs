@@ -1,5 +1,6 @@
-use super::{TimelineStep, duration::max_duration};
+use super::{Hold, Sequence, TimelineStep, Track, duration::max_duration};
 use crate::{
+    keyframes::Keyframes,
     property::{PropertySnapshot, sort_property_entries_by_composition},
     timing::Duration,
 };
@@ -34,6 +35,43 @@ impl Parallel {
     /// Appends a timeline step.
     pub fn push_step(&mut self, step: impl Into<TimelineStep>) {
         self.steps.push(step.into());
+    }
+
+    /// Appends a timeline step and returns the updated parallel group.
+    #[must_use]
+    pub fn then(mut self, step: impl Into<TimelineStep>) -> Self {
+        self.push_step(step);
+        self
+    }
+
+    /// Appends a keyframe track.
+    #[must_use]
+    pub fn track(self, track: impl Into<Track>) -> Self {
+        self.then(track.into())
+    }
+
+    /// Appends raw keyframes as a track.
+    #[must_use]
+    pub fn keyframes(self, keyframes: Keyframes) -> Self {
+        self.track(keyframes)
+    }
+
+    /// Appends a hold segment.
+    #[must_use]
+    pub fn hold(self, duration: impl Into<Duration>) -> Self {
+        self.then(Hold::new(duration.into()))
+    }
+
+    /// Appends a sequence.
+    #[must_use]
+    pub fn sequence(self, sequence: Sequence) -> Self {
+        self.then(sequence)
+    }
+
+    /// Appends a nested parallel group.
+    #[must_use]
+    pub fn parallel_step(self, parallel: Parallel) -> Self {
+        self.then(parallel)
     }
 
     /// Returns the finite maximum step duration, or `None` if any step is infinite.

@@ -1,8 +1,8 @@
 use super::{
-    TimelineStep,
+    Hold, Parallel, TimelineStep, Track,
     duration::{contains_offset, sum_durations},
 };
-use crate::{property::PropertySnapshot, timing::Duration};
+use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 
 /// A sequential timeline group.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -34,6 +34,43 @@ impl Sequence {
     /// Appends a timeline step.
     pub fn push_step(&mut self, step: impl Into<TimelineStep>) {
         self.steps.push(step.into());
+    }
+
+    /// Appends a timeline step and returns the updated sequence.
+    #[must_use]
+    pub fn then(mut self, step: impl Into<TimelineStep>) -> Self {
+        self.push_step(step);
+        self
+    }
+
+    /// Appends a keyframe track.
+    #[must_use]
+    pub fn track(self, track: impl Into<Track>) -> Self {
+        self.then(track.into())
+    }
+
+    /// Appends raw keyframes as a track.
+    #[must_use]
+    pub fn keyframes(self, keyframes: Keyframes) -> Self {
+        self.track(keyframes)
+    }
+
+    /// Appends a hold segment.
+    #[must_use]
+    pub fn hold(self, duration: impl Into<Duration>) -> Self {
+        self.then(Hold::new(duration.into()))
+    }
+
+    /// Appends a nested sequence.
+    #[must_use]
+    pub fn sequence_step(self, sequence: Sequence) -> Self {
+        self.then(sequence)
+    }
+
+    /// Appends a parallel group.
+    #[must_use]
+    pub fn parallel(self, parallel: Parallel) -> Self {
+        self.then(parallel)
     }
 
     /// Returns the finite sum of all step durations, or `None` if any step is infinite.

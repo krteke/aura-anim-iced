@@ -33,6 +33,12 @@ impl PropertyValue {
     }
 }
 
+impl From<f32> for PropertyValue {
+    fn from(value: f32) -> Self {
+        Self::Scalar(value)
+    }
+}
+
 /// The high-level kind of a property value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PropertyValueKind {

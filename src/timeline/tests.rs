@@ -4,7 +4,7 @@ use super::{Hold, Parallel, Sequence, Timeline, TimelineMarker, Track};
 use crate::{
     keyframes::Keyframes,
     property::{PropertyValue, UiProperty},
-    timing::{Delay, Duration, FillMode, IterationCount, Timing},
+    timing::{Delay, Duration, Easing, FillMode, IterationCount, Timing},
 };
 
 fn opacity_track(duration_ms: f64) -> Track {
@@ -95,6 +95,32 @@ fn tracks_use_keyframe_timing_total_duration() {
 }
 
 #[test]
+fn track_builder_helpers_create_keyframe_tracks() {
+    let track = Track::from(UiProperty::Opacity, 0.0)
+        .to(1.0)
+        .duration(Duration::from_millis(100.0))
+        .easing(Easing::EaseIn);
+
+    assert_approx_eq!(
+        f64,
+        track.total_duration().expect("track duration").as_millis(),
+        100.0,
+        epsilon = 1e-10
+    );
+
+    let sampled = track
+        .sample_at(Duration::from_millis(50.0))
+        .expect("track sample");
+
+    assert_approx_eq!(
+        f32,
+        opacity(&sampled),
+        Easing::EaseIn.value(0.5),
+        epsilon = 1e-5
+    );
+}
+
+#[test]
 fn sequence_duration_sums_step_durations() {
     let sequence = Sequence::from_steps([
         opacity_track(100.0).into(),
@@ -110,6 +136,88 @@ fn sequence_duration_sums_step_durations() {
             .expect("sequence duration")
             .as_millis(),
         200.0,
+        epsilon = 1e-10
+    );
+}
+
+#[test]
+fn timeline_builder_helpers_compose_sequence_steps() {
+    let timeline = Timeline::track(
+        Track::from(UiProperty::Opacity, 0.0)
+            .to(1.0)
+            .duration(Duration::from_millis(100.0)),
+    )
+    .then(Hold::new(Duration::from_millis(40.0)))
+    .then(
+        Track::from(UiProperty::Scale, 1.0)
+            .to(2.0)
+            .duration(Duration::from_millis(60.0)),
+    );
+
+    assert_eq!(timeline.root().steps().len(), 3);
+    assert_approx_eq!(
+        f64,
+        timeline
+            .total_duration()
+            .expect("timeline duration")
+            .as_millis(),
+        200.0,
+        epsilon = 1e-10
+    );
+
+    let sampled = timeline
+        .sample_at(Duration::from_millis(170.0))
+        .expect("timeline sample");
+
+    assert_approx_eq!(
+        f32,
+        scalar(&sampled, UiProperty::Scale),
+        1.5,
+        epsilon = 1e-5
+    );
+
+    let sequence_timeline = Timeline::sequence([
+        Hold::new(Duration::from_millis(10.0)).into(),
+        Hold::new(Duration::from_millis(15.0)).into(),
+    ]);
+
+    assert_approx_eq!(
+        f64,
+        sequence_timeline
+            .total_duration()
+            .expect("sequence timeline duration")
+            .as_millis(),
+        25.0,
+        epsilon = 1e-10
+    );
+}
+
+#[test]
+fn group_builder_helpers_compose_nested_steps() {
+    let sequence = Sequence::new()
+        .track(
+            Track::from(UiProperty::Opacity, 0.0)
+                .to(1.0)
+                .duration(Duration::from_millis(100.0)),
+        )
+        .hold(Duration::from_millis(25.0));
+    let parallel = Parallel::new()
+        .track(
+            Track::from(UiProperty::Scale, 1.0)
+                .to(2.0)
+                .duration(Duration::from_millis(100.0)),
+        )
+        .sequence(sequence);
+    let timeline = Timeline::parallel([parallel.into()]);
+
+    assert_eq!(timeline.root().steps().len(), 1);
+    assert_approx_eq!(
+        f64,
+        timeline
+            .total_duration()
+            .expect("timeline duration")
+            .as_millis(),
+        125.0,
         epsilon = 1e-10
     );
 }
