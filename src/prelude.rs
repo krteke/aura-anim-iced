@@ -7,7 +7,9 @@ pub use crate::property::{
     sort_property_entries_by_composition,
 };
 pub use crate::runtime::AnimationRuntime;
-pub use crate::timeline::Timeline;
+pub use crate::timeline::{
+    Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
+};
 pub use crate::timing::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
     TimingPhase, TimingSampleState,

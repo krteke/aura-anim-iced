@@ -16,6 +16,7 @@ fn public_prelude_constructs_core_v01_types() {
     assert_eq!(value, PropertyValue::Scalar(1.0));
     assert_approx_eq!(f64, timing.duration().as_millis(), 120.0, epsilon = 1e-12);
     assert!(keyframes.frames().is_empty());
-    assert_eq!(timeline.name, None);
+    assert_eq!(timeline.name(), None);
+    assert!(timeline.total_duration().is_some());
     assert!(runtime.is_idle());
 }

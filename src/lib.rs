@@ -43,7 +43,7 @@ pub use property::{
     sort_property_entries_by_composition,
 };
 pub use runtime::AnimationRuntime;
-pub use timeline::Timeline;
+pub use timeline::{Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelineStep, Track};
 pub use timing::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
     TimingPhase, TimingSampleState,

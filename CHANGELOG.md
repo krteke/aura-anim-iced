@@ -33,6 +33,7 @@
 - Added per-property keyframe sampling so each `UiProperty` maps across its own normalized offsets in multi-property snapshots.
 - Added keyframe builder helpers for common opacity, scale, translation, color, and shadow tracks.
 - Added keyframe regression tests for normalization, segment lookup, easing, fill behavior, and multi-property sampling.
+- Added timeline structure primitives for tracks, sequences, parallel groups, holds, markers, and total duration calculation.
 
 ### Changed
 
