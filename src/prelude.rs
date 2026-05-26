@@ -6,7 +6,10 @@ pub use crate::property::{
     TransformValue, UiProperty, sort_properties_by_composition,
     sort_property_entries_by_composition,
 };
-pub use crate::runtime::AnimationRuntime;
+pub use crate::runtime::{
+    ActiveAnimation, AnimationClock, AnimationHandle, AnimationPlaybackState, AnimationRegistry,
+    AnimationRuntime, AnimationSource, MotionPolicy, SystemClock,
+};
 pub use crate::timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,
     TimelinePlaybackState, TimelineStep, Track,

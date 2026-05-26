@@ -42,7 +42,10 @@ pub use property::{
     TransformValue, UiProperty, sort_properties_by_composition,
     sort_property_entries_by_composition,
 };
-pub use runtime::AnimationRuntime;
+pub use runtime::{
+    ActiveAnimation, AnimationClock, AnimationHandle, AnimationPlaybackState, AnimationRegistry,
+    AnimationRuntime, AnimationSource, MotionPolicy, SystemClock,
+};
 pub use timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,
     TimelinePlaybackState, TimelineStep, Track,

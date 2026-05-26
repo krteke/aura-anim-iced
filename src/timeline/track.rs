@@ -55,9 +55,13 @@ impl Track {
         &self.keyframes
     }
 
-    /// Inserts the final value for the track's first property at offset `1.0`.
+    /// Inserts a keyframe at the end of the track with the given property and value.
     #[must_use]
-    pub fn to(mut self, property: UiProperty, value: impl Into<PropertyValue>) -> Self {
+    pub fn keyframe_at_end(
+        mut self,
+        property: UiProperty,
+        value: impl Into<PropertyValue>,
+    ) -> Self {
         self.keyframes = self.keyframes.at(1.0, [(property, value.into())]);
         self
     }

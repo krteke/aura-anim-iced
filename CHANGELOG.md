@@ -39,6 +39,7 @@
 - Added timeline builder helpers for sequence, parallel, hold, track, chained steps, and track keyframe timing.
 - Added runtime-independent timeline playback controls for seeking, pausing, resuming, canceling, finishing, and completion snapshots.
 - Added timeline regression coverage for duration, hold sampling, property merge order, seek output, and completion output.
+- Added runtime storage primitives for animation handles, active entries, registries, clocks, and motion policy configuration.
 
 ### Changed
 

@@ -12,6 +12,7 @@ mod step;
 mod tests;
 mod track;
 
+pub use error::TimelinePlaybackError;
 pub use hold::Hold;
 pub use marker::TimelineMarker;
 pub use parallel::Parallel;
