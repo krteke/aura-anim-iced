@@ -328,3 +328,69 @@ fn test_clock_injects_and_advances_deterministic_runtime_time() {
     runtime.clock_mut().advance_by(Duration::from_millis(75.0));
     assert_eq!(runtime.clock().now(), Duration::from_millis(100.0));
 }
+
+#[test]
+fn runtime_regression_covers_handles_ticks_completion_idle_and_test_clock() {
+    let mut runtime = AnimationRuntime::testing();
+
+    let opacity = runtime.register_keyframes(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    );
+    let scale = runtime.register_timeline(Timeline::track(
+        Track::from(UiProperty::Scale, 1.0)
+            .to(2.0)
+            .duration(Duration::from_millis(200.0)),
+    ));
+
+    assert_ne!(opacity.handle(), scale.handle());
+    assert_eq!(opacity.handle().id(), 1);
+    assert_eq!(scale.handle().id(), 2);
+    assert_eq!(runtime.active_count(), 2);
+    assert!(runtime.should_subscribe());
+
+    runtime.clock_mut().advance_by(Duration::from_millis(50.0));
+    let first_tick = runtime.tick();
+
+    assert_eq!(first_tick.timestamp(), Duration::from_millis(50.0));
+    assert!(first_tick.completed().is_empty());
+    assert_approx_eq!(
+        f32,
+        scalar(first_tick.properties(), UiProperty::Opacity),
+        0.5,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(first_tick.properties(), UiProperty::Scale),
+        1.25,
+        epsilon = 1e-5
+    );
+    assert_eq!(runtime.active_count(), 2);
+
+    runtime.clock_mut().advance_by(Duration::from_millis(50.0));
+    let second_tick = runtime.tick();
+
+    assert_eq!(second_tick.completed(), &[opacity.handle()]);
+    assert!(runtime.registry().get(opacity.handle()).is_none());
+    assert!(runtime.registry().get(scale.handle()).is_some());
+    assert_eq!(runtime.active_count(), 1);
+    assert!(!runtime.is_idle());
+    assert!(runtime.should_subscribe());
+
+    runtime.clock_mut().advance_by(Duration::from_millis(100.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(final_tick.completed(), &[scale.handle()]);
+    assert_eq!(runtime.active_count(), 0);
+    assert!(runtime.is_idle());
+    assert!(!runtime.should_subscribe());
+    assert_approx_eq!(
+        f32,
+        scalar(final_tick.properties(), UiProperty::Scale),
+        2.0,
+        epsilon = 1e-5
+    );
+}

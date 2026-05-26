@@ -59,7 +59,7 @@
 - `[x]` Implement runtime tick processing that advances active animations, removes completed entries, and returns an aggregated snapshot for view code.
 - `[x]` Implement idle detection that reports zero active animations and exposes a subscription gate for stopping animation ticks.
 - `[x]` Add testing clock support that injects deterministic timestamps for unit tests and example-level runtime checks.
-- `[ ]` Write runtime tests for handle registration, tick sampling, completion removal, idle detection, and deterministic clock progression.
+- `[x]` Write runtime tests for handle registration, tick sampling, completion removal, idle detection, and deterministic clock progression.
 
 ## Iced Integration
 
