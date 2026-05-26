@@ -31,14 +31,20 @@ impl Keyframe {
         &self.snapshot
     }
 
-    pub(crate) fn normalize(&mut self) {
-        self.offset = normalize_offset(self.offset);
-        sort_property_entries_by_composition(&mut self.snapshot);
-    }
+    pub(crate) fn merge_snapshot(&mut self, snapshot: PropertySnapshot) {
+        for (property, value) in snapshot {
+            if let Some((_, existing)) = self
+                .snapshot
+                .iter_mut()
+                .find(|(candidate, _)| *candidate == property)
+            {
+                *existing = value;
+            } else {
+                self.snapshot.push((property, value));
+            }
+        }
 
-    #[cfg(test)]
-    pub(crate) fn new_unchecked(offset: f32, snapshot: PropertySnapshot) -> Self {
-        Self { offset, snapshot }
+        sort_property_entries_by_composition(&mut self.snapshot);
     }
 }
 

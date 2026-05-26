@@ -1,7 +1,5 @@
-use std::cmp::Ordering;
-
 use super::{Keyframe, KeyframeSegment, sample::sample_segment};
-use crate::{property::PropertySnapshot, timing::Timing};
+use crate::{nearly_equal_f32, property::PropertySnapshot, timing::Timing};
 
 /// A collection of property snapshots keyed by normalized offsets.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -55,15 +53,39 @@ impl Keyframes {
         self
     }
 
+    /// Inserts multiple property snapshots and returns the updated track.
+    #[must_use]
+    pub fn with_keyframes<I, S>(mut self, frames: I) -> Self
+    where
+        I: IntoIterator<Item = (f32, S)>,
+        S: Into<PropertySnapshot>,
+    {
+        self.push_many(frames);
+        self
+    }
+
     /// Inserts a property snapshot at a normalized offset.
     pub fn push_at(&mut self, offset: f32, snapshot: impl Into<PropertySnapshot>) {
-        self.frames.push(Keyframe::new(offset, snapshot.into()));
-        self.sort_frames();
+        self.upsert_frame(Keyframe::new(offset, snapshot.into()));
+    }
+
+    /// Inserts multiple property snapshots and normalizes them in one pass.
+    pub fn push_many<I, S>(&mut self, frames: I)
+    where
+        I: IntoIterator<Item = (f32, S)>,
+        S: Into<PropertySnapshot>,
+    {
+        self.frames.extend(
+            frames
+                .into_iter()
+                .map(|(offset, snapshot)| Keyframe::new(offset, snapshot.into())),
+        );
+        self.sort_and_merge_frames();
     }
 
     /// Normalizes all keyframe offsets, snapshot property ordering, and frame ordering.
     pub fn normalize(&mut self) {
-        self.sort_frames();
+        self.sort_and_merge_frames();
     }
 
     /// Finds the keyframe segment that contains a normalized offset.
@@ -78,24 +100,38 @@ impl Keyframes {
         sample_segment(self.segment_at(offset), self.timing.easing())
     }
 
-    pub(crate) fn deep_normalize(&mut self) {
-        for frame in &mut self.frames {
-            frame.normalize();
+    fn upsert_frame(&mut self, frame: Keyframe) {
+        if let Some(existing) = self
+            .frames
+            .iter_mut()
+            .find(|existing| nearly_equal_f32(existing.offset(), frame.offset()))
+        {
+            existing.merge_snapshot(frame.snapshot().clone());
+            return;
         }
 
-        self.sort_frames();
+        let insert_at = self
+            .frames
+            .partition_point(|existing| existing.offset() < frame.offset());
+        self.frames.insert(insert_at, frame);
     }
 
-    fn sort_frames(&mut self) {
-        self.frames.sort_by(|left, right| {
-            left.offset()
-                .partial_cmp(&right.offset())
-                .unwrap_or(Ordering::Equal)
-        });
-    }
+    fn sort_and_merge_frames(&mut self) {
+        self.frames
+            .sort_by(|left, right| left.offset().total_cmp(&right.offset()));
 
-    #[cfg(test)]
-    pub(crate) fn from_raw_frames(frames: Vec<Keyframe>, timing: Timing) -> Self {
-        Self { frames, timing }
+        let mut merged = Vec::with_capacity(self.frames.len());
+
+        for frame in self.frames.drain(..) {
+            if let Some(existing) = merged.last_mut().filter(|existing: &&mut Keyframe| {
+                nearly_equal_f32(existing.offset(), frame.offset())
+            }) {
+                existing.merge_snapshot(frame.snapshot().clone());
+            } else {
+                merged.push(frame);
+            }
+        }
+
+        self.frames = merged;
     }
 }

@@ -29,6 +29,7 @@
 - Added property-snapshot keyframe storage with normalized offsets, timing attachment, builder-style insertion, and sorted snapshot composition.
 - Added keyframe segment lookup for empty tracks, single-frame tracks, exact offsets, edge offsets, and between-frame progress.
 - Added keyframe snapshot sampling with Iced easing and interpolation for scalar, Iced geometry, transform, color, and shadow values.
+- Added batch keyframe insertion APIs with single-pass normalization and duplicate-offset merging.
 
 ### Changed
 
@@ -40,3 +41,4 @@
 - Changed keyframe placeholders from generic single-value animation storage to sampled Iced property snapshots.
 - Split timing internals by duration, iteration, mode, normalization, sampling, and utility responsibilities without changing existing timing builders.
 - Split keyframe storage, segment lookup, track operations, and tests into focused modules.
+- Defined duplicate keyframe offsets as merged snapshots where later values override earlier values for the same property.

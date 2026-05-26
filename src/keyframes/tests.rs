@@ -52,7 +52,11 @@ fn offsets_are_clamped_and_invalid_offsets_become_zero() {
 
     let offsets: Vec<_> = keyframes.frames().iter().map(Keyframe::offset).collect();
 
-    assert_eq!(offsets, vec![0.0, 0.0, 1.0]);
+    assert_eq!(offsets, vec![0.0, 1.0]);
+    assert_eq!(
+        keyframes.frames()[0].snapshot(),
+        &snapshot(&[(UiProperty::Opacity, 0.5)])
+    );
 }
 
 #[test]
@@ -85,23 +89,71 @@ fn keyframe_snapshots_are_sorted_by_property_composition() {
 }
 
 #[test]
-fn normalize_repairs_manually_mutated_frames() {
-    let mut keyframes = Keyframes::from_raw_frames(
-        vec![
-            Keyframe::new_unchecked(
-                2.0,
-                snapshot(&[(UiProperty::Shadow, 1.0), (UiProperty::Opacity, 0.0)]),
-            ),
-            Keyframe::new_unchecked(-1.0, snapshot(&[(UiProperty::Radius, 4.0)])),
-        ],
-        Timing::default(),
+fn duplicate_offsets_merge_snapshots_and_later_values_override_properties() {
+    let keyframes = Keyframes::new()
+        .at(
+            0.5,
+            snapshot(&[(UiProperty::Opacity, 0.25), (UiProperty::TranslateX, 12.0)]),
+        )
+        .at(
+            0.5,
+            snapshot(&[(UiProperty::Opacity, 0.75), (UiProperty::Radius, 8.0)]),
+        );
+
+    assert_eq!(keyframes.len(), 1);
+    assert_eq!(
+        keyframes.frames()[0].snapshot(),
+        &snapshot(&[
+            (UiProperty::Opacity, 0.75),
+            (UiProperty::TranslateX, 12.0),
+            (UiProperty::Radius, 8.0),
+        ])
     );
+}
 
-    keyframes.normalize();
+#[test]
+fn nearly_equal_duplicate_offsets_merge_into_one_keyframe() {
+    let keyframes = Keyframes::new()
+        .at(0.5, snapshot(&[(UiProperty::Opacity, 0.25)]))
+        .at(0.500_001, snapshot(&[(UiProperty::Scale, 1.25)]));
 
+    assert_eq!(keyframes.len(), 1);
+    assert_eq!(
+        keyframes.frames()[0].snapshot(),
+        &snapshot(&[(UiProperty::Opacity, 0.25), (UiProperty::Scale, 1.25)])
+    );
+}
+
+#[test]
+fn push_many_batches_sorting_normalization_and_duplicate_offset_merging() {
+    let mut keyframes = Keyframes::new();
+
+    keyframes.push_many([
+        (0.75, snapshot(&[(UiProperty::Opacity, 0.75)])),
+        (0.25, snapshot(&[(UiProperty::Opacity, 0.25)])),
+        (1.25, snapshot(&[(UiProperty::Scale, 1.25)])),
+        (0.75, snapshot(&[(UiProperty::Radius, 8.0)])),
+    ]);
+
+    let offsets: Vec<_> = keyframes.frames().iter().map(Keyframe::offset).collect();
+
+    assert_eq!(offsets, vec![0.25, 0.75, 1.0]);
+    assert_eq!(
+        keyframes.frames()[1].snapshot(),
+        &snapshot(&[(UiProperty::Opacity, 0.75), (UiProperty::Radius, 8.0)])
+    );
+}
+
+#[test]
+fn with_keyframes_builds_tracks_from_batch_input() {
+    let keyframes = Keyframes::new().with_keyframes([
+        (1.0, snapshot(&[(UiProperty::Opacity, 1.0)])),
+        (0.0, snapshot(&[(UiProperty::Opacity, 0.0)])),
+    ]);
+
+    assert_eq!(keyframes.len(), 2);
     assert_approx_eq!(f32, keyframes.frames()[0].offset(), 0.0, epsilon = 1e-5);
     assert_approx_eq!(f32, keyframes.frames()[1].offset(), 1.0, epsilon = 1e-5);
-    assert_eq!(keyframes.frames()[1].snapshot()[0].0, UiProperty::Opacity);
 }
 
 #[test]
@@ -158,6 +210,19 @@ fn segment_lookup_returns_between_for_offsets_between_neighbors() {
     assert_approx_eq!(f32, from.offset(), 0.25, epsilon = 1e-5);
     assert_approx_eq!(f32, to.offset(), 0.75, epsilon = 1e-5);
     assert_approx_eq!(f32, progress, 0.5, epsilon = 1e-5);
+}
+
+#[test]
+fn segment_lookup_uses_merged_keyframe_for_duplicate_offsets() {
+    let keyframes = Keyframes::new()
+        .at(0.5, snapshot(&[(UiProperty::Opacity, 0.25)]))
+        .at(0.5, snapshot(&[(UiProperty::Opacity, 0.75)]));
+
+    let KeyframeSegment::Single(frame) = keyframes.segment_at(0.5) else {
+        panic!("expected single merged segment");
+    };
+
+    assert_eq!(frame.snapshot(), &snapshot(&[(UiProperty::Opacity, 0.75)]));
 }
 
 #[test]
