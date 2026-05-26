@@ -16,6 +16,7 @@ impl Animatable for Shadow {
 
 #[cfg(test)]
 mod tests {
+    use float_cmp::assert_approx_eq;
     use iced::{Color, Shadow, Vector};
 
     use crate::animatable::Animatable;
@@ -50,7 +51,8 @@ mod tests {
         let sampled = Shadow::interpolate(from, to, 0.5);
 
         assert_color_close(sampled.color, Color::from_rgba(0.5, 0.4, 0.6, 0.8));
-        assert_eq!(sampled.offset, Vector::new(10.0, 20.0));
-        assert_eq!(sampled.blur_radius, 8.0);
+        assert_approx_eq!(f32, sampled.offset.x, 10.0, epsilon = 1e-5);
+        assert_approx_eq!(f32, sampled.offset.y, 20.0, epsilon = 1e-5);
+        assert_approx_eq!(f32, sampled.blur_radius, 8.0, epsilon = 1e-5);
     }
 }

@@ -1,6 +1,6 @@
 //! Common imports for the v0.1 public API.
 
-pub use crate::keyframes::{Keyframe, Keyframes};
+pub use crate::keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use crate::property::{
     PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,
     TransformValue, UiProperty, sort_properties_by_composition,

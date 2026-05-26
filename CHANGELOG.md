@@ -27,6 +27,7 @@
 - Added direction-aware timing sampling for normal, reverse, alternate, and alternate-reverse playback across repeated iterations and fill endpoints.
 - Added timing regression tests for delay boundaries, zero-duration completion, fill output, playback rate scaling, repeated iteration completion, and reverse playback.
 - Added property-snapshot keyframe storage with normalized offsets, timing attachment, builder-style insertion, and sorted snapshot composition.
+- Added keyframe segment lookup for empty tracks, single-frame tracks, exact offsets, edge offsets, and between-frame progress.
 
 ### Changed
 
@@ -37,3 +38,4 @@
 - Removed internal interpolation traits from the public prelude so user-facing APIs stay centered on Iced property snapshots.
 - Changed keyframe placeholders from generic single-value animation storage to sampled Iced property snapshots.
 - Split timing internals by duration, iteration, mode, normalization, sampling, and utility responsibilities without changing existing timing builders.
+- Split keyframe storage, segment lookup, track operations, and tests into focused modules.

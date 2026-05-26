@@ -1,3 +1,5 @@
+use float_cmp::assert_approx_eq;
+
 use super::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, Timing, TimingPhase,
     TimingSampleState,
@@ -5,12 +7,37 @@ use super::{
 
 #[test]
 fn duration_and_delay_sanitize_invalid_values() {
-    assert_eq!(Duration::from_millis(-10.0).as_millis(), 0.0);
-    assert_eq!(Duration::from_millis(f64::NAN).as_millis(), 0.0);
-    assert_eq!(Duration::from_secs(1.5).as_millis(), 1_500.0);
+    assert_approx_eq!(
+        f64,
+        Duration::from_millis(-10.0).as_millis(),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        Duration::from_millis(f64::NAN).as_millis(),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        Duration::from_secs(1.5).as_millis(),
+        1_500.0,
+        epsilon = 1e-10
+    );
 
-    assert_eq!(Delay::from_millis(-5.0).as_millis(), 0.0);
-    assert_eq!(Delay::from_secs(0.25).as_millis(), 250.0);
+    assert_approx_eq!(
+        f64,
+        Delay::from_millis(-5.0).as_millis(),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        Delay::from_secs(0.25).as_millis(),
+        250.0,
+        epsilon = 1e-10
+    );
 }
 
 #[test]
@@ -23,18 +50,23 @@ fn timing_builder_stores_playback_configuration() {
         .with_iterations(IterationCount::count(3))
         .with_playback_rate(2.0);
 
-    assert_eq!(timing.duration.as_millis(), 120.0);
-    assert_eq!(timing.delay.as_millis(), 40.0);
+    assert_approx_eq!(f64, timing.duration.as_millis(), 120.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, timing.delay.as_millis(), 40.0, epsilon = 1e-10);
     assert_eq!(timing.direction, Direction::AlternateReverse);
     assert_eq!(timing.fill_mode, FillMode::Both);
     assert_eq!(timing.easing, Easing::EaseInOut);
     assert_eq!(timing.iterations, IterationCount::count(3));
-    assert_eq!(timing.playback_rate, 2.0);
+    assert_approx_eq!(f64, timing.playback_rate, 2.0, epsilon = 1e-10);
 }
 
 #[test]
 fn easing_uses_iced_curves() {
-    assert_eq!(super::sample_easing(Easing::Linear, 0.25), 0.25);
+    assert_approx_eq!(
+        f64,
+        super::sample_easing(Easing::Linear, 0.25),
+        0.25,
+        epsilon = 1e-10
+    );
     assert!(super::sample_easing(Easing::EaseIn, 0.5) < 0.5);
     assert!(super::sample_easing(Easing::EaseOut, 0.5) > 0.5);
 
@@ -47,9 +79,24 @@ fn easing_uses_iced_curves() {
 
 #[test]
 fn easing_clamps_invalid_progress() {
-    assert_eq!(super::sample_easing(Easing::Linear, -1.0), 0.0);
-    assert_eq!(super::sample_easing(Easing::Linear, 2.0), 1.0);
-    assert_eq!(super::sample_easing(Easing::Linear, f64::NAN), 0.0);
+    assert_approx_eq!(
+        f64,
+        super::sample_easing(Easing::Linear, -1.0),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        super::sample_easing(Easing::Linear, 2.0),
+        1.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        super::sample_easing(Easing::Linear, f64::NAN),
+        0.0,
+        epsilon = 1e-10
+    );
 }
 
 #[test]
@@ -100,7 +147,7 @@ fn elapsed_time_normalizes_before_active_and_after_end() {
     assert_eq!(before.phase, TimingPhase::BeforeStart);
     assert_eq!(before.sample_state, TimingSampleState::BeforeStart);
     assert!(!before.has_sample());
-    assert_eq!(before.iteration_progress, 0.0);
+    assert_approx_eq!(f64, before.iteration_progress, 0.0, epsilon = 1e-10);
 
     let active = timing.normalize_elapsed(175.0);
     assert_eq!(active.phase, TimingPhase::Active);
@@ -108,9 +155,9 @@ fn elapsed_time_normalizes_before_active_and_after_end() {
     assert!(active.has_sample());
     assert_eq!(active.current_iteration_index, Some(1));
     assert_eq!(active.completed_iterations, 1);
-    assert_eq!(active.iteration_progress, 0.25);
-    assert_eq!(active.eased_iteration_progress, 0.25);
-    assert_eq!(active.active_progress, 1.25);
+    assert_approx_eq!(f64, active.iteration_progress, 0.25, epsilon = 1e-10);
+    assert_approx_eq!(f64, active.eased_iteration_progress, 0.25, epsilon = 1e-10);
+    assert_approx_eq!(f64, active.active_progress, 1.25, epsilon = 1e-10);
 
     let after = timing.normalize_elapsed(250.0);
     assert_eq!(after.phase, TimingPhase::AfterEnd);
@@ -118,9 +165,9 @@ fn elapsed_time_normalizes_before_active_and_after_end() {
     assert!(!after.has_sample());
     assert_eq!(after.current_iteration_index, None);
     assert_eq!(after.completed_iterations, 2);
-    assert_eq!(after.iteration_progress, 1.0);
-    assert_eq!(after.eased_iteration_progress, 1.0);
-    assert_eq!(after.active_progress, 2.0);
+    assert_approx_eq!(f64, after.iteration_progress, 1.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, after.eased_iteration_progress, 1.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, after.active_progress, 2.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -136,8 +183,8 @@ fn delay_normalization_starts_active_sampling_at_delay_boundary() {
     assert_eq!(start.sample_state, TimingSampleState::Active);
     assert_eq!(start.current_iteration_index, Some(0));
     assert_eq!(start.completed_iterations, 0);
-    assert_eq!(start.iteration_progress, 0.0);
-    assert_eq!(start.active_progress, 0.0);
+    assert_approx_eq!(f64, start.iteration_progress, 0.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, start.active_progress, 0.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -150,9 +197,14 @@ fn zero_duration_normalizes_to_completion_state() {
     assert_eq!(normalized.sample_state, TimingSampleState::ForwardsFill);
     assert_eq!(normalized.current_iteration_index, None);
     assert_eq!(normalized.completed_iterations, 1);
-    assert_eq!(normalized.iteration_progress, 1.0);
-    assert_eq!(normalized.eased_iteration_progress, 1.0);
-    assert_eq!(normalized.active_progress, 1.0);
+    assert_approx_eq!(f64, normalized.iteration_progress, 1.0, epsilon = 1e-10);
+    assert_approx_eq!(
+        f64,
+        normalized.eased_iteration_progress,
+        1.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(f64, normalized.active_progress, 1.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -161,10 +213,12 @@ fn elapsed_time_normalization_applies_easing() {
 
     let normalized = timing.normalize_elapsed(50.0);
 
-    assert_eq!(normalized.iteration_progress, 0.5);
-    assert_eq!(
+    assert_approx_eq!(f64, normalized.iteration_progress, 0.5, epsilon = 1e-10);
+    assert_approx_eq!(
+        f64,
         normalized.eased_iteration_progress,
-        super::sample_easing(Easing::EaseIn, 0.5)
+        super::sample_easing(Easing::EaseIn, 0.5),
+        epsilon = 1e-10
     );
     assert!(normalized.eased_iteration_progress < normalized.iteration_progress);
 }
@@ -176,7 +230,7 @@ fn playback_rate_scales_elapsed_time() {
     let normalized = timing.normalize_elapsed(25.0);
 
     assert_eq!(normalized.phase, TimingPhase::Active);
-    assert_eq!(normalized.iteration_progress, 0.5);
+    assert_approx_eq!(f64, normalized.iteration_progress, 0.5, epsilon = 1e-10);
 }
 
 #[test]
@@ -190,16 +244,21 @@ fn playback_rate_scales_delay_and_active_elapsed_time_together() {
 
     let active = timing.normalize_elapsed(50.0);
     assert_eq!(active.phase, TimingPhase::Active);
-    assert_eq!(active.iteration_progress, 0.5);
-    assert_eq!(active.active_progress, 0.5);
+    assert_approx_eq!(f64, active.iteration_progress, 0.5, epsilon = 1e-10);
+    assert_approx_eq!(f64, active.active_progress, 0.5, epsilon = 1e-10);
 }
 
 #[test]
 fn invalid_playback_rate_falls_back_to_normal_speed() {
     let timing = Timing::new(100.0).with_playback_rate(0.0);
 
-    assert_eq!(timing.playback_rate, 1.0);
-    assert_eq!(timing.normalize_elapsed(25.0).iteration_progress, 0.25);
+    assert_approx_eq!(f64, timing.playback_rate, 1.0, epsilon = 1e-10);
+    assert_approx_eq!(
+        f64,
+        timing.normalize_elapsed(25.0).iteration_progress,
+        0.25,
+        epsilon = 1e-10
+    );
 }
 
 #[test]
@@ -213,14 +272,14 @@ fn fill_mode_none_emits_no_samples_outside_active_interval() {
     assert_eq!(before.sample_state, TimingSampleState::BeforeStart);
     assert!(!before.has_sample());
     assert!(!before.is_filled());
-    assert_eq!(before.iteration_progress, 0.0);
+    assert_approx_eq!(f64, before.iteration_progress, 0.0, epsilon = 1e-10);
 
     let after = timing.normalize_elapsed(150.0);
     assert_eq!(after.phase, TimingPhase::AfterEnd);
     assert_eq!(after.sample_state, TimingSampleState::AfterEnd);
     assert!(!after.has_sample());
     assert!(!after.is_filled());
-    assert_eq!(after.iteration_progress, 1.0);
+    assert_approx_eq!(f64, after.iteration_progress, 1.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -234,8 +293,8 @@ fn backwards_fill_emits_the_first_sample_before_start_only() {
     assert_eq!(before.sample_state, TimingSampleState::BackwardsFill);
     assert!(before.has_sample());
     assert!(before.is_filled());
-    assert_eq!(before.iteration_progress, 0.0);
-    assert_eq!(before.eased_iteration_progress, 0.0);
+    assert_approx_eq!(f64, before.iteration_progress, 0.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, before.eased_iteration_progress, 0.0, epsilon = 1e-10);
 
     let after = timing.normalize_elapsed(150.0);
     assert_eq!(after.sample_state, TimingSampleState::AfterEnd);
@@ -257,8 +316,8 @@ fn forwards_fill_emits_the_final_sample_after_end_only() {
     assert_eq!(after.sample_state, TimingSampleState::ForwardsFill);
     assert!(after.has_sample());
     assert!(after.is_filled());
-    assert_eq!(after.iteration_progress, 1.0);
-    assert_eq!(after.eased_iteration_progress, 1.0);
+    assert_approx_eq!(f64, after.iteration_progress, 1.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, after.eased_iteration_progress, 1.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -292,12 +351,12 @@ fn normal_direction_samples_each_iteration_forward() {
     let first = timing.normalize_elapsed(25.0);
     assert_eq!(first.current_iteration_index, Some(0));
     assert_eq!(first.completed_iterations, 0);
-    assert_eq!(first.iteration_progress, 0.25);
+    assert_approx_eq!(f64, first.iteration_progress, 0.25, epsilon = 1e-10);
 
     let second = timing.normalize_elapsed(125.0);
     assert_eq!(second.current_iteration_index, Some(1));
     assert_eq!(second.completed_iterations, 1);
-    assert_eq!(second.iteration_progress, 0.25);
+    assert_approx_eq!(f64, second.iteration_progress, 0.25, epsilon = 1e-10);
 }
 
 #[test]
@@ -310,16 +369,16 @@ fn repeated_iterations_preserve_active_progress_and_complete_at_boundary() {
     assert_eq!(middle.phase, TimingPhase::Active);
     assert_eq!(middle.current_iteration_index, Some(2));
     assert_eq!(middle.completed_iterations, 2);
-    assert_eq!(middle.iteration_progress, 0.5);
-    assert_eq!(middle.active_progress, 2.5);
+    assert_approx_eq!(f64, middle.iteration_progress, 0.5, epsilon = 1e-10);
+    assert_approx_eq!(f64, middle.active_progress, 2.5, epsilon = 1e-10);
 
     let complete = timing.normalize_elapsed(300.0);
     assert_eq!(complete.phase, TimingPhase::AfterEnd);
     assert_eq!(complete.sample_state, TimingSampleState::ForwardsFill);
     assert_eq!(complete.current_iteration_index, None);
     assert_eq!(complete.completed_iterations, 3);
-    assert_eq!(complete.iteration_progress, 1.0);
-    assert_eq!(complete.active_progress, 3.0);
+    assert_approx_eq!(f64, complete.iteration_progress, 1.0, epsilon = 1e-10);
+    assert_approx_eq!(f64, complete.active_progress, 3.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -331,12 +390,12 @@ fn reverse_direction_samples_each_iteration_backward() {
     let first = timing.normalize_elapsed(25.0);
     assert_eq!(first.current_iteration_index, Some(0));
     assert_eq!(first.completed_iterations, 0);
-    assert_eq!(first.iteration_progress, 0.75);
+    assert_approx_eq!(f64, first.iteration_progress, 0.75, epsilon = 1e-10);
 
     let second = timing.normalize_elapsed(125.0);
     assert_eq!(second.current_iteration_index, Some(1));
     assert_eq!(second.completed_iterations, 1);
-    assert_eq!(second.iteration_progress, 0.75);
+    assert_approx_eq!(f64, second.iteration_progress, 0.75, epsilon = 1e-10);
 }
 
 #[test]
@@ -349,17 +408,17 @@ fn reverse_direction_repeats_backward_and_completes_at_start_value() {
     let first_start = timing.normalize_elapsed(0.0);
     assert_eq!(first_start.current_iteration_index, Some(0));
     assert_eq!(first_start.completed_iterations, 0);
-    assert_eq!(first_start.iteration_progress, 1.0);
+    assert_approx_eq!(f64, first_start.iteration_progress, 1.0, epsilon = 1e-10);
 
     let second_start = timing.normalize_elapsed(100.0);
     assert_eq!(second_start.current_iteration_index, Some(1));
     assert_eq!(second_start.completed_iterations, 1);
-    assert_eq!(second_start.iteration_progress, 1.0);
+    assert_approx_eq!(f64, second_start.iteration_progress, 1.0, epsilon = 1e-10);
 
     let complete = timing.normalize_elapsed(200.0);
     assert_eq!(complete.phase, TimingPhase::AfterEnd);
     assert_eq!(complete.sample_state, TimingSampleState::ForwardsFill);
-    assert_eq!(complete.iteration_progress, 0.0);
+    assert_approx_eq!(f64, complete.iteration_progress, 0.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -371,17 +430,17 @@ fn alternate_direction_switches_odd_iterations_to_reverse() {
     let first = timing.normalize_elapsed(25.0);
     assert_eq!(first.current_iteration_index, Some(0));
     assert_eq!(first.completed_iterations, 0);
-    assert_eq!(first.iteration_progress, 0.25);
+    assert_approx_eq!(f64, first.iteration_progress, 0.25, epsilon = 1e-10);
 
     let second = timing.normalize_elapsed(125.0);
     assert_eq!(second.current_iteration_index, Some(1));
     assert_eq!(second.completed_iterations, 1);
-    assert_eq!(second.iteration_progress, 0.75);
+    assert_approx_eq!(f64, second.iteration_progress, 0.75, epsilon = 1e-10);
 
     let third = timing.normalize_elapsed(225.0);
     assert_eq!(third.current_iteration_index, Some(2));
     assert_eq!(third.completed_iterations, 2);
-    assert_eq!(third.iteration_progress, 0.25);
+    assert_approx_eq!(f64, third.iteration_progress, 0.25, epsilon = 1e-10);
 }
 
 #[test]
@@ -393,17 +452,17 @@ fn alternate_reverse_direction_switches_odd_iterations_to_forward() {
     let first = timing.normalize_elapsed(25.0);
     assert_eq!(first.current_iteration_index, Some(0));
     assert_eq!(first.completed_iterations, 0);
-    assert_eq!(first.iteration_progress, 0.75);
+    assert_approx_eq!(f64, first.iteration_progress, 0.75, epsilon = 1e-10);
 
     let second = timing.normalize_elapsed(125.0);
     assert_eq!(second.current_iteration_index, Some(1));
     assert_eq!(second.completed_iterations, 1);
-    assert_eq!(second.iteration_progress, 0.25);
+    assert_approx_eq!(f64, second.iteration_progress, 0.25, epsilon = 1e-10);
 
     let third = timing.normalize_elapsed(225.0);
     assert_eq!(third.current_iteration_index, Some(2));
     assert_eq!(third.completed_iterations, 2);
-    assert_eq!(third.iteration_progress, 0.75);
+    assert_approx_eq!(f64, third.iteration_progress, 0.75, epsilon = 1e-10);
 }
 
 #[test]
@@ -414,10 +473,12 @@ fn direction_sampling_applies_before_easing() {
 
     let normalized = timing.normalize_elapsed(25.0);
 
-    assert_eq!(normalized.iteration_progress, 0.75);
-    assert_eq!(
+    assert_approx_eq!(f64, normalized.iteration_progress, 0.75, epsilon = 1e-10);
+    assert_approx_eq!(
+        f64,
         normalized.eased_iteration_progress,
-        super::sample_easing(Easing::EaseIn, 0.75)
+        super::sample_easing(Easing::EaseIn, 0.75),
+        epsilon = 1e-10
     );
 }
 
@@ -433,11 +494,11 @@ fn direction_controls_backwards_and_forwards_fill_endpoints() {
         reverse_before.sample_state,
         TimingSampleState::BackwardsFill
     );
-    assert_eq!(reverse_before.iteration_progress, 1.0);
+    assert_approx_eq!(f64, reverse_before.iteration_progress, 1.0, epsilon = 1e-10);
 
     let reverse_after = reverse.normalize_elapsed(150.0);
     assert_eq!(reverse_after.sample_state, TimingSampleState::ForwardsFill);
-    assert_eq!(reverse_after.iteration_progress, 0.0);
+    assert_approx_eq!(f64, reverse_after.iteration_progress, 0.0, epsilon = 1e-10);
 
     let alternate = Timing::new(100.0)
         .with_direction(Direction::Alternate)
@@ -449,7 +510,12 @@ fn direction_controls_backwards_and_forwards_fill_endpoints() {
         alternate_after.sample_state,
         TimingSampleState::ForwardsFill
     );
-    assert_eq!(alternate_after.iteration_progress, 0.0);
+    assert_approx_eq!(
+        f64,
+        alternate_after.iteration_progress,
+        0.0,
+        epsilon = 1e-10
+    );
 }
 
 #[test]
@@ -464,13 +530,23 @@ fn zero_duration_uses_configured_iteration_count() {
     assert_eq!(normalized.sample_state, TimingSampleState::ForwardsFill);
     assert_eq!(normalized.current_iteration_index, None);
     assert_eq!(normalized.completed_iterations, 3);
-    assert_eq!(normalized.active_progress, 3.0);
+    assert_approx_eq!(f64, normalized.active_progress, 3.0, epsilon = 1e-10);
 }
 
 #[test]
 fn direction_sampling_clamps_nan_progress() {
-    assert_eq!(Direction::Normal.sample_progress(0, f64::NAN), 0.0);
-    assert_eq!(Direction::Reverse.sample_progress(0, f64::NAN), 1.0);
+    assert_approx_eq!(
+        f64,
+        Direction::Normal.sample_progress(0, f64::NAN),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        Direction::Reverse.sample_progress(0, f64::NAN),
+        1.0,
+        epsilon = 1e-10
+    );
 }
 
 #[test]

@@ -9,6 +9,7 @@ pub(crate) fn clamp_progress(value: f64) -> f64 {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 pub(crate) fn sample_easing(easing: Easing, progress: f64) -> f64 {
     f64::from(easing.value(clamp_progress(progress) as f32)).clamp(0.0, 1.0)
 }
