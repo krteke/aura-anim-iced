@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use super::{Keyframe, KeyframeSegment};
+use super::{Keyframe, KeyframeSegment, sample::sample_segment};
 use crate::{property::PropertySnapshot, timing::Timing};
 
 /// A collection of property snapshots keyed by normalized offsets.
@@ -63,13 +63,19 @@ impl Keyframes {
 
     /// Normalizes all keyframe offsets, snapshot property ordering, and frame ordering.
     pub fn normalize(&mut self) {
-        self.deep_normalize();
+        self.sort_frames();
     }
 
     /// Finds the keyframe segment that contains a normalized offset.
     #[must_use]
     pub fn segment_at(&self, offset: f32) -> KeyframeSegment<'_> {
         KeyframeSegment::find(&self.frames, offset)
+    }
+
+    /// Samples a property snapshot at a normalized offset.
+    #[must_use]
+    pub fn sample_at(&self, offset: f32) -> Option<PropertySnapshot> {
+        sample_segment(self.segment_at(offset), self.timing.easing())
     }
 
     pub(crate) fn deep_normalize(&mut self) {

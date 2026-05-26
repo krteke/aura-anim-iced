@@ -1,6 +1,7 @@
 //! Property-snapshot keyframe storage and lookup.
 
 mod frame;
+mod sample;
 mod segment;
 #[cfg(test)]
 mod tests;

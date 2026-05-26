@@ -28,6 +28,7 @@
 - Added timing regression tests for delay boundaries, zero-duration completion, fill output, playback rate scaling, repeated iteration completion, and reverse playback.
 - Added property-snapshot keyframe storage with normalized offsets, timing attachment, builder-style insertion, and sorted snapshot composition.
 - Added keyframe segment lookup for empty tracks, single-frame tracks, exact offsets, edge offsets, and between-frame progress.
+- Added keyframe snapshot sampling with Iced easing and interpolation for scalar, Iced geometry, transform, color, and shadow values.
 
 ### Changed
 
