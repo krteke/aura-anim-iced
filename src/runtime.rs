@@ -72,8 +72,7 @@ impl<C: AnimationClock> AnimationRuntime<C> {
             entry.mark_completed(started_at);
         }
 
-        let registration =
-            AnimationRegistration::from_entry(entry.handle(), entry.started_at(), &entry);
+        let registration = AnimationRegistration::from_entry(&entry);
 
         self.registry.insert(entry);
 
@@ -137,12 +136,31 @@ impl<C> AnimationRuntime<C> {
     /// Returns the number of active animation entries.
     #[must_use]
     pub fn active_count(&self) -> usize {
-        self.registry.active_count()
+        self.registry
+            .entries()
+            .iter()
+            .filter(|entry| entry.is_active())
+            .count()
     }
 
     /// Returns whether the runtime has no active animation entries.
     #[must_use]
     pub fn is_idle(&self) -> bool {
-        self.registry.is_empty()
+        self.active_count() == 0
+    }
+
+    /// Returns whether the runtime has entries that should receive animation ticks.
+    #[must_use]
+    pub fn should_tick(&self) -> bool {
+        self.registry
+            .entries()
+            .iter()
+            .any(ActiveAnimation::needs_tick)
+    }
+
+    /// Returns whether an Iced subscription should keep producing animation ticks.
+    #[must_use]
+    pub fn should_subscribe(&self) -> bool {
+        self.should_tick()
     }
 }

@@ -12,14 +12,10 @@ pub struct AnimationRegistration {
 }
 
 impl AnimationRegistration {
-    pub(super) fn from_entry(
-        handle: AnimationHandle,
-        started_at: Duration,
-        entry: &ActiveAnimation,
-    ) -> Self {
+    pub(super) fn from_entry(entry: &ActiveAnimation) -> Self {
         Self {
-            handle,
-            started_at,
+            handle: entry.handle(),
+            started_at: entry.started_at(),
             state: entry.state(),
             properties: entry.last_snapshot().cloned(),
             completed_at: entry.completed_at(),

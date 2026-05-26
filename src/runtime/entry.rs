@@ -90,6 +90,21 @@ impl ActiveAnimation {
         self.completed_at.is_some()
     }
 
+    /// Returns whether this entry is still active runtime state.
+    #[must_use]
+    pub const fn is_active(&self) -> bool {
+        matches!(
+            self.state,
+            AnimationPlaybackState::Playing | AnimationPlaybackState::Paused
+        )
+    }
+
+    /// Returns whether this entry needs runtime tick updates.
+    #[must_use]
+    pub const fn needs_tick(&self) -> bool {
+        matches!(self.state, AnimationPlaybackState::Playing)
+    }
+
     /// Returns the runtime timestamp when this entry completed.
     #[must_use]
     pub const fn completed_at(&self) -> Option<Duration> {
