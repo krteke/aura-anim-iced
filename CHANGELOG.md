@@ -49,6 +49,8 @@
 - Added an Iced subscription helper that maps active runtime animations into a tick stream.
 - Added an Iced update helper that routes tick messages into the runtime and returns sampled animation output.
 - Added effect snapshot conversion helpers for applying sampled opacity, translation, scale, radius, colors, and shadow values to Iced widgets.
+- Added compile checks for Iced integration helpers, example usage, and public prelude imports.
+- Added integration coverage for subscription gating, tick forwarding, active runtime updates, and idle runtime output.
 
 ### Changed
 
