@@ -30,6 +30,7 @@
 - Added keyframe segment lookup for empty tracks, single-frame tracks, exact offsets, edge offsets, and between-frame progress.
 - Added keyframe snapshot sampling with Iced easing and interpolation for scalar, Iced geometry, transform, color, and shadow values.
 - Added batch keyframe insertion APIs with single-pass normalization and duplicate-offset merging.
+- Added per-property keyframe sampling so each `UiProperty` maps across its own normalized offsets in multi-property snapshots.
 
 ### Changed
 

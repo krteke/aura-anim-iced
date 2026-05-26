@@ -1,51 +1,105 @@
 use crate::{
     animatable::Animatable,
+    nearly_equal_f32,
     property::{
         PropertySnapshot, PropertyValue, TransformValue, UiProperty,
-        sort_property_entries_by_composition,
+        sort_properties_by_composition, sort_property_entries_by_composition,
     },
     timing::Easing,
 };
 
-use super::{KeyframeSegment, normalize_offset};
+use super::{Keyframe, normalize_offset};
 
-pub(crate) fn sample_segment(
-    segment: KeyframeSegment<'_>,
+pub(crate) fn sample_frames(
+    frames: &[Keyframe],
+    offset: f32,
     easing: Easing,
 ) -> Option<PropertySnapshot> {
-    match segment {
-        KeyframeSegment::Empty => None,
-        KeyframeSegment::Single(frame) | KeyframeSegment::Exact(frame) => {
-            Some(frame.snapshot().clone())
-        }
-        KeyframeSegment::Between { from, to, progress } => Some(sample_between(
-            from.snapshot(),
-            to.snapshot(),
-            easing,
-            progress,
-        )),
+    if frames.is_empty() {
+        return None;
     }
-}
 
-fn sample_between(
-    from: &PropertySnapshot,
-    to: &PropertySnapshot,
-    easing: Easing,
-    progress: f32,
-) -> PropertySnapshot {
-    let progress = easing.value(normalize_offset(progress));
+    let offset = normalize_offset(offset);
     let mut sampled = Vec::new();
 
-    for (property, from_value) in from {
-        if let Some((_, to_value)) = find_property(to, *property)
-            && let Some(value) = interpolate_value(from_value, to_value, progress)
-        {
-            sampled.push((*property, value));
+    for property in unique_properties(frames) {
+        if let Some(value) = sample_property(frames, property, offset, easing) {
+            sampled.push((property, value));
         }
     }
 
     sort_property_entries_by_composition(&mut sampled);
-    sampled
+    Some(sampled)
+}
+
+fn unique_properties(frames: &[Keyframe]) -> Vec<UiProperty> {
+    let mut properties = Vec::new();
+
+    for frame in frames {
+        for (property, _) in frame.snapshot() {
+            if !properties.contains(property) {
+                properties.push(*property);
+            }
+        }
+    }
+
+    sort_properties_by_composition(&mut properties);
+    properties
+}
+
+fn sample_property(
+    frames: &[Keyframe],
+    property: UiProperty,
+    offset: f32,
+    easing: Easing,
+) -> Option<PropertyValue> {
+    let exact = frames
+        .iter()
+        .find(|frame| nearly_equal_f32(frame.offset(), offset))
+        .and_then(|frame| find_property(frame.snapshot(), property));
+
+    if let Some((_, value)) = exact {
+        return Some(value.clone());
+    }
+
+    let before = frames
+        .iter()
+        .rev()
+        .filter(|frame| frame.offset() <= offset || nearly_equal_f32(frame.offset(), offset))
+        .find_map(|frame| {
+            find_property(frame.snapshot(), property).map(|(_, value)| (frame, value))
+        });
+    let after = frames
+        .iter()
+        .filter(|frame| frame.offset() >= offset || nearly_equal_f32(frame.offset(), offset))
+        .find_map(|frame| {
+            find_property(frame.snapshot(), property).map(|(_, value)| (frame, value))
+        });
+
+    match (before, after) {
+        (Some((before_frame, before_value)), Some((after_frame, after_value))) => {
+            if nearly_equal_f32(before_frame.offset(), after_frame.offset()) {
+                Some(before_value.clone())
+            } else {
+                let progress =
+                    property_progress(before_frame.offset(), after_frame.offset(), offset);
+                let progress = easing.value(progress);
+                interpolate_value(before_value, after_value, progress)
+            }
+        }
+        (Some((_, value)), None) | (None, Some((_, value))) => Some(value.clone()),
+        (None, None) => None,
+    }
+}
+
+fn property_progress(from: f32, to: f32, offset: f32) -> f32 {
+    let span = to - from;
+
+    if span > f32::EPSILON {
+        ((offset - from) / span).clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
 }
 
 fn find_property(

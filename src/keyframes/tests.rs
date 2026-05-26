@@ -260,6 +260,65 @@ fn sampling_between_keyframes_interpolates_scalar_values() {
 }
 
 #[test]
+fn sampling_maps_each_property_across_its_own_keyframe_offsets() {
+    let keyframes = Keyframes::new()
+        .at(0.0, snapshot(&[(UiProperty::Opacity, 0.0)]))
+        .at(0.5, snapshot(&[(UiProperty::Scale, 2.0)]))
+        .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
+
+    let sampled = keyframes.sample_at(0.5).expect("sample");
+
+    assert_eq!(
+        sampled,
+        snapshot(&[(UiProperty::Opacity, 0.5), (UiProperty::Scale, 2.0)])
+    );
+}
+
+#[test]
+fn sampling_holds_properties_that_have_only_one_side_of_the_offset() {
+    let keyframes = Keyframes::new()
+        .at(
+            0.0,
+            vec![
+                (UiProperty::Opacity, PropertyValue::Scalar(0.0)),
+                (
+                    UiProperty::Background,
+                    PropertyValue::Color(iced::Color::BLACK),
+                ),
+            ],
+        )
+        .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
+
+    let sampled = keyframes.sample_at(0.5).expect("sample");
+
+    assert_eq!(
+        sampled,
+        vec![
+            (UiProperty::Opacity, PropertyValue::Scalar(0.5)),
+            (
+                UiProperty::Background,
+                PropertyValue::Color(iced::Color::BLACK)
+            ),
+        ]
+    );
+}
+
+#[test]
+fn sampling_exact_offset_does_not_prevent_other_properties_from_interpolating() {
+    let keyframes = Keyframes::new()
+        .at(0.0, snapshot(&[(UiProperty::Opacity, 0.0)]))
+        .at(0.5, snapshot(&[(UiProperty::Scale, 1.5)]))
+        .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
+
+    let sampled = keyframes.sample_at(0.5).expect("sample");
+
+    assert_eq!(
+        sampled,
+        snapshot(&[(UiProperty::Opacity, 0.5), (UiProperty::Scale, 1.5)])
+    );
+}
+
+#[test]
 fn sampling_between_keyframes_applies_iced_easing_to_segment_progress() {
     let keyframes = Keyframes::new()
         .with_timing(Timing::new(100.0).with_easing(Easing::EaseIn))
@@ -400,7 +459,7 @@ fn sampling_between_keyframes_interpolates_iced_and_transform_values() {
 }
 
 #[test]
-fn sampling_between_keyframes_omits_missing_or_mismatched_properties() {
+fn sampling_between_keyframes_omits_mismatched_properties_and_holds_missing_ones() {
     let keyframes = Keyframes::new()
         .at(
             0.0,
@@ -423,5 +482,14 @@ fn sampling_between_keyframes_omits_missing_or_mismatched_properties() {
 
     let sampled = keyframes.sample_at(0.5).expect("sample");
 
-    assert_eq!(sampled, snapshot(&[(UiProperty::Opacity, 0.5)]));
+    assert_eq!(
+        sampled,
+        vec![
+            (UiProperty::Opacity, PropertyValue::Scalar(0.5)),
+            (
+                UiProperty::Background,
+                PropertyValue::Color(iced::Color::BLACK)
+            ),
+        ]
+    );
 }

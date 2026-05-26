@@ -1,4 +1,4 @@
-use super::{Keyframe, KeyframeSegment, sample::sample_segment};
+use super::{Keyframe, KeyframeSegment, sample::sample_frames};
 use crate::{nearly_equal_f32, property::PropertySnapshot, timing::Timing};
 
 /// A collection of property snapshots keyed by normalized offsets.
@@ -97,7 +97,7 @@ impl Keyframes {
     /// Samples a property snapshot at a normalized offset.
     #[must_use]
     pub fn sample_at(&self, offset: f32) -> Option<PropertySnapshot> {
-        sample_segment(self.segment_at(offset), self.timing.easing())
+        sample_frames(&self.frames, offset, self.timing.easing())
     }
 
     fn upsert_frame(&mut self, frame: Keyframe) {
