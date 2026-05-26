@@ -36,6 +36,7 @@ pub mod runtime;
 pub mod timeline;
 pub mod timing;
 
+pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
 pub use keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use property::{
     PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,

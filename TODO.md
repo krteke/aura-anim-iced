@@ -65,7 +65,7 @@
 
 - `[x]` Implement `src/iced_ext.rs` with a subscription helper that maps runtime activity into an Iced `Subscription` tick stream.
 - `[x]` Add update helper functions that route tick messages into `AnimationRuntime` and return view-friendly effect snapshots.
-- `[ ]` Add effect snapshot conversion helpers for opacity, translate, scale, radius, color, and shadow values consumed by Iced widgets.
+- `[x]` Add effect snapshot conversion helpers for opacity, translate, scale, radius, color, and shadow values consumed by Iced widgets.
 - `[ ]` Add compile checks for Iced integration, examples, and public prelude usage.
 - `[ ]` Write integration tests for subscription gating, tick forwarding, active runtime updates, and idle runtime output.
 

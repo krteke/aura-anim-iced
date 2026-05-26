@@ -1,5 +1,6 @@
 //! Common imports for the v0.1 public API.
 
+pub use crate::iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
 pub use crate::keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use crate::property::{
     PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,
