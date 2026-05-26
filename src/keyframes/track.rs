@@ -1,5 +1,9 @@
 use super::{Keyframe, KeyframeSegment, sample::sample_frames};
-use crate::{nearly_equal_f32, property::PropertySnapshot, timing::Timing};
+use crate::{
+    nearly_equal_f32,
+    property::{PropertySnapshot, PropertyValue, UiProperty},
+    timing::Timing,
+};
 
 /// A collection of property snapshots keyed by normalized offsets.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -51,6 +55,84 @@ impl Keyframes {
     pub fn at(mut self, offset: f32, snapshot: impl Into<PropertySnapshot>) -> Self {
         self.push_at(offset, snapshot);
         self
+    }
+
+    /// Inserts an opacity keyframe.
+    #[must_use]
+    pub fn opacity(self, offset: f32, value: f32) -> Self {
+        self.at(
+            offset,
+            [(UiProperty::Opacity, PropertyValue::Scalar(value))],
+        )
+    }
+
+    /// Inserts a uniform scale keyframe.
+    #[must_use]
+    pub fn scale(self, offset: f32, value: f32) -> Self {
+        self.at(offset, [(UiProperty::Scale, PropertyValue::Scalar(value))])
+    }
+
+    /// Inserts a horizontal translation keyframe.
+    #[must_use]
+    pub fn translate_x(self, offset: f32, value: f32) -> Self {
+        self.at(
+            offset,
+            [(UiProperty::TranslateX, PropertyValue::Scalar(value))],
+        )
+    }
+
+    /// Inserts a vertical translation keyframe.
+    #[must_use]
+    pub fn translate_y(self, offset: f32, value: f32) -> Self {
+        self.at(
+            offset,
+            [(UiProperty::TranslateY, PropertyValue::Scalar(value))],
+        )
+    }
+
+    /// Inserts horizontal and vertical translation keyframes at the same offset.
+    #[must_use]
+    pub fn translation(self, offset: f32, x: f32, y: f32) -> Self {
+        self.at(
+            offset,
+            [
+                (UiProperty::TranslateX, PropertyValue::Scalar(x)),
+                (UiProperty::TranslateY, PropertyValue::Scalar(y)),
+            ],
+        )
+    }
+
+    /// Inserts a background color keyframe.
+    #[must_use]
+    pub fn background_color(self, offset: f32, value: iced::Color) -> Self {
+        self.at(
+            offset,
+            [(UiProperty::Background, PropertyValue::Color(value))],
+        )
+    }
+
+    /// Inserts a border color keyframe.
+    #[must_use]
+    pub fn border_color(self, offset: f32, value: iced::Color) -> Self {
+        self.at(
+            offset,
+            [(UiProperty::BorderColor, PropertyValue::Color(value))],
+        )
+    }
+
+    /// Inserts a text color keyframe.
+    #[must_use]
+    pub fn text_color(self, offset: f32, value: iced::Color) -> Self {
+        self.at(
+            offset,
+            [(UiProperty::TextColor, PropertyValue::Color(value))],
+        )
+    }
+
+    /// Inserts a shadow keyframe.
+    #[must_use]
+    pub fn shadow(self, offset: f32, value: iced::Shadow) -> Self {
+        self.at(offset, [(UiProperty::Shadow, PropertyValue::Shadow(value))])
     }
 
     /// Inserts multiple property snapshots and returns the updated track.

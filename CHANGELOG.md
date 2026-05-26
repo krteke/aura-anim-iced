@@ -31,6 +31,7 @@
 - Added keyframe snapshot sampling with Iced easing and interpolation for scalar, Iced geometry, transform, color, and shadow values.
 - Added batch keyframe insertion APIs with single-pass normalization and duplicate-offset merging.
 - Added per-property keyframe sampling so each `UiProperty` maps across its own normalized offsets in multi-property snapshots.
+- Added keyframe builder helpers for common opacity, scale, translation, color, and shadow tracks.
 
 ### Changed
 

@@ -44,6 +44,60 @@ fn at_inserts_keyframes_in_sorted_offset_order() {
 }
 
 #[test]
+fn scalar_builder_helpers_insert_common_visual_keyframes() {
+    let keyframes = Keyframes::new()
+        .scale(0.5, 1.2)
+        .translation(0.5, 12.0, -4.0)
+        .opacity(0.5, 0.75)
+        .translate_x(1.0, 0.0)
+        .translate_y(1.0, 8.0);
+
+    assert_eq!(keyframes.len(), 2);
+    assert_eq!(
+        keyframes.frames()[0].snapshot(),
+        &snapshot(&[
+            (UiProperty::Opacity, 0.75),
+            (UiProperty::TranslateX, 12.0),
+            (UiProperty::TranslateY, -4.0),
+            (UiProperty::Scale, 1.2),
+        ])
+    );
+    assert_eq!(
+        keyframes.frames()[1].snapshot(),
+        &snapshot(&[(UiProperty::TranslateX, 0.0), (UiProperty::TranslateY, 8.0)])
+    );
+}
+
+#[test]
+fn color_and_shadow_builder_helpers_insert_iced_values() {
+    let background = iced::Color::from_rgb(0.1, 0.2, 0.3);
+    let border = iced::Color::from_rgb(0.4, 0.5, 0.6);
+    let text = iced::Color::from_rgb(0.7, 0.8, 0.9);
+    let shadow = iced::Shadow {
+        color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.4),
+        offset: iced::Vector::new(2.0, 6.0),
+        blur_radius: 12.0,
+    };
+
+    let keyframes = Keyframes::new()
+        .shadow(0.25, shadow)
+        .text_color(0.25, text)
+        .background_color(0.25, background)
+        .border_color(0.25, border);
+
+    assert_eq!(keyframes.len(), 1);
+    assert_eq!(
+        keyframes.frames()[0].snapshot(),
+        &vec![
+            (UiProperty::Background, PropertyValue::Color(background)),
+            (UiProperty::BorderColor, PropertyValue::Color(border)),
+            (UiProperty::TextColor, PropertyValue::Color(text)),
+            (UiProperty::Shadow, PropertyValue::Shadow(shadow)),
+        ]
+    );
+}
+
+#[test]
 fn offsets_are_clamped_and_invalid_offsets_become_zero() {
     let keyframes = Keyframes::new()
         .at(1.25, snapshot(&[(UiProperty::Opacity, 1.0)]))
