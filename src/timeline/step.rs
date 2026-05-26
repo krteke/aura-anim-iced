@@ -29,8 +29,6 @@ impl TimelineStep {
     /// Samples this step at local timeline `offset`.
     #[must_use]
     pub fn sample_at(&self, offset: impl Into<Duration>) -> Option<PropertySnapshot> {
-        let offset = offset.into();
-
         match self {
             Self::Track(track) => track.sample_at(offset),
             Self::Sequence(sequence) => sequence.sample_at(offset),

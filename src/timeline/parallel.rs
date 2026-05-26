@@ -1,5 +1,8 @@
 use super::{TimelineStep, duration::max_duration};
-use crate::{property::PropertySnapshot, timing::Duration};
+use crate::{
+    property::{PropertySnapshot, sort_property_entries_by_composition},
+    timing::Duration,
+};
 
 /// A parallel timeline group.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -41,7 +44,34 @@ impl Parallel {
 
     /// Samples this parallel group at local timeline `offset`.
     #[must_use]
-    pub fn sample_at(&self, _offset: impl Into<Duration>) -> Option<PropertySnapshot> {
-        None
+    pub fn sample_at(&self, offset: impl Into<Duration>) -> Option<PropertySnapshot> {
+        let offset = offset.into();
+        let mut merged = PropertySnapshot::new();
+
+        for step in &self.steps {
+            if let Some(snapshot) = step.sample_at(offset) {
+                merge_snapshot(&mut merged, snapshot);
+            }
+        }
+
+        if merged.is_empty() {
+            None
+        } else {
+            sort_property_entries_by_composition(&mut merged);
+            Some(merged)
+        }
+    }
+}
+
+fn merge_snapshot(target: &mut PropertySnapshot, snapshot: PropertySnapshot) {
+    for (property, value) in snapshot {
+        if let Some((_, existing)) = target
+            .iter_mut()
+            .find(|(candidate, _)| *candidate == property)
+        {
+            *existing = value;
+        } else {
+            target.push((property, value));
+        }
     }
 }

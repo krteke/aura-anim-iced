@@ -25,12 +25,31 @@ fn fixed_opacity_track(duration_ms: f64, from: f32, to: f32) -> Track {
     )
 }
 
+fn scale_track(duration_ms: f64, from: f32, to: f32) -> Track {
+    Track::new(
+        Keyframes::new()
+            .with_timing(Timing::new(duration_ms))
+            .scale(0.0, from)
+            .scale(1.0, to),
+    )
+}
+
 fn opacity(snapshot: &[(UiProperty, PropertyValue)]) -> f32 {
     let Some((_, PropertyValue::Scalar(value))) = snapshot
         .iter()
         .find(|(property, _)| *property == UiProperty::Opacity)
     else {
         panic!("expected scalar opacity");
+    };
+
+    *value
+}
+
+fn scalar(snapshot: &[(UiProperty, PropertyValue)], target: UiProperty) -> f32 {
+    let Some((_, PropertyValue::Scalar(value))) =
+        snapshot.iter().find(|(property, _)| *property == target)
+    else {
+        panic!("expected scalar property");
     };
 
     *value
@@ -112,6 +131,73 @@ fn parallel_duration_uses_longest_step() {
             .as_millis(),
         250.0,
         epsilon = 1e-10
+    );
+}
+
+#[test]
+fn parallel_sampling_merges_active_track_snapshots() {
+    let parallel = Parallel::from_steps([
+        scale_track(100.0, 1.0, 2.0).into(),
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+    ]);
+
+    let sampled = parallel
+        .sample_at(Duration::from_millis(50.0))
+        .expect("parallel sample");
+
+    assert_eq!(
+        sampled
+            .iter()
+            .map(|(property, _)| *property)
+            .collect::<Vec<_>>(),
+        vec![UiProperty::Opacity, UiProperty::Scale]
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(&sampled, UiProperty::Opacity),
+        0.5,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(&sampled, UiProperty::Scale),
+        1.5,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
+fn parallel_sampling_resolves_property_collisions_by_insertion_order() {
+    let parallel = Parallel::from_steps([
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+        fixed_opacity_track(100.0, 10.0, 20.0).into(),
+    ]);
+
+    let sampled = parallel
+        .sample_at(Duration::from_millis(50.0))
+        .expect("parallel sample");
+
+    assert_eq!(sampled.len(), 1);
+    assert_approx_eq!(f32, opacity(&sampled), 15.0, epsilon = 1e-5);
+}
+
+#[test]
+fn parallel_sampling_omits_inactive_tracks() {
+    let parallel = Parallel::from_steps([
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+        scale_track(200.0, 1.0, 3.0).into(),
+    ]);
+
+    let sampled = parallel
+        .sample_at(Duration::from_millis(150.0))
+        .expect("parallel sample");
+
+    assert_eq!(sampled.len(), 1);
+    assert_approx_eq!(
+        f32,
+        scalar(&sampled, UiProperty::Scale),
+        2.5,
+        epsilon = 1e-5
     );
 }
 

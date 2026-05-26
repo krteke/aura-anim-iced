@@ -35,6 +35,7 @@
 - Added keyframe regression tests for normalization, segment lookup, easing, fill behavior, and multi-property sampling.
 - Added timeline structure primitives for tracks, sequences, parallel groups, holds, markers, and total duration calculation.
 - Added sequence timeline sampling with ordered step advancement, hold gaps, and active track snapshots.
+- Added parallel timeline sampling with active track merging and insertion-order collision resolution.
 
 ### Changed
 
