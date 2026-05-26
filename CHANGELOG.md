@@ -46,6 +46,7 @@
 - Added runtime idle detection and a subscription gate for stopping animation ticks when no playing animations remain.
 - Added a deterministic runtime test clock for unit tests and example-level animation checks.
 - Added runtime regression coverage for handle registration, tick sampling, completion removal, idle detection, and deterministic clock progression.
+- Added an Iced subscription helper that maps active runtime animations into a tick stream.
 
 ### Changed
 

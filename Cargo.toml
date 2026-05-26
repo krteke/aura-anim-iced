@@ -39,7 +39,7 @@ tracing = ["dep:tracing"]
 testing = []
 
 [dependencies]
-iced = "0.14"
+iced = { version = "0.14", features = ["tokio"] }
 serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }
 thiserror = "2"
