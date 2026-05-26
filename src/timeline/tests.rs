@@ -415,6 +415,71 @@ fn timeline_playback_controls_sample_without_runtime_ownership() {
 }
 
 #[test]
+fn timeline_regression_tests_cover_duration_hold_merge_seek_and_completion() {
+    let parallel = Parallel::from_steps([
+        fixed_opacity_track(100.0, 0.0, 1.0).into(),
+        scale_track(100.0, 1.0, 2.0).into(),
+        fixed_opacity_track(100.0, 10.0, 20.0).into(),
+    ]);
+    let timeline = Timeline::sequence([
+        parallel.into(),
+        Hold::new(Duration::from_millis(50.0)).into(),
+    ]);
+
+    assert_approx_eq!(
+        f64,
+        timeline.root().steps()[0]
+            .total_duration()
+            .expect("parallel duration")
+            .as_millis(),
+        100.0,
+        epsilon = 1e-10
+    );
+    assert_approx_eq!(
+        f64,
+        timeline
+            .total_duration()
+            .expect("sequence duration")
+            .as_millis(),
+        150.0,
+        epsilon = 1e-10
+    );
+    assert_eq!(timeline.sample_at(Duration::from_millis(125.0)), None);
+
+    let mut playback = TimelinePlayback::new();
+    playback.seek(Duration::from_millis(50.0));
+    let seek = playback.snapshot(&timeline);
+    let seek_properties = seek.properties().expect("seek output");
+
+    assert_eq!(
+        seek_properties
+            .iter()
+            .map(|(property, _)| *property)
+            .collect::<Vec<_>>(),
+        vec![UiProperty::Opacity, UiProperty::Scale]
+    );
+    assert_approx_eq!(f32, opacity(seek_properties), 15.0, epsilon = 1e-5);
+    assert_approx_eq!(
+        f32,
+        scalar(seek_properties, UiProperty::Scale),
+        1.5,
+        epsilon = 1e-5
+    );
+
+    let finished = playback.finish(&timeline).expect("finished output");
+    let finished_properties = finished.properties().expect("completion output");
+
+    assert_eq!(finished.state(), TimelinePlaybackState::Finished);
+    assert_approx_eq!(f32, opacity(finished_properties), 20.0, epsilon = 1e-5);
+    assert_approx_eq!(
+        f32,
+        scalar(finished_properties, UiProperty::Scale),
+        2.0,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
 fn timeline_duration_uses_root_sequence_and_markers_are_stored() {
     let mut timeline = Timeline::new().with_name("toast");
     timeline.push_step(Parallel::from_steps([

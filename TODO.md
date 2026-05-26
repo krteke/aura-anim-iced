@@ -49,7 +49,7 @@
 - `[x]` Implement parallel sampling that merges active tracks, resolves property collisions by insertion order, and emits a composed snapshot.
 - `[x]` Implement timeline builder helpers for `sequence`, `parallel`, `hold`, `then`, `track`, `from`, `to`, `duration`, and `easing`.
 - `[x]` Add playback controls for seek, pause, resume, cancel, finish, and completion state snapshots without runtime ownership.
-- `[ ]` Write timeline tests for sequence duration, parallel duration, hold sampling, property merge ordering, seek output, and completion output.
+- `[x]` Write timeline tests for sequence duration, parallel duration, hold sampling, property merge ordering, seek output, and completion output.
 
 ## Runtime
 

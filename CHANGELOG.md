@@ -38,6 +38,7 @@
 - Added parallel timeline sampling with active track merging and insertion-order collision resolution.
 - Added timeline builder helpers for sequence, parallel, hold, track, chained steps, and track keyframe timing.
 - Added runtime-independent timeline playback controls for seeking, pausing, resuming, canceling, finishing, and completion snapshots.
+- Added timeline regression coverage for duration, hold sampling, property merge order, seek output, and completion output.
 
 ### Changed
 
