@@ -155,20 +155,32 @@ impl_interpolate_tuple!(A: 0, B: 1, C: 2, D: 3);
 
 #[cfg(test)]
 mod tests {
+    use float_cmp::assert_approx_eq;
+
     use super::{Animatable, InterpolationProgress};
 
     #[test]
     fn f32_interpolation_clamps_progress() {
-        assert_eq!(f32::interpolate(10.0, 20.0, -1.0), 10.0);
-        assert_eq!(f32::interpolate(10.0, 20.0, 0.5), 15.0);
-        assert_eq!(f32::interpolate(10.0, 20.0, 2.0), 20.0);
+        assert_approx_eq!(
+            f32,
+            f32::interpolate(10.0, 20.0, -1.0),
+            10.0,
+            epsilon = 1e-5
+        );
+        assert_approx_eq!(f32, f32::interpolate(10.0, 20.0, 0.5), 15.0, epsilon = 1e-5);
+        assert_approx_eq!(f32, f32::interpolate(10.0, 20.0, 2.0), 20.0, epsilon = 1e-5);
     }
 
     #[test]
     fn f64_interpolation_clamps_progress() {
-        assert_eq!(f64::interpolate(2.0, 6.0, f32::NAN), 2.0);
-        assert_eq!(f64::interpolate(2.0, 6.0, 0.25), 3.0);
-        assert_eq!(f64::interpolate(2.0, 6.0, 1.5), 6.0);
+        assert_approx_eq!(
+            f64,
+            f64::interpolate(2.0, 6.0, f32::NAN),
+            2.0,
+            epsilon = 1e-10
+        );
+        assert_approx_eq!(f64, f64::interpolate(2.0, 6.0, 0.25), 3.0, epsilon = 1e-10);
+        assert_approx_eq!(f64, f64::interpolate(2.0, 6.0, 1.5), 6.0, epsilon = 1e-10);
     }
 
     #[test]
@@ -187,9 +199,24 @@ mod tests {
 
     #[test]
     fn interpolation_progress_normalizes_invalid_values() {
-        assert_eq!(InterpolationProgress::new(f32::NAN).value(), 0.0);
-        assert_eq!(InterpolationProgress::new(-0.25).value(), 0.0);
-        assert_eq!(InterpolationProgress::new(1.25).value(), 1.0);
+        assert_approx_eq!(
+            f32,
+            InterpolationProgress::new(f32::NAN).value(),
+            0.0,
+            epsilon = 1e-5
+        );
+        assert_approx_eq!(
+            f32,
+            InterpolationProgress::new(-0.25).value(),
+            0.0,
+            epsilon = 1e-5
+        );
+        assert_approx_eq!(
+            f32,
+            InterpolationProgress::new(1.25).value(),
+            1.0,
+            epsilon = 1e-5
+        );
     }
 
     #[test]

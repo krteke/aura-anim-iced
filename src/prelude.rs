@@ -8,8 +8,8 @@ pub use crate::property::{
 };
 pub use crate::runtime::{
     ActiveAnimation, AnimationClock, AnimationHandle, AnimationPlaybackState,
-    AnimationRegistration, AnimationRegistry, AnimationRuntime, AnimationSource, MotionPolicy,
-    SystemClock,
+    AnimationRegistration, AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick,
+    MotionPolicy, SystemClock,
 };
 pub use crate::timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,

@@ -9,6 +9,7 @@ mod registry;
 mod source;
 #[cfg(test)]
 mod tests;
+mod tick;
 
 pub use clock::{AnimationClock, SystemClock};
 pub use entry::{ActiveAnimation, AnimationPlaybackState};
@@ -17,6 +18,7 @@ pub use policy::MotionPolicy;
 pub use registration::AnimationRegistration;
 pub use registry::AnimationRegistry;
 pub use source::AnimationSource;
+pub use tick::AnimationTick;
 
 use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 
@@ -86,6 +88,13 @@ impl<C: AnimationClock> AnimationRuntime<C> {
     /// Registers a timeline and returns its initial runtime output.
     pub fn register_timeline(&mut self, timeline: Timeline) -> AnimationRegistration {
         self.register(timeline)
+    }
+
+    /// Advances active animations and returns a view-ready aggregated snapshot.
+    pub fn tick(&mut self) -> AnimationTick {
+        let now = self.clock.now();
+
+        tick::tick_registry(&mut self.registry, now)
     }
 }
 

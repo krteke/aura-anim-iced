@@ -56,7 +56,7 @@
 
 - `[x]` Implement `src/runtime.rs` with `AnimationRuntime`, `AnimationRegistry`, animation handles, active entries, clock abstraction, and motion policy storage.
 - `[x]` Implement runtime registration for keyframe and timeline instances with start time, playback state, property snapshot output, and completion tracking.
-- `[ ]` Implement runtime tick processing that advances active animations, removes completed entries, and returns an aggregated snapshot for view code.
+- `[x]` Implement runtime tick processing that advances active animations, removes completed entries, and returns an aggregated snapshot for view code.
 - `[ ]` Implement idle detection that reports zero active animations and exposes a subscription gate for stopping animation ticks.
 - `[ ]` Add testing clock support that injects deterministic timestamps for unit tests and example-level runtime checks.
 - `[ ]` Write runtime tests for handle registration, tick sampling, completion removal, idle detection, and deterministic clock progression.

@@ -35,6 +35,12 @@ impl AnimationRegistry {
         &self.entries
     }
 
+    /// Returns mutable active entries in insertion order.
+    #[must_use]
+    pub fn entries_mut(&mut self) -> &mut [ActiveAnimation] {
+        &mut self.entries
+    }
+
     /// Allocates a stable handle.
     #[must_use]
     pub fn allocate_handle(&mut self) -> AnimationHandle {

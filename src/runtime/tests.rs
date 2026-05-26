@@ -1,10 +1,12 @@
+use float_cmp::assert_approx_eq;
+
 use super::{
     ActiveAnimation, AnimationClock, AnimationPlaybackState, AnimationRegistry, AnimationRuntime,
     AnimationSource, MotionPolicy,
 };
 use crate::{
     keyframes::Keyframes,
-    property::{PropertyValue, UiProperty},
+    property::{PropertySnapshot, PropertyValue, UiProperty},
     timeline::{Timeline, Track},
     timing::{Duration, Timing},
 };
@@ -18,6 +20,16 @@ impl AnimationClock for FixedClock {
     fn now(&self) -> Duration {
         self.now
     }
+}
+
+fn scalar(snapshot: &PropertySnapshot, target: UiProperty) -> f32 {
+    let Some((_, PropertyValue::Scalar(value))) =
+        snapshot.iter().find(|(property, _)| *property == target)
+    else {
+        panic!("expected scalar property");
+    };
+
+    *value
 }
 
 #[test]
@@ -194,4 +206,79 @@ fn runtime_marks_zero_duration_sources_completed_at_registration() {
         Some(&vec![(UiProperty::Opacity, PropertyValue::Scalar(1.0))])
     );
     assert_eq!(entry.last_snapshot(), registration.properties());
+}
+
+#[test]
+fn runtime_tick_advances_active_animations_and_aggregates_properties() {
+    let mut runtime = AnimationRuntime::with_clock(FixedClock {
+        now: Duration::ZERO,
+    });
+    runtime.register_keyframes(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    );
+    runtime.register_timeline(Timeline::track(
+        Track::from(UiProperty::Scale, 1.0)
+            .to(2.0)
+            .duration(Duration::from_millis(100.0)),
+    ));
+    runtime.register_keyframes(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0))
+            .opacity(0.0, 10.0)
+            .opacity(1.0, 20.0),
+    );
+
+    runtime.clock_mut().now = Duration::from_millis(50.0);
+    let tick = runtime.tick();
+
+    assert_eq!(tick.timestamp(), Duration::from_millis(50.0));
+    assert_eq!(
+        tick.properties()
+            .iter()
+            .map(|(property, _)| *property)
+            .collect::<Vec<_>>(),
+        vec![UiProperty::Opacity, UiProperty::Scale]
+    );
+    assert_eq!(runtime.active_count(), 3);
+    assert!(tick.completed().is_empty());
+    assert_approx_eq!(
+        f32,
+        scalar(tick.properties(), UiProperty::Opacity),
+        15.0,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(tick.properties(), UiProperty::Scale),
+        1.5,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
+fn runtime_tick_emits_completion_snapshot_and_removes_completed_entries() {
+    let mut runtime = AnimationRuntime::with_clock(FixedClock {
+        now: Duration::ZERO,
+    });
+    let registration = runtime.register_keyframes(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    );
+
+    runtime.clock_mut().now = Duration::from_millis(100.0);
+    let tick = runtime.tick();
+
+    assert_eq!(tick.completed(), &[registration.handle()]);
+    assert_eq!(runtime.active_count(), 0);
+    assert_approx_eq!(
+        f32,
+        scalar(tick.properties(), UiProperty::Opacity),
+        1.0,
+        epsilon = 1e-5
+    );
 }
