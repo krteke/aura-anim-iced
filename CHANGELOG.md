@@ -40,6 +40,7 @@
 - Added runtime-independent timeline playback controls for seeking, pausing, resuming, canceling, finishing, and completion snapshots.
 - Added timeline regression coverage for duration, hold sampling, property merge order, seek output, and completion output.
 - Added runtime storage primitives for animation handles, active entries, registries, clocks, and motion policy configuration.
+- Added timeline marker helpers for name lookup, offset-ordered storage, stable same-offset ordering, and offset-based filtering.
 
 ### Changed
 

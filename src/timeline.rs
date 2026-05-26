@@ -90,10 +90,28 @@ impl Timeline {
         &self.root
     }
 
-    /// Returns the named markers in insertion order.
+    /// Returns the named markers sorted by offset.
     #[must_use]
     pub fn markers(&self) -> &[TimelineMarker] {
         &self.markers
+    }
+
+    /// Returns the first marker with `name`.
+    #[must_use]
+    pub fn marker_named(&self, name: &str) -> Option<&TimelineMarker> {
+        self.markers.iter().find(|marker| marker.name() == name)
+    }
+
+    /// Returns markers whose offsets are at or before `offset`.
+    pub fn markers_at_or_before(
+        &self,
+        offset: impl Into<Duration>,
+    ) -> impl Iterator<Item = &TimelineMarker> + '_ {
+        let offset = offset.into();
+
+        self.markers
+            .iter()
+            .take_while(move |marker| marker.is_at_or_before(offset))
     }
 
     /// Appends a timeline step to the root sequence.
@@ -108,9 +126,20 @@ impl Timeline {
         self
     }
 
-    /// Appends a named marker.
+    /// Appends a named marker and returns the updated timeline.
+    #[must_use]
+    pub fn marker(mut self, name: impl Into<String>, offset: impl Into<Duration>) -> Self {
+        self.push_marker(TimelineMarker::new(name, offset));
+        self
+    }
+
+    /// Appends a named marker while preserving offset ordering.
     pub fn push_marker(&mut self, marker: TimelineMarker) {
-        self.markers.push(marker);
+        let insert_at = self.markers.partition_point(|existing| {
+            existing.offset().as_millis() <= marker.offset().as_millis()
+        });
+
+        self.markers.insert(insert_at, marker);
     }
 
     /// Returns the finite total duration of the root sequence, or `None` if any step is infinite.

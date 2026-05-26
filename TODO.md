@@ -50,6 +50,7 @@
 - `[x]` Implement timeline builder helpers for `sequence`, `parallel`, `hold`, `then`, `track`, `from`, `to`, `duration`, and `easing`.
 - `[x]` Add playback controls for seek, pause, resume, cancel, finish, and completion state snapshots without runtime ownership.
 - `[x]` Write timeline tests for sequence duration, parallel duration, hold sampling, property merge ordering, seek output, and completion output.
+- `[x]` Add timeline marker query helpers for name lookup, offset ordering, stable same-offset ordering, and marker tests.
 
 ## Runtime
 

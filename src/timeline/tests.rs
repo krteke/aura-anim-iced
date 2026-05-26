@@ -509,6 +509,63 @@ fn timeline_duration_uses_root_sequence_and_markers_are_stored() {
 }
 
 #[test]
+fn timeline_marker_helpers_sort_find_and_filter_offsets() {
+    let timeline = Timeline::hold(Duration::from_millis(100.0))
+        .marker("exit", Duration::from_millis(150.0))
+        .marker("mid-a", Duration::from_millis(50.0))
+        .marker("start", Duration::from_millis(-10.0))
+        .marker("mid-b", Duration::from_millis(50.0));
+
+    assert_eq!(
+        timeline
+            .markers()
+            .iter()
+            .map(TimelineMarker::name)
+            .collect::<Vec<_>>(),
+        vec!["start", "mid-a", "mid-b", "exit"]
+    );
+    assert_approx_eq!(
+        f64,
+        timeline
+            .marker_named("start")
+            .expect("start marker")
+            .offset()
+            .as_millis(),
+        0.0,
+        epsilon = 1e-10
+    );
+    assert_eq!(
+        timeline
+            .marker_named("mid-b")
+            .map(TimelineMarker::offset)
+            .map(Duration::as_millis),
+        Some(50.0)
+    );
+    assert_eq!(timeline.marker_named("missing"), None);
+    assert_eq!(
+        timeline
+            .markers_at_or_before(Duration::from_millis(50.0))
+            .map(TimelineMarker::name)
+            .collect::<Vec<_>>(),
+        vec!["start", "mid-a", "mid-b"]
+    );
+    assert_eq!(
+        timeline
+            .markers_at_or_before(Duration::from_millis(120.0))
+            .map(TimelineMarker::name)
+            .collect::<Vec<_>>(),
+        vec!["start", "mid-a", "mid-b"]
+    );
+    assert_eq!(
+        timeline
+            .markers_at_or_before(Duration::from_millis(200.0))
+            .map(TimelineMarker::name)
+            .collect::<Vec<_>>(),
+        vec!["start", "mid-a", "mid-b", "exit"]
+    );
+}
+
+#[test]
 fn infinite_track_makes_group_duration_infinite() {
     let infinite = Track::new(
         Keyframes::new()

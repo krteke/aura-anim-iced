@@ -28,4 +28,8 @@ impl TimelineMarker {
     pub const fn offset(&self) -> Duration {
         self.offset
     }
+
+    pub(crate) fn is_at_or_before(&self, offset: Duration) -> bool {
+        self.offset.as_millis() <= offset.as_millis()
+    }
 }
