@@ -26,7 +26,6 @@
 //! - `keyframes_popup.rs` for opacity and scale keyframes.
 //! - `timeline_toast.rs` for enter, hold, exit, and cleanup sequencing.
 
-#[allow(dead_code)]
 pub(crate) mod animatable;
 pub mod iced_ext;
 pub mod keyframes;
@@ -39,7 +38,7 @@ pub mod timing;
 pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
 pub use keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use property::{
-    PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,
+    PropertyCompositionKey, PropertyKindError, PropertySnapshot, PropertyValue, PropertyValueKind,
     TransformValue, UiProperty, sort_properties_by_composition,
     sort_property_entries_by_composition,
 };

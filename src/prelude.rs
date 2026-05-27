@@ -3,9 +3,8 @@
 pub use crate::iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
 pub use crate::keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use crate::property::{
-    PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueError, PropertyValueKind,
-    TransformValue, UiProperty, sort_properties_by_composition,
-    sort_property_entries_by_composition,
+    PropertyCompositionKey, PropertySnapshot, PropertyValue, PropertyValueKind, TransformValue,
+    UiProperty, sort_properties_by_composition, sort_property_entries_by_composition,
 };
 pub use crate::runtime::{
     ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistration,

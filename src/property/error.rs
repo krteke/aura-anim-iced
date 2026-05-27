@@ -4,7 +4,7 @@ use super::{PropertyValueKind, UiProperty};
 
 /// A typed property/value mismatch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct PropertyValueError {
+pub struct PropertyKindError {
     /// The property being validated.
     pub property: UiProperty,
     /// The expected value kind.
@@ -13,14 +13,14 @@ pub struct PropertyValueError {
     pub actual: PropertyValueKind,
 }
 
-impl Display for PropertyValueError {
+impl Display for PropertyKindError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Property value error: expected {}, got {}",
+            "Property kind error: expected {}, got {}",
             self.expected, self.actual
         )
     }
 }
 
-impl Error for PropertyValueError {}
+impl Error for PropertyKindError {}

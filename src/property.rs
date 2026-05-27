@@ -7,7 +7,7 @@ mod order;
 mod tests;
 mod value;
 
-pub use error::PropertyValueError;
+pub use error::PropertyKindError;
 pub use order::{
     PropertyCompositionKey, sort_properties_by_composition, sort_property_entries_by_composition,
 };
@@ -147,14 +147,14 @@ impl UiProperty {
     }
 
     /// Validates that `value` can be used for this property.
-    pub fn validate_value(self, value: &PropertyValue) -> Result<(), PropertyValueError> {
+    pub fn validate_value(self, value: &PropertyValue) -> Result<(), PropertyKindError> {
         let expected = self.expected_value_kind();
         let actual = value.kind();
 
         if expected.matches(value) {
             Ok(())
         } else {
-            Err(PropertyValueError {
+            Err(PropertyKindError {
                 property: self,
                 expected,
                 actual,

@@ -5,6 +5,7 @@ use std::time::Instant;
 use aura_anim_iced::{iced_ext, prelude::*};
 use iced::{
     Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme, Vector,
+    alignment::{Horizontal, Vertical},
     widget::{button, column, container, mouse_area, row, text},
 };
 
@@ -99,21 +100,29 @@ fn view(demo: &Demo) -> Element<'_, Message> {
     } else {
         "Toggle focus"
     }))
+    .width(150.0)
     .on_press(Message::FocusToggled);
     let state = row![
-        text(if demo.hovered { "hover" } else { "rest" }),
-        text(if demo.pressed { "pressed" } else { "released" }),
-        text(if demo.focused { "focused" } else { "unfocused" }),
+        text(if demo.hovered { "hover" } else { "rest" }).width(60.0),
+        text(if demo.pressed { "pressed" } else { "released" }).width(60.0),
+        text(if demo.focused { "focused" } else { "unfocused" }).width(60.0),
     ]
     .spacing(16);
 
-    container(column![animated, focus_toggle, state].spacing(24))
+    let button_container = container(animated)
         .width(Length::Fill)
         .height(Length::Fill)
         .padding(48)
         .center_x(Length::Fill)
-        .center_y(Length::Fill)
-        .into()
+        .center_y(Length::Fill);
+    let content_container = container(column![focus_toggle, state].spacing(24))
+        .width(Length::Fixed(180.0))
+        .height(Length::Fill)
+        .padding(48)
+        .center_x(Length::Fill)
+        .center_y(Length::Fill);
+
+    container(column![button_container, content_container].spacing(24)).into()
 }
 
 fn animated_button(demo: &Demo) -> Element<'_, Message> {
@@ -135,11 +144,11 @@ fn animated_button(demo: &Demo) -> Element<'_, Message> {
     });
 
     mouse_area(
-        container(text("Animated Button").size(18))
+        container(text("Animated Button").size(18.0 * scale))
             .width(Length::Fixed(190.0 * scale))
             .height(Length::Fixed(56.0 * scale))
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
+            .align_x(Horizontal::Center)
+            .align_y(Vertical::Center)
             .style(move |_theme: &Theme| container::Style {
                 text_color: Some(text_color),
                 background: Some(Background::Color(background)),

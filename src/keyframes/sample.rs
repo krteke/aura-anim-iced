@@ -138,7 +138,10 @@ fn interpolate_value(
         (PropertyValue::Shadow(from), PropertyValue::Shadow(to)) => Some(PropertyValue::Shadow(
             iced::Shadow::interpolate(*from, *to, progress),
         )),
-        _ => None,
+        _ => {
+            // TODO
+            None
+        }
     }
 }
 

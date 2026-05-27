@@ -1,7 +1,8 @@
+use crate::property::error::PropertyKindError;
+
 use super::{
-    PropertyCompositionKey, PropertyValue, PropertyValueError, PropertyValueKind, TransformValue,
-    UiProperty, UiPropertyCategory, sort_properties_by_composition,
-    sort_property_entries_by_composition,
+    PropertyCompositionKey, PropertyValue, PropertyValueKind, TransformValue, UiProperty,
+    UiPropertyCategory, sort_properties_by_composition, sort_property_entries_by_composition,
 };
 
 #[test]
@@ -192,7 +193,7 @@ fn property_rejects_mismatched_values() {
 
     assert_eq!(
         UiProperty::Opacity.validate_value(&value),
-        Err(PropertyValueError {
+        Err(PropertyKindError {
             property: UiProperty::Opacity,
             expected: PropertyValueKind::Scalar,
             actual: PropertyValueKind::Size,
