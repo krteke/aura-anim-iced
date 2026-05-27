@@ -1,5 +1,4 @@
 //! Compile checks for Iced integration and public prelude usage.
-#![cfg(feature = "testing")]
 use std::time::Instant;
 
 use aura_anim_iced::{iced_ext, prelude::*};

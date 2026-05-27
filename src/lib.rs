@@ -44,7 +44,7 @@ pub use property::{
 };
 pub use runtime::{
     ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistration,
-    AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick, MotionPolicy,
+    AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick, TickPolicy,
 };
 pub use timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,

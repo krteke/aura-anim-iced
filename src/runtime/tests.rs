@@ -2,7 +2,7 @@ use float_cmp::assert_approx_eq;
 
 use super::{
     ActiveAnimation, AnimationClock, AnimationPlaybackState, AnimationRegistry, AnimationRuntime,
-    AnimationSource, MotionPolicy, TestClock,
+    AnimationSource, TestClock, TickPolicy,
 };
 use crate::{
     keyframes::Keyframes,
@@ -29,9 +29,8 @@ fn runtime_stores_registry_clock_and_motion_policy() {
     assert!(runtime.is_idle());
     assert_eq!(runtime.active_count(), 0);
     assert_eq!(runtime.clock().now(), Duration::from_millis(250.0));
-    assert!(!runtime.motion_policy().reduced_motion());
 
-    let policy = MotionPolicy::new(true, Duration::from_millis(33.0));
+    let policy = TickPolicy::new(Duration::from_millis(33.0));
     runtime.set_motion_policy(policy);
 
     assert_eq!(runtime.motion_policy(), policy);

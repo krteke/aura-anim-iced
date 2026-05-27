@@ -8,7 +8,6 @@ use std::time::{Duration as StdDuration, Instant};
 use crate::runtime::{AnimationClock, AnimationRuntime, AnimationTick};
 
 #[cfg(test)]
-#[cfg(feature = "testing")]
 mod tests;
 
 pub use effect::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};

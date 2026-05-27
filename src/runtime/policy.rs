@@ -2,12 +2,12 @@ use crate::timing::Duration;
 
 /// Runtime policy for animation motion behavior.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MotionPolicy {
+pub struct TickPolicy {
     tick_interval: Duration,
 }
 
-impl MotionPolicy {
-    /// Creates a motion policy.
+impl TickPolicy {
+    /// Creates a tick policy.
     #[must_use]
     pub const fn new(tick_interval: Duration) -> Self {
         Self { tick_interval }
@@ -26,7 +26,7 @@ impl MotionPolicy {
     }
 }
 
-impl Default for MotionPolicy {
+impl Default for TickPolicy {
     fn default() -> Self {
         Self {
             tick_interval: Self::default_tick_interval(),
