@@ -1,4 +1,7 @@
-use crate::property::{PropertySnapshot, sort_property_entries_by_composition};
+use crate::{
+    prelude::RawPropertySpec,
+    property::{PropertyEntry, PropertySnapshot},
+};
 
 /// A property snapshot stored at a normalized keyframe offset.
 #[derive(Debug, Clone, PartialEq)]
@@ -11,7 +14,7 @@ impl Keyframe {
     /// Creates a keyframe with a normalized offset and composition-sorted snapshot.
     #[must_use]
     pub fn new(offset: f32, mut snapshot: PropertySnapshot) -> Self {
-        sort_property_entries_by_composition(&mut snapshot);
+        snapshot.sort_by_composition_key();
 
         Self {
             offset: normalize_offset(offset),
@@ -32,19 +35,11 @@ impl Keyframe {
     }
 
     pub(crate) fn merge_snapshot(&mut self, snapshot: PropertySnapshot) {
-        for (property, value) in snapshot {
-            if let Some((_, existing)) = self
-                .snapshot
-                .iter_mut()
-                .find(|(candidate, _)| *candidate == property)
-            {
-                *existing = value;
-            } else {
-                self.snapshot.push((property, value));
-            }
-        }
+        self.snapshot.merge(snapshot);
+    }
 
-        sort_property_entries_by_composition(&mut self.snapshot);
+    pub(crate) fn find_property(&self, property: &RawPropertySpec) -> Option<&PropertyEntry> {
+        self.snapshot.find_property(property)
     }
 }
 

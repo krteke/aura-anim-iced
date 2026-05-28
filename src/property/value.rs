@@ -1,3 +1,5 @@
+use crate::animatable::Animatable;
+
 /// A typed value carried by an animation property.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PropertyValue {
@@ -46,5 +48,20 @@ impl TransformValue {
     #[must_use]
     pub const fn identity() -> Self {
         Self::new(0.0, 0.0, 1.0, 0.0)
+    }
+}
+
+impl Animatable for TransformValue {
+    fn interpolate_progress(
+        from: Self,
+        to: Self,
+        progress: crate::animatable::InterpolationProgress,
+    ) -> Self {
+        TransformValue::new(
+            f32::interpolate_progress(from.translate_x, to.translate_x, progress),
+            f32::interpolate_progress(from.translate_y, to.translate_y, progress),
+            f32::interpolate_progress(from.scale, to.scale, progress),
+            f32::interpolate_progress(from.rotate, to.rotate, progress),
+        )
     }
 }

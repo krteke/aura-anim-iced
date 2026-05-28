@@ -12,9 +12,6 @@ pub use kind::PropertyValueKind;
 pub use spec::{PropertySpec, RawPropertySpec};
 pub use value::{PropertyValue, TransformValue};
 
-// /// A sampled set of property values ready to compose into an Iced view.
-// pub type PropertySnapshot = Vec<(UiProperty, PropertyValue)>;
-
 pub const OPACITY: PropertySpec<Scalar> =
     PropertySpec::new(PropertyKey::new("aura", "opacity"), 10);
 pub const SCALE: PropertySpec<Scalar> = PropertySpec::new(PropertyKey::new("aura", "scale"), 20);
@@ -43,6 +40,14 @@ impl<K: PropertyValueKind> From<Vec<(PropertySpec<K>, K::Inner)>> for PropertySn
                 .into_iter()
                 .map(|(spec, value)| PropertyEntry::new(spec, value))
                 .collect(),
+        }
+    }
+}
+
+impl<K: PropertyValueKind> From<(PropertySpec<K>, K::Inner)> for PropertySnapshot {
+    fn from(value: (PropertySpec<K>, K::Inner)) -> Self {
+        Self {
+            entries: vec![PropertyEntry::new(value.0, value.1)],
         }
     }
 }
@@ -125,6 +130,11 @@ impl PropertyEntry {
 
     pub fn value(&self) -> &PropertyValue {
         &self.value
+    }
+
+    pub(crate) fn set_value(&mut self, value: PropertyValue) -> Self {
+        self.value = value;
+        *self
     }
 }
 

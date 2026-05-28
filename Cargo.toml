@@ -35,7 +35,7 @@ path = "src/lib.rs"
 # layout = []
 # inspector = ["tracing"]
 # serde = ["dep:serde"]
-# tracing = ["dep:tracing"]
+tracing = ["dep:tracing"]
 
 [dependencies]
 iced = { version = "0.14", features = ["tokio"] }

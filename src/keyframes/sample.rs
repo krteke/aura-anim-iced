@@ -1,10 +1,10 @@
+use std::collections::HashSet;
+
 use crate::{
     animatable::Animatable,
     nearly_equal_f32,
-    property::{
-        PropertySnapshot, PropertyValue, TransformValue, UiProperty,
-        sort_properties_by_composition, sort_property_entries_by_composition,
-    },
+    prelude::{PropertyEntry, RawPropertySpec},
+    property::{PropertySnapshot, PropertyValue, TransformValue},
     timing::Easing,
 };
 
@@ -20,45 +20,42 @@ pub(crate) fn sample_frames(
     }
 
     let offset = normalize_offset(offset);
-    let mut sampled = Vec::new();
+    let mut sampled = PropertySnapshot::new();
 
     for property in unique_properties(frames) {
-        if let Some(value) = sample_property(frames, property, offset, easing) {
-            sampled.push((property, value));
+        if let Some(entry) = sample_property(frames, property, offset, easing) {
+            sampled.push(entry);
         }
     }
 
-    sort_property_entries_by_composition(&mut sampled);
+    sampled.sort_by_composition_key();
     Some(sampled)
 }
 
-fn unique_properties(frames: &[Keyframe]) -> Vec<UiProperty> {
-    let mut properties = Vec::new();
+fn unique_properties(frames: &[Keyframe]) -> HashSet<RawPropertySpec> {
+    let mut properties = HashSet::new();
 
     for frame in frames {
-        for (property, _) in frame.snapshot() {
-            if !properties.contains(property) {
-                properties.push(*property);
-            }
+        for entry in frame.snapshot().entries() {
+            properties.insert(*entry.spec());
         }
     }
 
-    sort_properties_by_composition(&mut properties);
     properties
 }
 
 fn sample_property(
     frames: &[Keyframe],
-    property: UiProperty,
+    property: RawPropertySpec,
     offset: f32,
     easing: Easing,
-) -> Option<PropertyValue> {
+) -> Option<PropertyEntry> {
     let exact = frames
         .iter()
         .find(|frame| nearly_equal_f32(frame.offset(), offset))
-        .and_then(|frame| find_property(frame.snapshot(), property));
+        .and_then(|frame| frame.find_property(&property));
 
-    if let Some((_, value)) = exact {
+    if let Some(value) = exact {
         return Some(*value);
     }
 
@@ -66,28 +63,24 @@ fn sample_property(
         .iter()
         .rev()
         .filter(|frame| frame.offset() <= offset || nearly_equal_f32(frame.offset(), offset))
-        .find_map(|frame| {
-            find_property(frame.snapshot(), property).map(|(_, value)| (frame, value))
-        });
+        .find_map(|frame| frame.find_property(&property).map(|entry| (frame, entry)));
     let after = frames
         .iter()
         .filter(|frame| frame.offset() >= offset || nearly_equal_f32(frame.offset(), offset))
-        .find_map(|frame| {
-            find_property(frame.snapshot(), property).map(|(_, value)| (frame, value))
-        });
+        .find_map(|frame| frame.find_property(&property).map(|entry| (frame, entry)));
 
     match (before, after) {
-        (Some((before_frame, before_value)), Some((after_frame, after_value))) => {
+        (Some((before_frame, before_entry)), Some((after_frame, after_entry))) => {
             if nearly_equal_f32(before_frame.offset(), after_frame.offset()) {
-                Some(*before_value)
+                Some(*before_entry)
             } else {
                 let progress =
                     property_progress(before_frame.offset(), after_frame.offset(), offset);
                 let progress = easing.value(progress);
-                interpolate_value(before_value, after_value, progress)
+                interpolate_entry(&before_entry, &after_entry, progress)
             }
         }
-        (Some((_, value)), None) | (None, Some((_, value))) => Some(*value),
+        (Some((_, entry)), None) | (None, Some((_, entry))) => Some(*entry),
         (None, None) => None,
     }
 }
@@ -95,28 +88,17 @@ fn sample_property(
 fn property_progress(from: f32, to: f32, offset: f32) -> f32 {
     let span = to - from;
 
-    if span > f32::EPSILON {
-        ((offset - from) / span).clamp(0.0, 1.0)
-    } else {
-        0.0
-    }
+    ((offset - from) / span).clamp(0.0, 1.0)
 }
 
-fn find_property(
-    snapshot: &PropertySnapshot,
-    property: UiProperty,
-) -> Option<&(UiProperty, PropertyValue)> {
-    snapshot
-        .iter()
-        .find(|(candidate, _)| *candidate == property)
-}
-
-fn interpolate_value(
-    from: &PropertyValue,
-    to: &PropertyValue,
+fn interpolate_entry(
+    from: &PropertyEntry,
+    to: &PropertyEntry,
     progress: f32,
-) -> Option<PropertyValue> {
-    match (from, to) {
+) -> Option<PropertyEntry> {
+    let mut result = from.clone();
+
+    let value = match (from.value(), to.value()) {
         (PropertyValue::Scalar(from), PropertyValue::Scalar(to)) => Some(PropertyValue::Scalar(
             f32::interpolate(*from, *to, progress),
         )),
@@ -130,7 +112,7 @@ fn interpolate_value(
             PropertyValue::Rectangle(iced::Rectangle::interpolate(*from, *to, progress)),
         ),
         (PropertyValue::Transform(from), PropertyValue::Transform(to)) => Some(
-            PropertyValue::Transform(interpolate_transform(*from, *to, progress)),
+            PropertyValue::Transform(TransformValue::interpolate(*from, *to, progress)),
         ),
         (PropertyValue::Color(from), PropertyValue::Color(to)) => Some(PropertyValue::Color(
             iced::Color::interpolate(*from, *to, progress),
@@ -138,22 +120,8 @@ fn interpolate_value(
         (PropertyValue::Shadow(from), PropertyValue::Shadow(to)) => Some(PropertyValue::Shadow(
             iced::Shadow::interpolate(*from, *to, progress),
         )),
-        _ => {
-            // TODO
-            None
-        }
-    }
-}
+        _ => None,
+    };
 
-fn interpolate_transform(
-    from: TransformValue,
-    to: TransformValue,
-    progress: f32,
-) -> TransformValue {
-    TransformValue::new(
-        f32::interpolate(from.translate_x, to.translate_x, progress),
-        f32::interpolate(from.translate_y, to.translate_y, progress),
-        f32::interpolate(from.scale, to.scale, progress),
-        f32::interpolate(from.rotate, to.rotate, progress),
-    )
+    value.map(|value| result.set_value(value))
 }
