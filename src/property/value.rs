@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 /// A typed value carried by an animation property.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PropertyValue {
@@ -17,72 +15,6 @@ pub enum PropertyValue {
     Color(iced::Color),
     /// An Iced shadow value.
     Shadow(iced::Shadow),
-}
-
-impl PropertyValue {
-    /// Returns the kind represented by this value.
-    #[must_use]
-    pub const fn kind(&self) -> PropertyValueKind {
-        match self {
-            Self::Scalar(_) => PropertyValueKind::Scalar,
-            Self::Vector2(_) => PropertyValueKind::Vector2,
-            Self::Size(_) => PropertyValueKind::Size,
-            Self::Rectangle(_) => PropertyValueKind::Rectangle,
-            Self::Transform(_) => PropertyValueKind::Transform,
-            Self::Color(_) => PropertyValueKind::Color,
-            Self::Shadow(_) => PropertyValueKind::Shadow,
-        }
-    }
-}
-
-impl From<f32> for PropertyValue {
-    fn from(value: f32) -> Self {
-        Self::Scalar(value)
-    }
-}
-
-/// The high-level kind of a property value.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum PropertyValueKind {
-    /// Scalar values.
-    Scalar,
-    /// Two-dimensional vector values.
-    Vector2,
-    /// Size values.
-    Size,
-    /// Rectangle values.
-    Rectangle,
-    /// Transform values.
-    Transform,
-    /// Color values.
-    Color,
-    /// Shadow values.
-    Shadow,
-}
-
-impl Display for PropertyValueKind {
-    #[allow(clippy::uninlined_format_args)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            PropertyValueKind::Scalar => "Scalar",
-            PropertyValueKind::Vector2 => "Vector2",
-            PropertyValueKind::Size => "Size",
-            PropertyValueKind::Rectangle => "Rectangle",
-            PropertyValueKind::Transform => "Transform",
-            PropertyValueKind::Color => "Color",
-            PropertyValueKind::Shadow => "Shadow",
-        };
-
-        write!(f, "{}", s)
-    }
-}
-
-impl PropertyValueKind {
-    /// Returns whether this kind matches `value`.
-    #[must_use]
-    pub fn matches(self, value: &PropertyValue) -> bool {
-        self == value.kind()
-    }
 }
 
 /// A transform-friendly value.

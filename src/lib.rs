@@ -37,11 +37,7 @@ pub mod timing;
 
 pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
 pub use keyframes::{Keyframe, KeyframeSegment, Keyframes};
-pub use property::{
-    PropertyCompositionKey, PropertyKindError, PropertySnapshot, PropertyValue, PropertyValueKind,
-    TransformValue, UiProperty, sort_properties_by_composition,
-    sort_property_entries_by_composition,
-};
+pub use property::{PropertySnapshot, PropertyValue, TransformValue};
 pub use runtime::{
     ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistration,
     AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick, TickPolicy,

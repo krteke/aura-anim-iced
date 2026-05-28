@@ -1,181 +1,149 @@
 //! Visual property identifiers, value containers, and composition helpers.
 
-mod error;
-mod iced;
-mod order;
+mod kind;
+mod spec;
 #[cfg(test)]
 mod tests;
 mod value;
 
-pub use error::PropertyKindError;
-pub use order::{
-    PropertyCompositionKey, sort_properties_by_composition, sort_property_entries_by_composition,
-};
-pub use value::{PropertyValue, PropertyValueKind, TransformValue};
+use crate::property::kind::{Color, Scalar, Shadow};
 
-/// A sampled set of property values ready to compose into an Iced view.
-pub type PropertySnapshot = Vec<(UiProperty, PropertyValue)>;
+pub use kind::PropertyValueKind;
+pub use spec::{PropertySpec, RawPropertySpec};
+pub use value::{PropertyValue, TransformValue};
 
-/// A stable visual property that can be animated and sampled.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UiProperty {
-    /// Element opacity.
-    Opacity,
-    /// Horizontal translation.
-    TranslateX,
-    /// Vertical translation.
-    TranslateY,
-    /// Uniform scale.
-    Scale,
-    /// Rotation angle.
-    Rotate,
-    /// Element width.
-    Width,
-    /// Element height.
-    Height,
-    /// Element padding.
-    Padding,
-    /// Corner radius.
-    Radius,
-    /// Background color.
-    Background,
-    /// Border color.
-    BorderColor,
-    /// Text color.
-    TextColor,
-    /// Shadow style.
-    Shadow,
+// /// A sampled set of property values ready to compose into an Iced view.
+// pub type PropertySnapshot = Vec<(UiProperty, PropertyValue)>;
+
+pub const OPACITY: PropertySpec<Scalar> =
+    PropertySpec::new(PropertyKey::new("aura", "opacity"), 10);
+pub const SCALE: PropertySpec<Scalar> = PropertySpec::new(PropertyKey::new("aura", "scale"), 20);
+pub const WIDTH: PropertySpec<Scalar> = PropertySpec::new(PropertyKey::new("aura", "width"), 30);
+pub const HEIGHT: PropertySpec<Scalar> = PropertySpec::new(PropertyKey::new("aura", "height"), 31);
+pub const PADDING: PropertySpec<Scalar> =
+    PropertySpec::new(PropertyKey::new("aura", "padding"), 40);
+pub const RADIUS: PropertySpec<Scalar> = PropertySpec::new(PropertyKey::new("aura", "radius"), 50);
+pub const BACKGROUND: PropertySpec<Color> =
+    PropertySpec::new(PropertyKey::new("aura", "background"), 60);
+pub const BORDER_COLOR: PropertySpec<Color> =
+    PropertySpec::new(PropertyKey::new("aura", "border-color"), 70);
+pub const TEXT_COLOR: PropertySpec<Color> =
+    PropertySpec::new(PropertyKey::new("aura", "text-color"), 80);
+pub const SHADOW: PropertySpec<Shadow> = PropertySpec::new(PropertyKey::new("aura", "shadow"), 90);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PropertySnapshot {
+    entries: Vec<PropertyEntry>,
 }
 
-impl UiProperty {
-    /// All v0.1 visual properties in stable ID order.
-    pub const ALL: [Self; 13] = [
-        Self::Opacity,
-        Self::TranslateX,
-        Self::TranslateY,
-        Self::Scale,
-        Self::Rotate,
-        Self::Width,
-        Self::Height,
-        Self::Padding,
-        Self::Radius,
-        Self::Background,
-        Self::BorderColor,
-        Self::TextColor,
-        Self::Shadow,
-    ];
+impl<K: PropertyValueKind> From<Vec<(PropertySpec<K>, K::Inner)>> for PropertySnapshot {
+    fn from(value: Vec<(PropertySpec<K>, K::Inner)>) -> Self {
+        Self {
+            entries: value
+                .into_iter()
+                .map(|(spec, value)| PropertyEntry::new(spec, value))
+                .collect(),
+        }
+    }
+}
 
-    /// Returns the stable numeric ID for serialized tracks and diagnostics.
-    #[must_use]
-    pub const fn id(self) -> u16 {
-        match self {
-            Self::Opacity => 1,
-            Self::TranslateX => 2,
-            Self::TranslateY => 3,
-            Self::Scale => 4,
-            Self::Rotate => 5,
-            Self::Width => 6,
-            Self::Height => 7,
-            Self::Padding => 8,
-            Self::Radius => 9,
-            Self::Background => 10,
-            Self::BorderColor => 11,
-            Self::TextColor => 12,
-            Self::Shadow => 13,
+impl From<Vec<PropertyEntry>> for PropertySnapshot {
+    fn from(entries: Vec<PropertyEntry>) -> Self {
+        Self { entries }
+    }
+}
+
+impl PropertySnapshot {
+    pub const fn new() -> Self {
+        Self {
+            entries: Vec::new(),
         }
     }
 
-    /// Returns the broad visual category for this property.
-    #[must_use]
-    pub const fn category(self) -> UiPropertyCategory {
-        match self {
-            Self::Opacity => UiPropertyCategory::Opacity,
-            Self::TranslateX | Self::TranslateY | Self::Scale | Self::Rotate => {
-                UiPropertyCategory::Transform
+    pub const fn with_entries(entries: Vec<PropertyEntry>) -> Self {
+        Self { entries }
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    pub fn entries(&self) -> &[PropertyEntry] {
+        &self.entries
+    }
+
+    pub fn sort_by_composition_key(&mut self) {
+        self.entries
+            .sort_by_key(|entry| entry.spec.composition_order());
+    }
+
+    pub fn merge(&mut self, other: Self) {
+        other.entries.into_iter().for_each(|snapshot| {
+            if let Some(entry) = self.find_property_mut(&snapshot.spec) {
+                entry.value = snapshot.value;
+            } else {
+                self.entries.push(snapshot);
             }
-            Self::Width | Self::Height | Self::Padding => UiPropertyCategory::Size,
-            Self::Radius => UiPropertyCategory::Radius,
-            Self::Background | Self::BorderColor | Self::TextColor => UiPropertyCategory::Color,
-            Self::Shadow => UiPropertyCategory::Shadow,
-        }
+        });
+
+        self.sort_by_composition_key();
     }
 
-    /// Returns the default composition order used when applying snapshots.
-    #[must_use]
-    pub const fn composition_order(self) -> u8 {
-        match self {
-            Self::Opacity => 10,
-            Self::TranslateX | Self::TranslateY | Self::Scale | Self::Rotate => 20,
-            Self::Width | Self::Height => 30,
-            Self::Padding => 40,
-            Self::Radius => 50,
-            Self::Background => 60,
-            Self::BorderColor => 70,
-            Self::TextColor => 80,
-            Self::Shadow => 90,
-        }
+    pub fn find_property(&self, property: &RawPropertySpec) -> Option<&PropertyEntry> {
+        self.entries.iter().find(|entry| entry.spec == *property)
     }
 
-    /// Returns the deterministic composition key for this property.
-    #[must_use]
-    pub const fn composition_key(self) -> PropertyCompositionKey {
-        PropertyCompositionKey::new(self.composition_order(), self.id())
+    pub(crate) fn push(&mut self, entry: PropertyEntry) {
+        self.entries.push(entry);
     }
 
-    /// Returns the expected value kind for this property.
-    #[must_use]
-    pub const fn expected_value_kind(self) -> PropertyValueKind {
-        match self {
-            Self::Opacity
-            | Self::TranslateX
-            | Self::TranslateY
-            | Self::Scale
-            | Self::Rotate
-            | Self::Width
-            | Self::Height
-            | Self::Padding
-            | Self::Radius => PropertyValueKind::Scalar,
-            Self::Background | Self::BorderColor | Self::TextColor => PropertyValueKind::Color,
-            Self::Shadow => PropertyValueKind::Shadow,
-        }
-    }
-
-    /// Returns whether `value` can be used for this property.
-    #[must_use]
-    pub fn accepts_value(self, value: &PropertyValue) -> bool {
-        self.expected_value_kind().matches(value)
-    }
-
-    /// Validates that `value` can be used for this property.
-    pub fn validate_value(self, value: &PropertyValue) -> Result<(), PropertyKindError> {
-        let expected = self.expected_value_kind();
-        let actual = value.kind();
-
-        if expected.matches(value) {
-            Ok(())
-        } else {
-            Err(PropertyKindError {
-                property: self,
-                expected,
-                actual,
-            })
-        }
+    fn find_property_mut(&mut self, property: &RawPropertySpec) -> Option<&mut PropertyEntry> {
+        self.entries
+            .iter_mut()
+            .find(|entry| entry.spec == *property)
     }
 }
 
-/// Broad visual property categories.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PropertyEntry {
+    spec: RawPropertySpec,
+    value: PropertyValue,
+}
+
+impl PropertyEntry {
+    pub fn new<K: PropertyValueKind>(spec: PropertySpec<K>, value: K::Inner) -> Self {
+        let value = value.into();
+        Self {
+            spec: spec.raw(),
+            value: K::wrap(value),
+        }
+    }
+
+    pub fn spec(&self) -> &RawPropertySpec {
+        &self.spec
+    }
+
+    pub fn value(&self) -> &PropertyValue {
+        &self.value
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum UiPropertyCategory {
-    /// Opacity properties.
-    Opacity,
-    /// Transform properties.
-    Transform,
-    /// Size and spacing properties.
-    Size,
-    /// Radius properties.
-    Radius,
-    /// Color properties.
-    Color,
-    /// Shadow properties.
-    Shadow,
+pub struct PropertyKey {
+    namespace: &'static str,
+    name: &'static str,
+}
+
+impl PropertyKey {
+    pub const fn new(namespace: &'static str, name: &'static str) -> Self {
+        Self { namespace, name }
+    }
+
+    pub const fn namespace(&self) -> &'static str {
+        self.namespace
+    }
+
+    pub const fn name(&self) -> &'static str {
+        self.name
+    }
 }
