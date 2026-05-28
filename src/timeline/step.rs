@@ -47,6 +47,10 @@ impl TimelineStep {
             Self::Hold(_) => None,
         }
     }
+
+    pub(crate) fn is_hold(&self) -> bool {
+        matches!(self, Self::Hold(_))
+    }
 }
 
 impl From<Track> for TimelineStep {

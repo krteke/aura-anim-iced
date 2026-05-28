@@ -1,9 +1,5 @@
 use super::{Hold, Sequence, TimelineStep, Track, duration::max_duration};
-use crate::{
-    keyframes::Keyframes,
-    property::{PropertySnapshot, sort_property_entries_by_composition},
-    timing::Duration,
-};
+use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 
 /// A parallel timeline group.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -88,14 +84,14 @@ impl Parallel {
 
         for step in &self.steps {
             if let Some(snapshot) = step.sample_at(offset) {
-                merge_snapshot(&mut merged, snapshot);
+                merged.merge(snapshot);
             }
         }
 
         if merged.is_empty() {
             None
         } else {
-            sort_property_entries_by_composition(&mut merged);
+            merged.sort_by_composition_key();
             Some(merged)
         }
     }
@@ -107,28 +103,15 @@ impl Parallel {
 
         for step in &self.steps {
             if let Some(snapshot) = step.completion_snapshot() {
-                merge_snapshot(&mut merged, snapshot);
+                merged.merge(snapshot);
             }
         }
 
         if merged.is_empty() {
             None
         } else {
-            sort_property_entries_by_composition(&mut merged);
+            merged.sort_by_composition_key();
             Some(merged)
-        }
-    }
-}
-
-fn merge_snapshot(target: &mut PropertySnapshot, snapshot: PropertySnapshot) {
-    for (property, value) in snapshot {
-        if let Some((_, existing)) = target
-            .iter_mut()
-            .find(|(candidate, _)| *candidate == property)
-        {
-            *existing = value;
-        } else {
-            target.push((property, value));
         }
     }
 }

@@ -85,6 +85,7 @@ impl Sequence {
         let offset_dur = offset.into();
         let mut cursor_dur = Duration::ZERO;
         let last_index = self.steps.len().saturating_sub(1);
+        let mut last_visible_snapshot = None;
 
         for (index, step) in self.steps.iter().enumerate() {
             let Some(duration) = step.total_duration() else {
@@ -98,7 +99,14 @@ impl Sequence {
                 offset_dur.as_millis(),
                 index == last_index,
             ) {
+                if step.is_hold() {
+                    return last_visible_snapshot;
+                }
                 return step.sample_at(offset_dur.checked_sub(cursor_dur)?);
+            }
+
+            if let Some(snapshot) = step.completion_snapshot() {
+                last_visible_snapshot = Some(snapshot);
             }
 
             cursor_dur = end_dur;
@@ -110,9 +118,23 @@ impl Sequence {
     /// Samples the final visual state from the last step that can produce one.
     #[must_use]
     pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
-        self.steps
+        let mut snapshot = PropertySnapshot::new();
+        let snapshots = self
+            .steps
             .iter()
-            .rev()
-            .find_map(TimelineStep::completion_snapshot)
+            .map(|s| s.completion_snapshot())
+            .collect::<Vec<_>>();
+
+        for s in snapshots {
+            if let Some(s) = s {
+                snapshot.merge(s);
+            }
+        }
+
+        if snapshot.is_empty() {
+            None
+        } else {
+            Some(snapshot)
+        }
     }
 }

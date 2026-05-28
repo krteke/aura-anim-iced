@@ -1,6 +1,7 @@
 use crate::{
     keyframes::Keyframes,
-    property::{PropertySnapshot, PropertyValue, UiProperty},
+    prelude::PropertyValueKind,
+    property::{PropertyEntry, PropertySnapshot, PropertySpec},
     timing::{Duration, Easing, Timing},
 };
 
@@ -12,8 +13,8 @@ pub struct Track {
 }
 
 /// A builder for creating property tracks.
-pub struct PropertyTrackBuilder {
-    property: UiProperty,
+pub struct PropertyTrackBuilder<K: PropertyValueKind> {
+    property: PropertySpec<K>,
     keyframes: Keyframes,
 }
 
@@ -29,10 +30,13 @@ impl Track {
 
     /// Creates a track with an initial value for `property` at offset `0.0`.
     #[must_use]
-    pub fn from(property: UiProperty, value: impl Into<PropertyValue>) -> PropertyTrackBuilder {
+    pub fn from<K: PropertyValueKind + Copy>(
+        property: PropertySpec<K>,
+        value: K::Inner,
+    ) -> PropertyTrackBuilder<K> {
         PropertyTrackBuilder {
             property,
-            keyframes: Keyframes::new().at(0.0, [(property, value.into())]),
+            keyframes: Keyframes::new().at(0.0, (property, value)),
         }
     }
 
@@ -57,12 +61,8 @@ impl Track {
 
     /// Inserts a keyframe at the end of the track with the given property and value.
     #[must_use]
-    pub fn keyframe_at_end(
-        mut self,
-        property: UiProperty,
-        value: impl Into<PropertyValue>,
-    ) -> Self {
-        self.keyframes = self.keyframes.at(1.0, [(property, value.into())]);
+    pub fn keyframe_at_end(mut self, property: PropertyEntry) -> Self {
+        self.keyframes = self.keyframes.at(1.0, vec![property]);
         self
     }
 
@@ -118,11 +118,11 @@ impl Track {
     }
 }
 
-impl PropertyTrackBuilder {
+impl<K: PropertyValueKind> PropertyTrackBuilder<K> {
     /// Inserts the final value and returns the completed track.
     #[must_use]
-    pub fn to(self, value: impl Into<PropertyValue>) -> Track {
-        Track::new(self.keyframes.at(1.0, [(self.property, value.into())]))
+    pub fn to(self, value: K::Inner) -> Track {
+        Track::new(self.keyframes.at(1.0, (self.property, value)))
     }
 }
 
