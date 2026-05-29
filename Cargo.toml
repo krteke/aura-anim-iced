@@ -38,6 +38,7 @@ path = "src/lib.rs"
 tracing = ["dep:tracing"]
 
 [dependencies]
+uuid = { version = "1.23.1", features = ["v4"] }
 iced = { version = "0.14", features = ["tokio"] }
 serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }

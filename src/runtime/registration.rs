@@ -5,7 +5,6 @@ use crate::{property::PropertySnapshot, timing::Duration};
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimationRegistration {
     handle: AnimationHandle,
-    started_at: Duration,
     state: AnimationPlaybackState,
     properties: Option<PropertySnapshot>,
     completed_at: Option<Duration>,
@@ -15,7 +14,6 @@ impl AnimationRegistration {
     pub(super) fn from_entry(entry: &ActiveAnimation) -> Self {
         Self {
             handle: entry.handle(),
-            started_at: entry.started_at(),
             state: entry.state(),
             properties: entry.last_snapshot().cloned(),
             completed_at: entry.completed_at(),
@@ -26,12 +24,6 @@ impl AnimationRegistration {
     #[must_use]
     pub const fn handle(&self) -> AnimationHandle {
         self.handle
-    }
-
-    /// Returns the runtime timestamp used as the animation start time.
-    #[must_use]
-    pub const fn started_at(&self) -> Duration {
-        self.started_at
     }
 
     /// Returns the initial playback state.

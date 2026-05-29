@@ -7,6 +7,7 @@ mod policy;
 mod registration;
 mod registry;
 mod source;
+mod target;
 #[cfg(test)]
 mod tests;
 mod tick;
@@ -15,12 +16,13 @@ pub use clock::{AnimationClock, SystemClock};
 pub use entry::{ActiveAnimation, AnimationPlaybackState};
 pub use handle::AnimationHandle;
 pub use policy::TickPolicy;
-pub use registration::AnimationRegistration;
 pub use registry::AnimationRegistry;
 pub use source::AnimationSource;
+pub use target::{AnimationTargetId, TargetedPropertySnapshot};
 pub use tick::AnimationTick;
 
 use crate::runtime::clock::TestClock;
+use crate::runtime::registration::AnimationRegistration;
 use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 
 /// Runtime state owned by an Iced application.
@@ -65,12 +67,16 @@ impl<C: AnimationClock> AnimationRuntime<C> {
     }
 
     /// Registers an animation source and returns its initial runtime output.
-    pub fn register(&mut self, source: impl Into<AnimationSource>) -> AnimationRegistration {
+    pub fn register_target(
+        &mut self,
+        target: AnimationTargetId,
+        source: impl Into<AnimationSource>,
+    ) -> AnimationRegistration {
         let handle = self.registry.allocate_handle();
-        let started_at = self.clock.now();
+        let now = self.clock.now();
         let source = source.into();
         let initial_snapshot = source.sample_at(Duration::ZERO);
-        let mut entry = ActiveAnimation::new(handle, source, started_at);
+        let mut entry = ActiveAnimation::new(handle, target, source, now);
 
         entry.set_last_snapshot(initial_snapshot.clone());
 
@@ -78,24 +84,31 @@ impl<C: AnimationClock> AnimationRuntime<C> {
             let completion_snapshot = entry.source().completion_snapshot();
 
             entry.set_last_snapshot(completion_snapshot);
-            entry.mark_completed(started_at);
+            entry.mark_completed(now);
         }
 
         let registration = AnimationRegistration::from_entry(&entry);
-
-        self.registry.insert(entry);
+        self.registry.insert(target, entry);
 
         registration
     }
 
     /// Registers keyframes and returns their initial runtime output.
-    pub fn register_keyframes(&mut self, keyframes: Keyframes) -> AnimationRegistration {
-        self.register(keyframes)
+    pub fn register_keyframes(
+        &mut self,
+        target: AnimationTargetId,
+        keyframes: Keyframes,
+    ) -> AnimationRegistration {
+        self.register_target(target, keyframes)
     }
 
     /// Registers a timeline and returns its initial runtime output.
-    pub fn register_timeline(&mut self, timeline: Timeline) -> AnimationRegistration {
-        self.register(timeline)
+    pub fn register_timeline(
+        &mut self,
+        target: AnimationTargetId,
+        timeline: Timeline,
+    ) -> AnimationRegistration {
+        self.register_target(target, timeline)
     }
 
     /// Advances active animations and returns a view-ready aggregated snapshot.
@@ -103,6 +116,36 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         let now = self.clock.now();
 
         tick::tick_registry(&mut self.registry, now)
+    }
+
+    pub fn cancel_target(&mut self, target: AnimationTargetId) {
+        self.registry.cancel_target(target);
+    }
+
+    pub fn seek_target(&mut self, target: AnimationTargetId, pos: Duration, now: Duration) {
+        self.registry.seek_target(target, pos, now);
+    }
+
+    pub fn pause_target(&mut self, target: AnimationTargetId) {
+        todo!()
+    }
+
+    pub fn cancel(&mut self, target: AnimationTargetId, handle: AnimationHandle) {
+        todo!()
+    }
+
+    pub fn seek(
+        &mut self,
+        target: AnimationTargetId,
+        handle: AnimationHandle,
+        pos: Duration,
+        now: Duration,
+    ) {
+        todo!()
+    }
+
+    pub fn pause(&mut self, target: AnimationTargetId, handle: AnimationHandle) {
+        todo!()
     }
 }
 
@@ -113,22 +156,10 @@ impl<C> AnimationRuntime<C> {
         &self.registry
     }
 
-    // /// Returns mutable access to the active animation registry.
-    // #[must_use]
-    // pub const fn registry_mut(&mut self) -> &mut AnimationRegistry {
-    //     &mut self.registry
-    // }
-
     /// Returns the runtime clock.
     #[must_use]
     pub const fn clock(&self) -> &C {
         &self.clock
-    }
-
-    /// Returns mutable access to the runtime clock.
-    #[must_use]
-    pub const fn clock_mut(&mut self) -> &mut C {
-        &mut self.clock
     }
 
     /// Returns the current motion policy.
@@ -145,11 +176,7 @@ impl<C> AnimationRuntime<C> {
     /// Returns the number of active animation entries.
     #[must_use]
     pub fn active_count(&self) -> usize {
-        self.registry
-            .entries()
-            .iter()
-            .filter(|entry| entry.is_active())
-            .count()
+        self.registry.active_count()
     }
 
     /// Returns whether the runtime has no active animation entries.

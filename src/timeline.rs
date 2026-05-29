@@ -5,7 +5,6 @@ mod error;
 mod hold;
 mod marker;
 mod parallel;
-mod playback;
 mod sequence;
 mod step;
 #[cfg(test)]
@@ -16,7 +15,6 @@ pub use error::TimelinePlaybackError;
 pub use hold::Hold;
 pub use marker::TimelineMarker;
 pub use parallel::Parallel;
-pub use playback::{TimelinePlayback, TimelinePlaybackSnapshot, TimelinePlaybackState};
 pub use sequence::Sequence;
 pub use step::TimelineStep;
 pub use track::Track;

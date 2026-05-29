@@ -1,23 +1,21 @@
-use std::collections::HashMap;
-
-use super::{AnimationHandle, AnimationPlaybackState, AnimationRegistry};
-use crate::{
-    property::{PropertySnapshot, PropertyValue, UiProperty, sort_property_entries_by_composition},
-    timing::Duration,
+use super::{
+    AnimationHandle, AnimationPlaybackState, AnimationRegistry,
+    target::{AnimationTargetId, TargetedPropertySnapshot},
 };
+use crate::{property::PropertySnapshot, timing::Duration};
 
 /// Output produced by one runtime tick.
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimationTick {
     timestamp: Duration,
-    properties: PropertySnapshot,
+    properties: TargetedPropertySnapshot,
     completed: Vec<AnimationHandle>,
 }
 
 impl AnimationTick {
     fn new(
         timestamp: Duration,
-        properties: PropertySnapshot,
+        properties: TargetedPropertySnapshot,
         completed: Vec<AnimationHandle>,
     ) -> Self {
         Self {
@@ -33,10 +31,16 @@ impl AnimationTick {
         self.timestamp
     }
 
-    /// Returns the aggregated property snapshot for view code.
+    /// Returns the target-scoped property snapshots for view code.
     #[must_use]
-    pub fn properties(&self) -> &PropertySnapshot {
+    pub fn properties(&self) -> &TargetedPropertySnapshot {
         &self.properties
+    }
+
+    /// Returns the property snapshot for a single target.
+    #[must_use]
+    pub fn properties_for(&self, target: AnimationTargetId) -> Option<&PropertySnapshot> {
+        self.properties.get(target)
     }
 
     /// Returns handles completed and removed during this tick.
@@ -53,16 +57,22 @@ impl AnimationTick {
 }
 
 pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> AnimationTick {
-    let mut properties_by_key = HashMap::new();
+    let mut properties = TargetedPropertySnapshot::new();
     let mut completed = Vec::new();
     let mut removed = Vec::new();
 
     for entry in registry.entries_mut().iter_mut() {
+        let target = entry.target();
         let snapshot = match entry.state() {
             AnimationPlaybackState::Playing => {
-                let elapsed = elapsed_since(now, entry.started_at());
+                let delta = now.checked_sub(entry.last_tick()).unwrap_or(Duration::ZERO);
+                entry.update_position(delta);
+                entry.set_last_tick(now);
 
-                if source_is_complete(entry.source().total_duration(), elapsed) {
+                if let Some(duration) = entry.source().total_duration()
+                    && source_is_complete(duration, entry.position())
+                {
+                    entry.set_position(duration);
                     let snapshot = entry.source().completion_snapshot();
 
                     entry.set_last_snapshot(snapshot.clone());
@@ -72,14 +82,17 @@ pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> 
 
                     snapshot
                 } else {
-                    let snapshot = entry.source().sample_at(elapsed);
+                    let snapshot = entry.source().sample_at(entry.position());
 
                     entry.set_last_snapshot(snapshot.clone());
 
                     snapshot
                 }
             }
-            AnimationPlaybackState::Paused => entry.last_snapshot().cloned(),
+            AnimationPlaybackState::Paused => {
+                entry.set_last_tick(now);
+                entry.last_snapshot().cloned()
+            }
             AnimationPlaybackState::Canceled => {
                 removed.push(entry.handle());
                 None
@@ -91,39 +104,26 @@ pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> 
             }
         };
 
-        merge_snapshot(snapshot, &mut properties_by_key);
+        merge_snapshot(&mut properties, target, snapshot);
     }
 
     for handle in &removed {
-        registry.remove(*handle);
+        registry.remove_by_handle(*handle);
     }
 
-    AnimationTick::new(now, sorted_properties(properties_by_key), completed)
+    AnimationTick::new(now, properties, completed)
 }
 
-fn elapsed_since(now: Duration, started_at: Duration) -> Duration {
-    now.checked_sub(started_at).unwrap_or(Duration::ZERO)
-}
-
-fn source_is_complete(total_duration: Option<Duration>, elapsed: Duration) -> bool {
-    total_duration.is_some_and(|duration| elapsed.as_millis() >= duration.as_millis())
+fn source_is_complete(total_duration: Duration, elapsed: Duration) -> bool {
+    elapsed.as_millis() >= total_duration.as_millis()
 }
 
 fn merge_snapshot(
+    properties: &mut TargetedPropertySnapshot,
+    target: AnimationTargetId,
     snapshot: Option<PropertySnapshot>,
-    properties_by_key: &mut HashMap<UiProperty, PropertyValue>,
 ) {
     if let Some(snapshot) = snapshot {
-        for (property, value) in snapshot {
-            properties_by_key.insert(property, value);
-        }
+        properties.merge(target, snapshot);
     }
-}
-
-fn sorted_properties(properties_by_key: HashMap<UiProperty, PropertyValue>) -> PropertySnapshot {
-    let mut properties = properties_by_key.into_iter().collect::<Vec<_>>();
-
-    sort_property_entries_by_composition(&mut properties);
-
-    properties
 }

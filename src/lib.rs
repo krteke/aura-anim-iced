@@ -35,17 +35,14 @@ pub mod runtime;
 pub mod timeline;
 pub mod timing;
 
-pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
+pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use property::{PropertySnapshot, PropertyValue, TransformValue};
 pub use runtime::{
-    ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistration,
-    AnimationRegistry, AnimationRuntime, AnimationSource, AnimationTick, TickPolicy,
+    ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistry, AnimationRuntime,
+    AnimationSource, AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
 };
-pub use timeline::{
-    Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelinePlayback, TimelinePlaybackSnapshot,
-    TimelinePlaybackState, TimelineStep, Track,
-};
+pub use timeline::{Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelineStep, Track};
 pub use timing::{
     Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
     TimingPhase, TimingSampleState,

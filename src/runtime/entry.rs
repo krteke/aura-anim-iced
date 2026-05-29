@@ -1,5 +1,5 @@
 use super::{AnimationHandle, AnimationSource};
-use crate::{property::PropertySnapshot, timing::Duration};
+use crate::{property::PropertySnapshot, runtime::target::AnimationTargetId, timing::Duration};
 
 /// Playback state tracked for an active runtime entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -19,8 +19,10 @@ pub enum AnimationPlaybackState {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ActiveAnimation {
     handle: AnimationHandle,
+    target: AnimationTargetId,
     source: AnimationSource,
-    started_at: Duration,
+    position: Duration,
+    last_tick: Duration,
     state: AnimationPlaybackState,
     last_snapshot: Option<PropertySnapshot>,
     completed_at: Option<Duration>,
@@ -31,13 +33,16 @@ impl ActiveAnimation {
     #[must_use]
     pub fn new(
         handle: AnimationHandle,
+        target: AnimationTargetId,
         source: impl Into<AnimationSource>,
-        started_at: impl Into<Duration>,
+        now: impl Into<Duration>,
     ) -> Self {
         Self {
             handle,
+            target,
             source: source.into(),
-            started_at: started_at.into(),
+            position: Duration::ZERO,
+            last_tick: now.into(),
             state: AnimationPlaybackState::Playing,
             last_snapshot: None,
             completed_at: None,
@@ -56,10 +61,22 @@ impl ActiveAnimation {
         &self.source
     }
 
-    /// Returns the runtime timestamp when this entry started.
+    /// Returns the target of this animation.
     #[must_use]
-    pub const fn started_at(&self) -> Duration {
-        self.started_at
+    pub const fn target(&self) -> AnimationTargetId {
+        self.target
+    }
+
+    /// Returns the runtime timestamp of the last tick.
+    #[must_use]
+    pub const fn last_tick(&self) -> Duration {
+        self.last_tick
+    }
+
+    /// Returns the current playback position.
+    #[must_use]
+    pub const fn position(&self) -> Duration {
+        self.position
     }
 
     /// Returns the current playback state.
@@ -115,5 +132,17 @@ impl ActiveAnimation {
     pub const fn mark_completed(&mut self, completed_at: Duration) {
         self.state = AnimationPlaybackState::Completed;
         self.completed_at = Some(completed_at);
+    }
+
+    pub(super) fn update_position(&mut self, delta: Duration) {
+        self.position += delta;
+    }
+
+    pub(super) fn set_last_tick(&mut self, last_tick: Duration) {
+        self.last_tick = last_tick;
+    }
+
+    pub(super) fn set_position(&mut self, position: Duration) {
+        self.position = position;
     }
 }
