@@ -1,5 +1,5 @@
-use super::{ActiveAnimation, AnimationHandle, AnimationPlaybackState};
-use crate::{property::PropertySnapshot, timing::Duration};
+use super::{AnimationHandle, AnimationPlaybackState};
+use crate::{property::PropertySnapshot, runtime::entry::ActiveAnimation, timing::Duration};
 
 /// Output produced when an animation is registered with the runtime.
 #[derive(Debug, Clone, PartialEq)]

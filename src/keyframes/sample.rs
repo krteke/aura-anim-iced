@@ -77,7 +77,7 @@ fn sample_property(
                 let progress =
                     property_progress(before_frame.offset(), after_frame.offset(), offset);
                 let progress = easing.value(progress);
-                interpolate_entry(&before_entry, &after_entry, progress)
+                interpolate_entry(before_entry, after_entry, progress)
             }
         }
         (Some((_, entry)), None) | (None, Some((_, entry))) => Some(*entry),
@@ -96,7 +96,7 @@ fn interpolate_entry(
     to: &PropertyEntry,
     progress: f32,
 ) -> Option<PropertyEntry> {
-    let mut result = from.clone();
+    let mut result = *from;
 
     let value = match (from.value(), to.value()) {
         (PropertyValue::Scalar(from), PropertyValue::Scalar(to)) => Some(PropertyValue::Scalar(

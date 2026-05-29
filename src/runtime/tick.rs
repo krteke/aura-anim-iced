@@ -1,5 +1,6 @@
-use super::{
-    AnimationHandle, AnimationPlaybackState, AnimationRegistry,
+use super::{AnimationHandle, AnimationPlaybackState};
+use crate::runtime::{
+    registry::AnimationRegistry,
     target::{AnimationTargetId, TargetedPropertySnapshot},
 };
 use crate::{property::PropertySnapshot, timing::Duration};

@@ -3,12 +3,15 @@
 pub use crate::iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use crate::keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use crate::property::{
-    PropertyEntry, PropertySnapshot, PropertySpec, PropertyValue, PropertyValueKind,
-    RawPropertySpec, TransformValue,
+    BACKGROUND, BORDER_COLOR, Color as ColorProperty, HEIGHT, OPACITY, PADDING, PropertyEntry,
+    PropertyKey, PropertySnapshot, PropertySpec, PropertyValue, PropertyValueKind, RADIUS,
+    RawPropertySpec, Rectangle as RectangleProperty, SCALE, SHADOW, Scalar as ScalarProperty,
+    Shadow as ShadowProperty, Size as SizeProperty, TEXT_COLOR, TransformValue,
+    Vector2 as Vector2Property, WIDTH,
 };
 pub use crate::runtime::{
-    ActiveAnimation, AnimationHandle, AnimationPlaybackState, AnimationRegistry, AnimationRuntime,
-    AnimationSource, AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
+    AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
+    AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
 };
 pub use crate::timeline::{
     Hold, Parallel, Sequence, Timeline, TimelineMarker, TimelineStep, Track,

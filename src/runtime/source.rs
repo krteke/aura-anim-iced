@@ -5,9 +5,9 @@ use crate::{
     timing::{Duration, TimingPhase},
 };
 
-/// Animation data owned by a runtime entry.
+/// Erased animation data owned by an internal runtime entry.
 #[derive(Debug, Clone, PartialEq)]
-pub enum AnimationSource {
+pub(crate) enum AnimationSource {
     /// A keyframe track sampled directly by the runtime.
     Keyframes(Keyframes),
     /// A timeline sampled by the runtime.
@@ -27,27 +27,24 @@ impl From<Timeline> for AnimationSource {
 }
 
 impl AnimationSource {
-    /// Returns the finite total duration of this source, or `None` when infinite.
     #[must_use]
-    pub fn total_duration(&self) -> Option<Duration> {
+    pub(crate) fn total_duration(&self) -> Option<Duration> {
         match self {
             Self::Keyframes(keyframes) => keyframes.timing().total_duration(),
             Self::Timeline(timeline) => timeline.total_duration(),
         }
     }
 
-    /// Samples this source at elapsed runtime time.
     #[must_use]
-    pub fn sample_at(&self, elapsed: impl Into<Duration>) -> Option<PropertySnapshot> {
+    pub(crate) fn sample_at(&self, elapsed: impl Into<Duration>) -> Option<PropertySnapshot> {
         match self {
             Self::Keyframes(keyframes) => sample_keyframes(keyframes, elapsed.into()),
             Self::Timeline(timeline) => timeline.sample_at(elapsed),
         }
     }
 
-    /// Returns the final visual state for this source.
     #[must_use]
-    pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
+    pub(crate) fn completion_snapshot(&self) -> Option<PropertySnapshot> {
         match self {
             Self::Keyframes(keyframes) => keyframes.sample_at(1.0),
             Self::Timeline(timeline) => timeline.completion_snapshot(),

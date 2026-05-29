@@ -13,16 +13,17 @@ mod tests;
 mod tick;
 
 pub use clock::{AnimationClock, SystemClock};
-pub use entry::{ActiveAnimation, AnimationPlaybackState};
+pub use entry::AnimationPlaybackState;
 pub use handle::AnimationHandle;
 pub use policy::TickPolicy;
-pub use registry::AnimationRegistry;
-pub use source::AnimationSource;
+pub use registration::AnimationRegistration;
 pub use target::{AnimationTargetId, TargetedPropertySnapshot};
 pub use tick::AnimationTick;
 
 use crate::runtime::clock::TestClock;
-use crate::runtime::registration::AnimationRegistration;
+use crate::runtime::{
+    entry::ActiveAnimation, registry::AnimationRegistry, source::AnimationSource,
+};
 use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 
 /// Runtime state owned by an Iced application.
@@ -53,6 +54,14 @@ impl AnimationRuntime<TestClock> {
     pub fn testing() -> Self {
         Self::with_clock(TestClock::new())
     }
+
+    /// Returns mutable access to the runtime clock.
+    ///
+    /// This is primarily useful for deterministic tests and custom clock
+    /// integrations.
+    pub const fn clock_mut(&mut self) -> &mut TestClock {
+        &mut self.clock
+    }
 }
 
 impl<C: AnimationClock> AnimationRuntime<C> {
@@ -66,8 +75,8 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         }
     }
 
-    /// Registers an animation source and returns its initial runtime output.
-    pub fn register_target(
+    /// Registers an erased animation source and returns its initial runtime output.
+    pub(crate) fn register_target(
         &mut self,
         target: AnimationTargetId,
         source: impl Into<AnimationSource>,
@@ -118,44 +127,49 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         tick::tick_registry(&mut self.registry, now)
     }
 
+    /// Cancels and removes all active animations registered for `target`.
     pub fn cancel_target(&mut self, target: AnimationTargetId) {
         self.registry.cancel_target(target);
     }
 
-    pub fn seek_target(&mut self, target: AnimationTargetId, pos: Duration, now: Duration) {
-        self.registry.seek_target(target, pos, now);
+    /// Seeks all active animations registered for `target`.
+    pub fn seek_target(&mut self, target: AnimationTargetId, pos: Duration) {
+        self.registry.seek_target(target, pos, self.clock.now());
     }
 
+    /// Pauses all active animations registered for `target`.
     pub fn pause_target(&mut self, target: AnimationTargetId) {
-        todo!()
+        self.registry.pause_target(target, self.clock.now());
     }
 
-    pub fn cancel(&mut self, target: AnimationTargetId, handle: AnimationHandle) {
-        todo!()
+    /// Cancels and removes one animation when `handle` belongs to `target`.
+    ///
+    /// Returns `true` when an entry was removed.
+    pub fn cancel(&mut self, target: AnimationTargetId, handle: AnimationHandle) -> bool {
+        self.registry.cancel(target, handle)
     }
 
+    /// Seeks one animation when `handle` belongs to `target`.
+    ///
+    /// Returns `true` when an entry was found and updated.
     pub fn seek(
         &mut self,
         target: AnimationTargetId,
         handle: AnimationHandle,
         pos: Duration,
-        now: Duration,
-    ) {
-        todo!()
+    ) -> bool {
+        self.registry.seek(target, handle, pos, self.clock.now())
     }
 
-    pub fn pause(&mut self, target: AnimationTargetId, handle: AnimationHandle) {
-        todo!()
+    /// Pauses one animation when `handle` belongs to `target`.
+    ///
+    /// Returns `true` when an entry was found and updated.
+    pub fn pause(&mut self, target: AnimationTargetId, handle: AnimationHandle) -> bool {
+        self.registry.pause(target, handle, self.clock.now())
     }
 }
 
 impl<C> AnimationRuntime<C> {
-    /// Returns the active animation registry.
-    #[must_use]
-    pub const fn registry(&self) -> &AnimationRegistry {
-        &self.registry
-    }
-
     /// Returns the runtime clock.
     #[must_use]
     pub const fn clock(&self) -> &C {

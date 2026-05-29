@@ -119,16 +119,13 @@ impl Sequence {
     #[must_use]
     pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
         let mut snapshot = PropertySnapshot::new();
-        let snapshots = self
+
+        for snapshot_part in self
             .steps
             .iter()
-            .map(|s| s.completion_snapshot())
-            .collect::<Vec<_>>();
-
-        for s in snapshots {
-            if let Some(s) = s {
-                snapshot.merge(s);
-            }
+            .filter_map(TimelineStep::completion_snapshot)
+        {
+            snapshot.merge(snapshot_part);
         }
 
         if snapshot.is_empty() {
