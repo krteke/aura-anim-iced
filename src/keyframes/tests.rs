@@ -1,623 +1,222 @@
-// use float_cmp::assert_approx_eq;
-
-// use super::{Keyframe, KeyframeSegment, Keyframes};
-// use crate::{
-//     property::{PropertyValue, TransformValue, UiProperty},
-//     timing::{Delay, Easing, FillMode, Timing},
-// };
-
-// fn snapshot(entries: &[(UiProperty, f32)]) -> Vec<(UiProperty, PropertyValue)> {
-//     entries
-//         .iter()
-//         .map(|(property, value)| (*property, PropertyValue::Scalar(*value)))
-//         .collect()
-// }
-
-// fn sample_elapsed(
-//     keyframes: &Keyframes,
-//     elapsed_ms: f64,
-// ) -> Option<Vec<(UiProperty, PropertyValue)>> {
-//     let timing = keyframes.timing().normalize_elapsed(elapsed_ms);
-
-//     if !timing.has_sample() {
-//         return None;
-//     }
-
-//     #[allow(
-//         clippy::cast_possible_truncation,
-//         reason = "Normalized keyframe offsets are stored as f32 throughout the keyframe module."
-//     )]
-//     keyframes.sample_at(timing.iteration_progress as f32)
-// }
-
-// #[test]
-// fn new_keyframes_start_empty_with_default_timing() {
-//     let keyframes = Keyframes::new();
-
-//     assert!(keyframes.is_empty());
-//     assert!(keyframes.frames().is_empty());
-//     assert_eq!(*keyframes.timing(), Timing::default());
-// }
-
-// #[test]
-// fn with_timing_attaches_timing_to_track() {
-//     let timing = Timing::new(250.0).with_delay(Delay::from_millis(50.0));
-
-//     let keyframes = Keyframes::new().with_timing(timing);
-
-//     assert_eq!(*keyframes.timing(), timing);
-// }
-
-// #[test]
-// fn at_inserts_keyframes_in_sorted_offset_order() {
-//     let keyframes = Keyframes::new()
-//         .at(0.75, snapshot(&[(UiProperty::Opacity, 0.75)]))
-//         .at(0.25, snapshot(&[(UiProperty::Opacity, 0.25)]))
-//         .at(0.5, snapshot(&[(UiProperty::Opacity, 0.5)]));
-
-//     let offsets: Vec<_> = keyframes.frames().iter().map(Keyframe::offset).collect();
-
-//     assert_eq!(offsets, vec![0.25, 0.5, 0.75]);
-// }
-
-// #[test]
-// fn scalar_builder_helpers_insert_common_visual_keyframes() {
-//     let keyframes = Keyframes::new()
-//         .scale(0.5, 1.2)
-//         .translation(0.5, 12.0, -4.0)
-//         .opacity(0.5, 0.75)
-//         .translate_x(1.0, 0.0)
-//         .translate_y(1.0, 8.0);
-
-//     assert_eq!(keyframes.len(), 2);
-//     assert_eq!(
-//         keyframes.frames()[0].snapshot(),
-//         &snapshot(&[
-//             (UiProperty::Opacity, 0.75),
-//             (UiProperty::TranslateX, 12.0),
-//             (UiProperty::TranslateY, -4.0),
-//             (UiProperty::Scale, 1.2),
-//         ])
-//     );
-//     assert_eq!(
-//         keyframes.frames()[1].snapshot(),
-//         &snapshot(&[(UiProperty::TranslateX, 0.0), (UiProperty::TranslateY, 8.0)])
-//     );
-// }
-
-// #[test]
-// fn color_and_shadow_builder_helpers_insert_iced_values() {
-//     let background = iced::Color::from_rgb(0.1, 0.2, 0.3);
-//     let border = iced::Color::from_rgb(0.4, 0.5, 0.6);
-//     let text = iced::Color::from_rgb(0.7, 0.8, 0.9);
-//     let shadow = iced::Shadow {
-//         color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.4),
-//         offset: iced::Vector::new(2.0, 6.0),
-//         blur_radius: 12.0,
-//     };
-
-//     let keyframes = Keyframes::new()
-//         .shadow(0.25, shadow)
-//         .text_color(0.25, text)
-//         .background_color(0.25, background)
-//         .border_color(0.25, border);
-
-//     assert_eq!(keyframes.len(), 1);
-//     assert_eq!(
-//         keyframes.frames()[0].snapshot(),
-//         &vec![
-//             (UiProperty::Background, PropertyValue::Color(background)),
-//             (UiProperty::BorderColor, PropertyValue::Color(border)),
-//             (UiProperty::TextColor, PropertyValue::Color(text)),
-//             (UiProperty::Shadow, PropertyValue::Shadow(shadow)),
-//         ]
-//     );
-// }
-
-// #[test]
-// fn offsets_are_clamped_and_invalid_offsets_become_zero() {
-//     let keyframes = Keyframes::new()
-//         .at(1.25, snapshot(&[(UiProperty::Opacity, 1.0)]))
-//         .at(-0.5, snapshot(&[(UiProperty::Opacity, 0.0)]))
-//         .at(f32::NAN, snapshot(&[(UiProperty::Opacity, 0.5)]));
-
-//     let offsets: Vec<_> = keyframes.frames().iter().map(Keyframe::offset).collect();
-
-//     assert_eq!(offsets, vec![0.0, 1.0]);
-//     assert_eq!(
-//         keyframes.frames()[0].snapshot(),
-//         &snapshot(&[(UiProperty::Opacity, 0.5)])
-//     );
-// }
-
-// #[test]
-// fn keyframe_snapshots_are_sorted_by_property_composition() {
-//     let frame = Keyframe::new(
-//         0.5,
-//         snapshot(&[
-//             (UiProperty::Shadow, 1.0),
-//             (UiProperty::Opacity, 0.5),
-//             (UiProperty::Radius, 8.0),
-//             (UiProperty::TranslateX, 12.0),
-//         ]),
-//     );
-
-//     let properties: Vec<_> = frame
-//         .snapshot()
-//         .iter()
-//         .map(|(property, _)| *property)
-//         .collect();
-
-//     assert_eq!(
-//         properties,
-//         vec![
-//             UiProperty::Opacity,
-//             UiProperty::TranslateX,
-//             UiProperty::Radius,
-//             UiProperty::Shadow,
-//         ]
-//     );
-// }
-
-// #[test]
-// fn duplicate_offsets_merge_snapshots_and_later_values_override_properties() {
-//     let keyframes = Keyframes::new()
-//         .at(
-//             0.5,
-//             snapshot(&[(UiProperty::Opacity, 0.25), (UiProperty::TranslateX, 12.0)]),
-//         )
-//         .at(
-//             0.5,
-//             snapshot(&[(UiProperty::Opacity, 0.75), (UiProperty::Radius, 8.0)]),
-//         );
-
-//     assert_eq!(keyframes.len(), 1);
-//     assert_eq!(
-//         keyframes.frames()[0].snapshot(),
-//         &snapshot(&[
-//             (UiProperty::Opacity, 0.75),
-//             (UiProperty::TranslateX, 12.0),
-//             (UiProperty::Radius, 8.0),
-//         ])
-//     );
-// }
-
-// #[test]
-// fn nearly_equal_duplicate_offsets_merge_into_one_keyframe() {
-//     let keyframes = Keyframes::new()
-//         .at(0.5, snapshot(&[(UiProperty::Opacity, 0.25)]))
-//         .at(0.500_001, snapshot(&[(UiProperty::Scale, 1.25)]));
-
-//     assert_eq!(keyframes.len(), 1);
-//     assert_eq!(
-//         keyframes.frames()[0].snapshot(),
-//         &snapshot(&[(UiProperty::Opacity, 0.25), (UiProperty::Scale, 1.25)])
-//     );
-// }
-
-// #[test]
-// fn push_many_batches_sorting_normalization_and_duplicate_offset_merging() {
-//     let mut keyframes = Keyframes::new();
-
-//     keyframes.push_many([
-//         (0.75, snapshot(&[(UiProperty::Opacity, 0.75)])),
-//         (0.25, snapshot(&[(UiProperty::Opacity, 0.25)])),
-//         (1.25, snapshot(&[(UiProperty::Scale, 1.25)])),
-//         (0.75, snapshot(&[(UiProperty::Radius, 8.0)])),
-//     ]);
-
-//     let offsets: Vec<_> = keyframes.frames().iter().map(Keyframe::offset).collect();
-
-//     assert_eq!(offsets, vec![0.25, 0.75, 1.0]);
-//     assert_eq!(
-//         keyframes.frames()[1].snapshot(),
-//         &snapshot(&[(UiProperty::Opacity, 0.75), (UiProperty::Radius, 8.0)])
-//     );
-// }
-
-// #[test]
-// fn with_keyframes_builds_tracks_from_batch_input() {
-//     let keyframes = Keyframes::new().with_keyframes([
-//         (1.0, snapshot(&[(UiProperty::Opacity, 1.0)])),
-//         (0.0, snapshot(&[(UiProperty::Opacity, 0.0)])),
-//     ]);
-
-//     assert_eq!(keyframes.len(), 2);
-//     assert_approx_eq!(f32, keyframes.frames()[0].offset(), 0.0, epsilon = 1e-5);
-//     assert_approx_eq!(f32, keyframes.frames()[1].offset(), 1.0, epsilon = 1e-5);
-// }
-
-// #[test]
-// fn segment_lookup_returns_empty_for_empty_tracks() {
-//     let keyframes = Keyframes::new();
-
-//     assert_eq!(keyframes.segment_at(0.5), KeyframeSegment::Empty);
-// }
-
-// #[test]
-// fn segment_lookup_returns_single_for_single_frame_tracks() {
-//     let keyframes = Keyframes::new().at(0.5, snapshot(&[(UiProperty::Opacity, 0.5)]));
-
-//     let KeyframeSegment::Single(frame) = keyframes.segment_at(0.25) else {
-//         panic!("expected single-frame segment");
-//     };
-
-//     assert_approx_eq!(f32, frame.offset(), 0.5, epsilon = 1e-5);
-//     assert!(keyframes.segment_at(0.75).is_resolved());
-// }
-
-// #[test]
-// fn segment_lookup_returns_exact_for_track_edges_and_exact_offsets() {
-//     let keyframes = Keyframes::new()
-//         .at(0.25, snapshot(&[(UiProperty::Opacity, 0.25)]))
-//         .at(0.75, snapshot(&[(UiProperty::Opacity, 0.75)]));
-
-//     let KeyframeSegment::Exact(before_first) = keyframes.segment_at(-1.0) else {
-//         panic!("expected first edge exact segment");
-//     };
-//     assert_approx_eq!(f32, before_first.offset(), 0.25, epsilon = 1e-5);
-
-//     let KeyframeSegment::Exact(exact) = keyframes.segment_at(0.75) else {
-//         panic!("expected exact segment");
-//     };
-//     assert_approx_eq!(f32, exact.offset(), 0.75, epsilon = 1e-6);
-
-//     let KeyframeSegment::Exact(after_last) = keyframes.segment_at(2.0) else {
-//         panic!("expected last edge exact segment");
-//     };
-//     assert_approx_eq!(f32, after_last.offset(), 0.75, epsilon = 1e-5);
-// }
-
-// #[test]
-// fn segment_lookup_returns_between_for_offsets_between_neighbors() {
-//     let keyframes = Keyframes::new()
-//         .at(0.25, snapshot(&[(UiProperty::Opacity, 0.25)]))
-//         .at(0.75, snapshot(&[(UiProperty::Opacity, 0.75)]));
-
-//     let KeyframeSegment::Between { from, to, progress } = keyframes.segment_at(0.5) else {
-//         panic!("expected between segment");
-//     };
-
-//     assert_approx_eq!(f32, from.offset(), 0.25, epsilon = 1e-5);
-//     assert_approx_eq!(f32, to.offset(), 0.75, epsilon = 1e-5);
-//     assert_approx_eq!(f32, progress, 0.5, epsilon = 1e-5);
-// }
-
-// #[test]
-// fn segment_lookup_uses_merged_keyframe_for_duplicate_offsets() {
-//     let keyframes = Keyframes::new()
-//         .at(0.5, snapshot(&[(UiProperty::Opacity, 0.25)]))
-//         .at(0.5, snapshot(&[(UiProperty::Opacity, 0.75)]));
-
-//     let KeyframeSegment::Single(frame) = keyframes.segment_at(0.5) else {
-//         panic!("expected single merged segment");
-//     };
-
-//     assert_eq!(frame.snapshot(), &snapshot(&[(UiProperty::Opacity, 0.75)]));
-// }
-
-// #[test]
-// fn sampling_empty_tracks_returns_none() {
-//     let keyframes = Keyframes::new();
-
-//     assert_eq!(keyframes.sample_at(0.5), None);
-// }
-
-// #[test]
-// fn sampling_single_and_exact_keyframes_clones_their_snapshots() {
-//     let keyframes = Keyframes::new().at(0.5, snapshot(&[(UiProperty::Opacity, 0.5)]));
-
-//     assert_eq!(
-//         keyframes.sample_at(0.0),
-//         Some(snapshot(&[(UiProperty::Opacity, 0.5)]))
-//     );
-//     assert_eq!(
-//         keyframes.sample_at(0.5),
-//         Some(snapshot(&[(UiProperty::Opacity, 0.5)]))
-//     );
-// }
-
-// #[test]
-// fn sampling_between_keyframes_interpolates_scalar_values() {
-//     let keyframes = Keyframes::new()
-//         .at(0.25, snapshot(&[(UiProperty::Opacity, 0.0)]))
-//         .at(0.75, snapshot(&[(UiProperty::Opacity, 1.0)]));
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-
-//     assert_eq!(sampled.len(), 1);
-//     assert_eq!(sampled[0].0, UiProperty::Opacity);
-//     assert_eq!(sampled[0].1, PropertyValue::Scalar(0.5));
-// }
-
-// #[test]
-// fn sampling_maps_each_property_across_its_own_keyframe_offsets() {
-//     let keyframes = Keyframes::new()
-//         .at(0.0, snapshot(&[(UiProperty::Opacity, 0.0)]))
-//         .at(0.5, snapshot(&[(UiProperty::Scale, 2.0)]))
-//         .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-
-//     assert_eq!(
-//         sampled,
-//         snapshot(&[(UiProperty::Opacity, 0.5), (UiProperty::Scale, 2.0)])
-//     );
-// }
-
-// #[test]
-// fn sampling_holds_properties_that_have_only_one_side_of_the_offset() {
-//     let keyframes = Keyframes::new()
-//         .at(
-//             0.0,
-//             vec![
-//                 (UiProperty::Opacity, PropertyValue::Scalar(0.0)),
-//                 (
-//                     UiProperty::Background,
-//                     PropertyValue::Color(iced::Color::BLACK),
-//                 ),
-//             ],
-//         )
-//         .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-
-//     assert_eq!(
-//         sampled,
-//         vec![
-//             (UiProperty::Opacity, PropertyValue::Scalar(0.5)),
-//             (
-//                 UiProperty::Background,
-//                 PropertyValue::Color(iced::Color::BLACK)
-//             ),
-//         ]
-//     );
-// }
-
-// #[test]
-// fn sampling_exact_offset_does_not_prevent_other_properties_from_interpolating() {
-//     let keyframes = Keyframes::new()
-//         .at(0.0, snapshot(&[(UiProperty::Opacity, 0.0)]))
-//         .at(0.5, snapshot(&[(UiProperty::Scale, 1.5)]))
-//         .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-
-//     assert_eq!(
-//         sampled,
-//         snapshot(&[(UiProperty::Opacity, 0.5), (UiProperty::Scale, 1.5)])
-//     );
-// }
-
-// #[test]
-// fn sampling_between_keyframes_applies_iced_easing_to_segment_progress() {
-//     let keyframes = Keyframes::new()
-//         .with_timing(Timing::new(100.0).with_easing(Easing::EaseIn))
-//         .at(0.0, snapshot(&[(UiProperty::Opacity, 0.0)]))
-//         .at(1.0, snapshot(&[(UiProperty::Opacity, 1.0)]));
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-//     let PropertyValue::Scalar(opacity) = sampled[0].1 else {
-//         panic!("expected scalar opacity");
-//     };
-
-//     assert_approx_eq!(f32, opacity, Easing::EaseIn.value(0.5), epsilon = 1e-5);
-// }
-
-// #[test]
-// fn elapsed_sampling_uses_timing_easing_for_keyframe_output() {
-//     let keyframes = Keyframes::new()
-//         .with_timing(Timing::new(100.0).with_easing(Easing::EaseIn))
-//         .opacity(0.0, 0.0)
-//         .opacity(1.0, 1.0);
-
-//     let sampled = sample_elapsed(&keyframes, 50.0).expect("active sample");
-//     let PropertyValue::Scalar(opacity) = sampled[0].1 else {
-//         panic!("expected scalar opacity");
-//     };
-
-//     assert_approx_eq!(f32, opacity, Easing::EaseIn.value(0.5), epsilon = 1e-5);
-// }
-
-// #[test]
-// fn elapsed_sampling_respects_timing_fill_mode_output() {
-//     let base = Keyframes::new().opacity(0.0, 0.0).opacity(1.0, 1.0);
-//     let timing = |fill_mode| {
-//         Timing::new(100.0)
-//             .with_delay(Delay::from_millis(50.0))
-//             .with_fill_mode(fill_mode)
-//     };
-
-//     let none = base.clone().with_timing(timing(FillMode::None));
-//     assert_eq!(sample_elapsed(&none, 25.0), None);
-//     assert_eq!(sample_elapsed(&none, 150.0), None);
-
-//     let backwards = base.clone().with_timing(timing(FillMode::Backwards));
-//     assert_eq!(
-//         sample_elapsed(&backwards, 25.0),
-//         Some(snapshot(&[(UiProperty::Opacity, 0.0)]))
-//     );
-//     assert_eq!(sample_elapsed(&backwards, 150.0), None);
-
-//     let forwards = base.clone().with_timing(timing(FillMode::Forwards));
-//     assert_eq!(sample_elapsed(&forwards, 25.0), None);
-//     assert_eq!(
-//         sample_elapsed(&forwards, 150.0),
-//         Some(snapshot(&[(UiProperty::Opacity, 1.0)]))
-//     );
-
-//     let both = base.with_timing(timing(FillMode::Both));
-//     assert_eq!(
-//         sample_elapsed(&both, 25.0),
-//         Some(snapshot(&[(UiProperty::Opacity, 0.0)]))
-//     );
-//     assert_eq!(
-//         sample_elapsed(&both, 100.0),
-//         Some(snapshot(&[(UiProperty::Opacity, 0.5)]))
-//     );
-//     assert_eq!(
-//         sample_elapsed(&both, 150.0),
-//         Some(snapshot(&[(UiProperty::Opacity, 1.0)]))
-//     );
-// }
-
-// #[test]
-// #[allow(clippy::too_many_lines)]
-// fn sampling_between_keyframes_interpolates_iced_and_transform_values() {
-//     let from_shadow = iced::Shadow {
-//         color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
-//         offset: iced::Vector::new(0.0, 4.0),
-//         blur_radius: 2.0,
-//     };
-//     let to_shadow = iced::Shadow {
-//         color: iced::Color::from_rgba(1.0, 1.0, 1.0, 1.0),
-//         offset: iced::Vector::new(10.0, 14.0),
-//         blur_radius: 6.0,
-//     };
-//     let keyframes = Keyframes::new()
-//         .at(
-//             0.0,
-//             vec![
-//                 (
-//                     UiProperty::TranslateX,
-//                     PropertyValue::Vector2(iced::Vector::new(0.0, 10.0)),
-//                 ),
-//                 (
-//                     UiProperty::Width,
-//                     PropertyValue::Size(iced::Size::new(100.0, 200.0)),
-//                 ),
-//                 (
-//                     UiProperty::Height,
-//                     PropertyValue::Rectangle(iced::Rectangle {
-//                         x: 0.0,
-//                         y: 10.0,
-//                         width: 100.0,
-//                         height: 200.0,
-//                     }),
-//                 ),
-//                 (
-//                     UiProperty::Scale,
-//                     PropertyValue::Transform(TransformValue::identity()),
-//                 ),
-//                 (
-//                     UiProperty::Background,
-//                     PropertyValue::Color(iced::Color::from_rgb(0.0, 0.5, 1.0)),
-//                 ),
-//                 (UiProperty::Shadow, PropertyValue::Shadow(from_shadow)),
-//             ],
-//         )
-//         .at(
-//             1.0,
-//             vec![
-//                 (
-//                     UiProperty::TranslateX,
-//                     PropertyValue::Vector2(iced::Vector::new(10.0, 30.0)),
-//                 ),
-//                 (
-//                     UiProperty::Width,
-//                     PropertyValue::Size(iced::Size::new(300.0, 600.0)),
-//                 ),
-//                 (
-//                     UiProperty::Height,
-//                     PropertyValue::Rectangle(iced::Rectangle {
-//                         x: 20.0,
-//                         y: 30.0,
-//                         width: 300.0,
-//                         height: 600.0,
-//                     }),
-//                 ),
-//                 (
-//                     UiProperty::Scale,
-//                     PropertyValue::Transform(TransformValue::new(10.0, 20.0, 2.0, 90.0)),
-//                 ),
-//                 (
-//                     UiProperty::Background,
-//                     PropertyValue::Color(iced::Color::from_rgb(1.0, 0.5, 0.0)),
-//                 ),
-//                 (UiProperty::Shadow, PropertyValue::Shadow(to_shadow)),
-//             ],
-//         );
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-
-//     assert!(sampled.contains(&(
-//         UiProperty::TranslateX,
-//         PropertyValue::Vector2(iced::Vector::new(5.0, 20.0))
-//     )));
-//     assert!(sampled.contains(&(
-//         UiProperty::Width,
-//         PropertyValue::Size(iced::Size::new(200.0, 400.0))
-//     )));
-//     assert!(sampled.contains(&(
-//         UiProperty::Height,
-//         PropertyValue::Rectangle(iced::Rectangle {
-//             x: 10.0,
-//             y: 20.0,
-//             width: 200.0,
-//             height: 400.0,
-//         })
-//     )));
-//     assert!(sampled.contains(&(
-//         UiProperty::Scale,
-//         PropertyValue::Transform(TransformValue::new(5.0, 10.0, 1.5, 45.0))
-//     )));
-//     assert!(sampled.contains(&(
-//         UiProperty::Background,
-//         PropertyValue::Color(iced::Color::from_rgb(0.5, 0.5, 0.5))
-//     )));
-
-//     let sampled_shadow = sampled
-//         .iter()
-//         .find_map(|(property, value)| {
-//             if *property == UiProperty::Shadow {
-//                 Some(value)
-//             } else {
-//                 None
-//             }
-//         })
-//         .expect("shadow");
-//     let PropertyValue::Shadow(sampled_shadow) = sampled_shadow else {
-//         panic!("expected shadow");
-//     };
-//     assert_approx_eq!(f32, sampled_shadow.offset.x, 5.0, epsilon = 1e-5);
-//     assert_approx_eq!(f32, sampled_shadow.offset.y, 9.0, epsilon = 1e-5);
-//     assert_approx_eq!(f32, sampled_shadow.blur_radius, 4.0, epsilon = 1e-5);
-//     assert_approx_eq!(f32, sampled_shadow.color.r, 0.5, epsilon = 1e-5);
-//     assert_approx_eq!(f32, sampled_shadow.color.a, 0.75, epsilon = 1e-5);
-// }
-
-// #[test]
-// fn sampling_between_keyframes_omits_mismatched_properties_and_holds_missing_ones() {
-//     let keyframes = Keyframes::new()
-//         .at(
-//             0.0,
-//             vec![
-//                 (UiProperty::Opacity, PropertyValue::Scalar(0.0)),
-//                 (UiProperty::Scale, PropertyValue::Scalar(1.0)),
-//                 (
-//                     UiProperty::Background,
-//                     PropertyValue::Color(iced::Color::BLACK),
-//                 ),
-//             ],
-//         )
-//         .at(
-//             1.0,
-//             vec![
-//                 (UiProperty::Opacity, PropertyValue::Scalar(1.0)),
-//                 (UiProperty::Scale, PropertyValue::Color(iced::Color::WHITE)),
-//             ],
-//         );
-
-//     let sampled = keyframes.sample_at(0.5).expect("sample");
-
-//     assert_eq!(
-//         sampled,
-//         vec![
-//             (UiProperty::Opacity, PropertyValue::Scalar(0.5)),
-//             (
-//                 UiProperty::Background,
-//                 PropertyValue::Color(iced::Color::BLACK)
-//             ),
-//         ]
-//     );
-// }
+use float_cmp::assert_approx_eq;
+
+use super::{Keyframe, KeyframeSegment, Keyframes};
+use crate::{
+    property::{
+        BACKGROUND, OPACITY, PropertyEntry, PropertyKey, PropertySnapshot, PropertySpec,
+        PropertyValue, SCALE, Size, Vector2, WIDTH,
+    },
+    timing::{Delay, Easing, FillMode, Timing},
+};
+
+const OFFSET: PropertySpec<Vector2> = PropertySpec::new(PropertyKey::new("test", "offset"), 20);
+const BOX_SIZE: PropertySpec<Size> = PropertySpec::new(PropertyKey::new("test", "size"), 30);
+const SCALE_AS_COLOR: PropertySpec<crate::property::Color> =
+    PropertySpec::new(PropertyKey::new("aura", "scale"), 20);
+
+fn scalar(snapshot: &PropertySnapshot, spec: PropertySpec<crate::property::Scalar>) -> f32 {
+    let Some(entry) = snapshot.find_property(&spec.raw()) else {
+        panic!("expected scalar property {}", spec.raw().key().name());
+    };
+    let PropertyValue::Scalar(value) = entry.value() else {
+        panic!("expected scalar value");
+    };
+
+    *value
+}
+
+#[test]
+fn new_keyframes_start_empty_with_default_timing() {
+    let keyframes = Keyframes::new();
+
+    assert!(keyframes.is_empty());
+    assert_eq!(keyframes.len(), 0);
+    assert!(keyframes.frames().is_empty());
+    assert_eq!(*keyframes.timing(), Timing::default());
+}
+
+#[test]
+fn offsets_are_normalized_sorted_and_duplicate_offsets_merge() {
+    let keyframes = Keyframes::new()
+        .at(1.25, (OPACITY, 1.0))
+        .at(-0.25, (OPACITY, 0.0))
+        .at(f32::NAN, (SCALE, 1.5))
+        .at(0.0, (OPACITY, 0.25));
+
+    let offsets = keyframes
+        .frames()
+        .iter()
+        .map(Keyframe::offset)
+        .collect::<Vec<_>>();
+
+    assert_eq!(offsets, vec![0.0, 1.0]);
+    assert_approx_eq!(
+        f32,
+        scalar(keyframes.frames()[0].snapshot(), OPACITY),
+        0.25,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(keyframes.frames()[0].snapshot(), SCALE),
+        1.5,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
+fn helper_builders_insert_common_typed_properties() {
+    let color = iced::Color::from_rgb(0.2, 0.3, 0.4);
+    let keyframes = Keyframes::new()
+        .background_color(0.5, color)
+        .opacity(0.5, 0.8)
+        .scale(1.0, 1.2)
+        .with_timing(Timing::new(120.0).with_delay(Delay::from_millis(20.0)));
+
+    assert_eq!(keyframes.len(), 2);
+    assert_approx_eq!(
+        f32,
+        scalar(keyframes.frames()[0].snapshot(), OPACITY),
+        0.8,
+        epsilon = 1e-5
+    );
+    assert_eq!(
+        keyframes.frames()[0]
+            .find_property(&BACKGROUND.raw())
+            .map(PropertyEntry::value),
+        Some(&PropertyValue::Color(color))
+    );
+    assert_eq!(keyframes.timing().delay(), Delay::from_millis(20.0));
+}
+
+#[test]
+fn segment_lookup_covers_empty_single_exact_and_between_cases() {
+    assert_eq!(Keyframes::new().segment_at(0.5), KeyframeSegment::Empty);
+
+    let single = Keyframes::new().at(0.5, (OPACITY, 0.5));
+    assert!(single.segment_at(0.2).is_resolved());
+
+    let keyframes = Keyframes::new()
+        .at(0.25, (OPACITY, 0.25))
+        .at(0.75, (OPACITY, 0.75));
+
+    let KeyframeSegment::Exact(first) = keyframes.segment_at(0.0) else {
+        panic!("expected edge exact segment");
+    };
+    assert_approx_eq!(f32, first.offset(), 0.25, epsilon = 1e-5);
+
+    let KeyframeSegment::Between { from, to, progress } = keyframes.segment_at(0.5) else {
+        panic!("expected interpolating segment");
+    };
+    assert_approx_eq!(f32, from.offset(), 0.25, epsilon = 1e-5);
+    assert_approx_eq!(f32, to.offset(), 0.75, epsilon = 1e-5);
+    assert_approx_eq!(f32, progress, 0.5, epsilon = 1e-5);
+}
+
+#[test]
+fn sample_at_interpolates_scalar_color_vector_and_size_values() {
+    let from_color = iced::Color::from_rgb(0.0, 0.2, 0.4);
+    let to_color = iced::Color::from_rgb(1.0, 0.6, 0.0);
+    let keyframes = Keyframes::new()
+        .at(
+            0.0,
+            PropertySnapshot::from(vec![
+                PropertyEntry::new(OPACITY, 0.0),
+                PropertyEntry::new(WIDTH, 100.0),
+                PropertyEntry::new(OFFSET, iced::Vector::new(0.0, 10.0)),
+                PropertyEntry::new(BOX_SIZE, iced::Size::new(20.0, 40.0)),
+                PropertyEntry::new(BACKGROUND, from_color),
+            ]),
+        )
+        .at(
+            1.0,
+            PropertySnapshot::from(vec![
+                PropertyEntry::new(OPACITY, 1.0),
+                PropertyEntry::new(WIDTH, 200.0),
+                PropertyEntry::new(OFFSET, iced::Vector::new(10.0, 30.0)),
+                PropertyEntry::new(BOX_SIZE, iced::Size::new(40.0, 80.0)),
+                PropertyEntry::new(BACKGROUND, to_color),
+            ]),
+        );
+
+    let sampled = keyframes.sample_at(0.5).expect("sample");
+
+    assert_approx_eq!(f32, scalar(&sampled, OPACITY), 0.5, epsilon = 1e-5);
+    assert_approx_eq!(f32, scalar(&sampled, WIDTH), 150.0, epsilon = 1e-5);
+    assert_eq!(
+        sampled
+            .find_property(&OFFSET.raw())
+            .map(PropertyEntry::value),
+        Some(&PropertyValue::Vector2(iced::Vector::new(5.0, 20.0)))
+    );
+    assert_eq!(
+        sampled
+            .find_property(&BOX_SIZE.raw())
+            .map(PropertyEntry::value),
+        Some(&PropertyValue::Size(iced::Size::new(30.0, 60.0)))
+    );
+    let Some(PropertyValue::Color(color)) = sampled
+        .find_property(&BACKGROUND.raw())
+        .map(PropertyEntry::value)
+    else {
+        panic!("expected color");
+    };
+    assert_approx_eq!(f32, color.r, 0.5, epsilon = 1e-5);
+    assert_approx_eq!(f32, color.g, 0.4, epsilon = 1e-5);
+}
+
+#[test]
+fn mismatched_value_shapes_drop_that_property_instead_of_panicking() {
+    let keyframes = Keyframes::new()
+        .at(
+            0.0,
+            PropertySnapshot::from(vec![PropertyEntry::new(SCALE, 1.0)]),
+        )
+        .at(
+            1.0,
+            PropertySnapshot::from(vec![PropertyEntry::new(SCALE_AS_COLOR, iced::Color::WHITE)]),
+        );
+
+    let sampled = keyframes.sample_at(0.5).expect("empty sample");
+
+    assert!(sampled.is_empty());
+}
+
+#[test]
+fn timing_fill_controls_elapsed_sampling() {
+    let keyframes = Keyframes::new()
+        .with_timing(
+            Timing::new(100.0)
+                .with_delay(Delay::from_millis(50.0))
+                .with_fill_mode(FillMode::None),
+        )
+        .opacity(0.0, 0.0)
+        .opacity(1.0, 1.0);
+
+    let before = keyframes.timing().normalize_elapsed(25.0);
+    assert!(!before.has_sample());
+
+    let after = keyframes
+        .with_timing(Timing::new(100.0).with_fill_mode(FillMode::Forwards))
+        .timing()
+        .normalize_elapsed(120.0);
+    assert!(after.has_sample());
+    assert_approx_eq!(f64, after.iteration_progress, 1.0, epsilon = 1e-10);
+}
+
+#[test]
+fn easing_is_applied_between_neighboring_keyframes() {
+    let keyframes = Keyframes::new()
+        .with_timing(Timing::new(100.0).with_easing(Easing::EaseIn))
+        .opacity(0.0, 0.0)
+        .opacity(1.0, 1.0);
+
+    let sampled = keyframes.sample_at(0.5).expect("sample");
+
+    assert_approx_eq!(
+        f32,
+        scalar(&sampled, OPACITY),
+        Easing::EaseIn.value(0.5),
+        epsilon = 1e-5
+    );
+}

@@ -2,7 +2,7 @@
 
 use std::time::Instant;
 
-use aura_anim_iced::{iced_ext, prelude::*};
+use aura_anim_iced::{iced_ext, prelude::*, property};
 use iced::{
     Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme, Vector,
     alignment::{Horizontal, Vertical},
@@ -31,6 +31,7 @@ enum Message {
 #[derive(Debug)]
 struct Demo {
     runtime: AnimationRuntime,
+    button_target: AnimationTargetId,
     effects: EffectSnapshot,
     hovered: bool,
     pressed: bool,
@@ -40,12 +41,17 @@ struct Demo {
 impl Default for Demo {
     fn default() -> Self {
         let mut runtime = AnimationRuntime::new();
+        let button_target = AnimationTargetId::new();
         let effects = target_effects(ButtonVisualState::Rest);
 
-        runtime.register_timeline(button_timeline(effects.clone(), effects.clone()));
+        runtime.register_timeline(
+            button_target,
+            button_timeline(effects.clone(), effects.clone()),
+        );
 
         Self {
             runtime,
+            button_target,
             effects,
             hovered: false,
             pressed: false,
@@ -78,7 +84,7 @@ fn update(demo: &mut Demo, message: Message) -> Task<Message> {
         }
         Message::AnimationTick(tick_instant) => {
             let tick = iced_ext::update_tick(&mut demo.runtime, tick_instant);
-            let effects = tick_effect_snapshot(&tick);
+            let effects = tick_effect_snapshot_for(&tick, demo.button_target);
 
             if !effects.is_empty() {
                 demo.effects = merge_effects(&demo.effects, &effects);
@@ -172,7 +178,7 @@ fn register_transition(demo: &mut Demo) {
     let target = target_effects(visual_state(demo));
     let timeline = button_timeline(demo.effects.clone(), target);
 
-    demo.runtime.register_timeline(timeline);
+    demo.runtime.register_timeline(demo.button_target, timeline);
 }
 
 fn visual_state(demo: &Demo) -> ButtonVisualState {
@@ -192,35 +198,35 @@ fn button_timeline(from: EffectSnapshot, to: EffectSnapshot) -> Timeline {
 
     Timeline::parallel([
         color_track(
-            UiProperty::Background,
+            property::BACKGROUND,
             from.background.unwrap_or(rest_background()),
             to.background.unwrap_or(rest_background()),
             timing,
         )
         .into(),
         color_track(
-            UiProperty::BorderColor,
+            property::BORDER_COLOR,
             from.border_color.unwrap_or(rest_border()),
             to.border_color.unwrap_or(rest_border()),
             timing,
         )
         .into(),
         color_track(
-            UiProperty::TextColor,
+            property::TEXT_COLOR,
             from.text_color.unwrap_or(Color::WHITE),
             to.text_color.unwrap_or(Color::WHITE),
             timing,
         )
         .into(),
         scalar_track(
-            UiProperty::Scale,
+            property::SCALE,
             from.scale.unwrap_or(1.0),
             to.scale.unwrap_or(1.0),
             timing,
         )
         .into(),
         scalar_track(
-            UiProperty::Radius,
+            property::RADIUS,
             from.radius.unwrap_or(14.0),
             to.radius.unwrap_or(14.0),
             timing,
@@ -235,21 +241,31 @@ fn button_timeline(from: EffectSnapshot, to: EffectSnapshot) -> Timeline {
     ])
 }
 
-fn scalar_track(property: UiProperty, from: f32, to: f32, timing: Timing) -> Track {
+fn scalar_track(
+    property: PropertySpec<property::Scalar>,
+    from: f32,
+    to: f32,
+    timing: Timing,
+) -> Track {
     Track::new(
         Keyframes::new()
             .with_timing(timing)
-            .at(0.0, [(property, PropertyValue::Scalar(from))])
-            .at(1.0, [(property, PropertyValue::Scalar(to))]),
+            .at(0.0, (property, from))
+            .at(1.0, (property, to)),
     )
 }
 
-fn color_track(property: UiProperty, from: Color, to: Color, timing: Timing) -> Track {
+fn color_track(
+    property: PropertySpec<property::Color>,
+    from: Color,
+    to: Color,
+    timing: Timing,
+) -> Track {
     Track::new(
         Keyframes::new()
             .with_timing(timing)
-            .at(0.0, [(property, PropertyValue::Color(from))])
-            .at(1.0, [(property, PropertyValue::Color(to))]),
+            .at(0.0, (property, from))
+            .at(1.0, (property, to)),
     )
 }
 
@@ -257,8 +273,8 @@ fn shadow_track(from: Shadow, to: Shadow, timing: Timing) -> Track {
     Track::new(
         Keyframes::new()
             .with_timing(timing)
-            .at(0.0, [(UiProperty::Shadow, PropertyValue::Shadow(from))])
-            .at(1.0, [(UiProperty::Shadow, PropertyValue::Shadow(to))]),
+            .at(0.0, (property::SHADOW, from))
+            .at(1.0, (property::SHADOW, to)),
     )
 }
 
@@ -318,6 +334,9 @@ fn target_effects(state: ButtonVisualState) -> EffectSnapshot {
 fn merge_effects(current: &EffectSnapshot, update: &EffectSnapshot) -> EffectSnapshot {
     EffectSnapshot {
         opacity: update.opacity.or(current.opacity),
+        width: update.width.or(current.width),
+        height: update.height.or(current.height),
+        padding: update.padding.or(current.padding),
         translation: update.translation.or(current.translation),
         scale: update.scale.or(current.scale),
         radius: update.radius.or(current.radius),
