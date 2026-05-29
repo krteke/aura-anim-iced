@@ -7,6 +7,7 @@
 - `[x]` Add a `prelude` module that exports the v0.1 Iced-first API surface for `UiProperty`, `PropertyValue`, `PropertySnapshot`, `Timing`, `Keyframes`, `Timeline`, `AnimationRuntime`, and Iced easing.
 - `[x]` Write crate-level documentation that states the Iced-first animation model, Iced public API boundary, the v0.1 scope, the runtime integration path, and the example entry points.
 - `[x]` Add compile-only smoke tests that import the public prelude, construct the Iced-first v0.1 types, and verify the crate builds with default features.
+- `[x]` Enable real v0.1 feature flags for default builds, serde, tracing, inspector diagnostics, and testing with compile coverage.
 
 ## Animatable Values
 

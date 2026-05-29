@@ -69,35 +69,11 @@ impl Keyframes {
         self.at(offset, (property::SCALE, value))
     }
 
-    // /// Inserts a horizontal translation keyframe.
-    // #[must_use]
-    // pub fn translate_x(self, offset: f32, value: f32) -> Self {
-    //     self.at(
-    //         offset,
-    //         vec![(property::TRANSLATE_X, PropertyValue::Scalar(value))],
-    //     )
-    // }
-
-    // /// Inserts a vertical translation keyframe.
-    // #[must_use]
-    // pub fn translate_y(self, offset: f32, value: f32) -> Self {
-    //     self.at(
-    //         offset,
-    //         vec![(property::TRANSLATE_Y, PropertyValue::Scalar(value))],
-    //     )
-    // }
-
-    // /// Inserts horizontal and vertical translation keyframes at the same offset.
-    // #[must_use]
-    // pub fn translation(self, offset: f32, x: f32, y: f32) -> Self {
-    //     self.at(
-    //         offset,
-    //         vec![
-    //             (property::TRANSLATE_X, PropertyValue::Scalar(x)),
-    //             (property::TRANSLATE_Y, PropertyValue::Scalar(y)),
-    //         ],
-    //     )
-    // }
+    /// Inserts horizontal and vertical translation keyframes at the same offset.
+    #[must_use]
+    pub fn translation(self, offset: f32, x: f32, y: f32) -> Self {
+        self.at(offset, (property::TRANSLATE, iced::Vector::new(x, y)))
+    }
 
     /// Inserts a background color keyframe.
     #[must_use]

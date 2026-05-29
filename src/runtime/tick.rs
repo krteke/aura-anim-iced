@@ -112,6 +112,27 @@ pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> 
         registry.remove_by_handle(*handle);
     }
 
+    #[cfg(feature = "tracing")]
+    tracing::trace!(
+        target: "aura_anim_iced::runtime",
+        timestamp_ms = now.as_millis(),
+        output_targets = properties.targets().len(),
+        completed = completed.len(),
+        active = registry.active_count(),
+        "runtime tick"
+    );
+
+    #[cfg(feature = "inspector")]
+    tracing::debug!(
+        target: "aura_anim_iced::inspector",
+        timestamp_ms = now.as_millis(),
+        output_targets = properties.targets().len(),
+        completed = completed.len(),
+        removed = removed.len(),
+        active = registry.active_count(),
+        "runtime inspector tick"
+    );
+
     AnimationTick::new(now, properties, completed)
 }
 

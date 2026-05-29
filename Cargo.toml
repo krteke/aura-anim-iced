@@ -30,16 +30,11 @@ name = "sampling"
 harness = false
 
 [features]
-# default = ["runtime"]
-# runtime = []
-# widgets = []
-# theme = []
-# spring = []
-# gesture = []
-# layout = []
-# inspector = ["tracing"]
+default = []
+# testing = []
 # serde = ["dep:serde"]
 tracing = ["dep:tracing"]
+inspector = ["tracing"]
 
 [dependencies]
 uuid = { version = "1.23.1", features = ["v4"] }

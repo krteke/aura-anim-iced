@@ -99,6 +99,16 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         let registration = AnimationRegistration::from_entry(&entry);
         self.registry.insert(target, entry);
 
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim_iced::runtime",
+            handle = registration.handle().id(),
+            target_id = ?target,
+            state = ?registration.state(),
+            completed = registration.completed_at().is_some(),
+            "registered animation"
+        );
+
         registration
     }
 
