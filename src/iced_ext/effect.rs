@@ -4,6 +4,24 @@ use crate::{
 };
 
 /// View-friendly effects extracted from sampled animation properties.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::{
+///     EffectSnapshot,
+///     property::{self, PropertySnapshot},
+/// };
+///
+/// let properties = PropertySnapshot::from(vec![
+///     (property::OPACITY, 0.75),
+///     (property::SCALE, 1.02),
+/// ]);
+/// let effects = EffectSnapshot::from_properties(&properties);
+///
+/// assert_eq!(effects.opacity, Some(0.75));
+/// assert_eq!(effects.scale, Some(1.02));
+/// ```
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct EffectSnapshot {
     /// Element opacity.

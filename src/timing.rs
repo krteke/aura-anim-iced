@@ -23,6 +23,27 @@ use crate::{
 };
 
 /// Timing state for an animation track or timeline step.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::timing::{
+///     Delay, Direction, Easing, FillMode, Timing, TimingSampleState,
+/// };
+///
+/// let timing = Timing::new(200.0)
+///     .with_delay(Delay::from_millis(50.0))
+///     .with_direction(Direction::Alternate)
+///     .with_fill_mode(FillMode::Both)
+///     .with_easing(Easing::EaseOut)
+///     .with_iterations(2);
+///
+/// let before = timing.normalize_elapsed(25.0);
+/// let active = timing.normalize_elapsed(100.0);
+///
+/// assert_eq!(before.sample_state, TimingSampleState::BackwardsFill);
+/// assert!(active.has_sample());
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Timing {
     /// Active duration for one iteration.

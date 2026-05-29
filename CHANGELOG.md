@@ -56,6 +56,7 @@
 - Added feature-gated runtime diagnostics through `tracing`, with inspector-specific tick events for tooling builds.
 - Added README guidance for project positioning, installation, Iced `Animation<T>` boundaries, and minimal runtime integration.
 - Added README sections for animatable values, property tracks, keyframes, timeline orchestration, runtime ticking, and Iced subscription wiring.
+- Added docs.rs examples for property snapshots, timing, keyframes, timelines, runtime registration, Iced effects, subscriptions, and the public prelude.
 
 ### Changed
 

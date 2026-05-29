@@ -19,6 +19,22 @@ pub fn should_subscribe<C>(runtime: &AnimationRuntime<C>) -> bool {
 }
 
 /// Returns an Iced tick subscription while the runtime has playing animations.
+///
+/// # Example
+///
+/// ```
+/// use std::time::Instant;
+///
+/// use aura_anim_iced::{AnimationRuntime, iced_ext};
+///
+/// #[derive(Debug, Clone)]
+/// enum Message {
+///     AnimationTick(Instant),
+/// }
+///
+/// let runtime = AnimationRuntime::new();
+/// let subscription = iced_ext::subscription(&runtime, Message::AnimationTick);
+/// ```
 pub fn subscription<Message, C>(
     runtime: &AnimationRuntime<C>,
     map_tick: impl Fn(Instant) -> Message + Clone + Send + Sync + 'static,

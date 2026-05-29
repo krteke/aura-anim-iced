@@ -22,6 +22,35 @@ pub use track::Track;
 use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 
 /// A root timeline made of sequential steps.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::{
+///     Duration, Easing, Hold, Keyframes, Timeline, Timing, Track, property,
+/// };
+///
+/// let enter = Track::new(
+///     Keyframes::new()
+///         .with_timing(Timing::new(120.0).with_easing(Easing::EaseOut))
+///         .at(0.0, (property::OPACITY, 0.0))
+///         .at(1.0, (property::OPACITY, 1.0)),
+/// );
+/// let exit = Track::new(
+///     Keyframes::new()
+///         .with_timing(Timing::new(80.0).with_easing(Easing::EaseIn))
+///         .at(0.0, (property::OPACITY, 1.0))
+///         .at(1.0, (property::OPACITY, 0.0)),
+/// );
+///
+/// let timeline = Timeline::sequence([
+///     enter.into(),
+///     Hold::new(Duration::from_millis(400.0)).into(),
+///     exit.into(),
+/// ]);
+///
+/// assert_eq!(timeline.total_duration(), Some(Duration::from_millis(600.0)));
+/// ```
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Timeline {
     name: Option<String>,

@@ -6,6 +6,24 @@ use crate::{
 };
 
 /// A collection of property snapshots keyed by normalized offsets.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::{Easing, Keyframes, Timing, property};
+///
+/// let keyframes = Keyframes::new()
+///     .with_timing(Timing::new(180.0).with_easing(Easing::EaseOut))
+///     .at(0.0, (property::OPACITY, 0.0))
+///     .at(0.0, (property::SCALE, 0.95))
+///     .at(1.0, (property::OPACITY, 1.0))
+///     .at(1.0, (property::SCALE, 1.0));
+///
+/// let sample = keyframes.sample_at(0.5).expect("active sample");
+///
+/// assert!(sample.find_property(&property::OPACITY.raw()).is_some());
+/// assert!(sample.find_property(&property::SCALE.raw()).is_some());
+/// ```
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Keyframes {
     frames: Vec<Keyframe>,

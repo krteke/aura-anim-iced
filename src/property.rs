@@ -44,6 +44,24 @@ pub const SHADOW: PropertySpec<Shadow> = PropertySpec::new(PropertyKey::new("aur
 /// Later entries with the same [`RawPropertySpec`] replace earlier entries when
 /// snapshots are merged. The runtime uses this as the value passed from
 /// keyframes/timelines into target-scoped ticks.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::property::{self, PropertySnapshot, PropertyValue};
+///
+/// let mut base = PropertySnapshot::from((property::OPACITY, 0.25));
+/// base.merge(PropertySnapshot::from(vec![
+///     (property::OPACITY, 1.0),
+///     (property::SCALE, 1.05),
+/// ]));
+///
+/// let opacity = base
+///     .find_property(&property::OPACITY.raw())
+///     .expect("opacity sample");
+///
+/// assert_eq!(opacity.value(), &PropertyValue::Scalar(1.0));
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct PropertySnapshot {
     entries: Vec<PropertyEntry>,
@@ -178,6 +196,17 @@ impl PropertyEntry {
 ///
 /// The namespace/name pair is used instead of a central enum so downstream code
 /// can declare additional properties without modifying this crate.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::property::{PropertyKey, PropertySpec, Scalar};
+///
+/// const TOAST_Y: PropertySpec<Scalar> =
+///     PropertySpec::new(PropertyKey::new("app", "toast-y"), 21);
+///
+/// assert_eq!(TOAST_Y.raw().key().name(), "toast-y");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PropertyKey {
     namespace: &'static str,

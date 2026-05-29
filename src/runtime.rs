@@ -27,6 +27,28 @@ use crate::runtime::{
 use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 
 /// Runtime state owned by an Iced application.
+///
+/// # Example
+///
+/// ```
+/// use aura_anim_iced::{
+///     AnimationRuntime, AnimationTargetId, Keyframes, Timing, property,
+/// };
+///
+/// let mut runtime = AnimationRuntime::new();
+/// let target = AnimationTargetId::new();
+///
+/// let registration = runtime.register_keyframes(
+///     target,
+///     Keyframes::new()
+///         .with_timing(Timing::new(100.0))
+///         .at(0.0, (property::OPACITY, 0.0))
+///         .at(1.0, (property::OPACITY, 1.0)),
+/// );
+///
+/// assert_eq!(registration.handle().id(), 1);
+/// assert!(runtime.should_subscribe());
+/// ```
 #[derive(Debug, Clone)]
 pub struct AnimationRuntime<C = SystemClock> {
     registry: AnimationRegistry,
