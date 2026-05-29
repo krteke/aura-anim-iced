@@ -89,7 +89,7 @@
 ## Documentation
 
 - `[x]` Update `README.md` with the project positioning, the relationship to Iced `Animation<T>`, installation commands, and a minimal runtime example.
-- `[ ]` Add README sections for animatable values, property tracks, keyframes, timeline orchestration, runtime ticking, and Iced subscription wiring.
+- `[x]` Add README sections for animatable values, property tracks, keyframes, timeline orchestration, runtime ticking, and Iced subscription wiring.
 - `[ ]` Add docs.rs examples to public types showing one compact usage snippet per Iced-first v0.1 module.
 - `[ ]` Add `CHANGELOG.md` with the `0.1.0-alpha.1` scope, implemented modules, example names, and benchmark entry points.
 - `[ ]` Add `LICENSE`, repository metadata, badges, and documentation links required for a clean crates.io package page.
