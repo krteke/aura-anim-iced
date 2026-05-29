@@ -8,7 +8,7 @@ use crate::{
     keyframes::Keyframes,
     property::{OPACITY, PropertySnapshot, PropertyValue, SCALE, WIDTH},
     timeline::{Timeline, Track},
-    timing::{Duration, Timing},
+    timing::{Direction, Duration, Timing},
 };
 
 fn keyframes(
@@ -133,6 +133,26 @@ fn completion_removes_only_finished_entries_and_reports_completed_handles() {
     assert_eq!(final_tick.completed(), &[long.handle()]);
     assert_eq!(runtime.active_count(), 0);
     assert!(!runtime.should_subscribe());
+}
+
+#[test]
+fn completion_output_respects_keyframe_direction() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let registration = runtime.register_keyframes(
+        target,
+        Keyframes::new()
+            .with_timing(Timing::new(100.0).with_direction(Direction::Reverse))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let tick = runtime.tick();
+    let snapshot = tick.properties_for(target).expect("target output");
+
+    assert_eq!(tick.completed(), &[registration.handle()]);
+    assert_approx_eq!(f32, scalar(snapshot, OPACITY), 0.0, epsilon = 1e-5);
 }
 
 #[test]

@@ -86,6 +86,10 @@
 - `[x]` Add benchmark fixtures for scalar tracks, color tracks, geometry tracks, shadow tracks, and mixed-property timeline snapshots.
 - `[ ]` Add zero-allocation sampling assertions after the sampling API supports caller-provided output buffers.
 
+## Bug Fixes
+
+- `[x]` Fix keyframe completion sampling so runtime and timeline completion output respects `Direction` and finite iteration count instead of hard-coding the final keyframe offset.
+
 ## Documentation
 
 - `[x]` Update `README.md` with the project positioning, the relationship to Iced `Animation<T>`, installation commands, and a minimal runtime example.

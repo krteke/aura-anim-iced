@@ -114,7 +114,7 @@ impl Track {
     /// Samples the final keyframe state for this track.
     #[must_use]
     pub fn completion_snapshot(&self) -> Option<PropertySnapshot> {
-        self.keyframes.sample_at(1.0)
+        self.keyframes.sample_completion()
     }
 }
 

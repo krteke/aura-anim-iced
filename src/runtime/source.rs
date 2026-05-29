@@ -1,8 +1,5 @@
 use crate::{
-    keyframes::Keyframes,
-    property::PropertySnapshot,
-    timeline::Timeline,
-    timing::{Duration, TimingPhase},
+    keyframes::Keyframes, property::PropertySnapshot, timeline::Timeline, timing::Duration,
 };
 
 /// Erased animation data owned by an internal runtime entry.
@@ -46,7 +43,7 @@ impl AnimationSource {
     #[must_use]
     pub(crate) fn completion_snapshot(&self) -> Option<PropertySnapshot> {
         match self {
-            Self::Keyframes(keyframes) => keyframes.sample_at(1.0),
+            Self::Keyframes(keyframes) => keyframes.sample_completion(),
             Self::Timeline(timeline) => timeline.completion_snapshot(),
         }
     }
@@ -57,10 +54,6 @@ fn sample_keyframes(keyframes: &Keyframes, elapsed: Duration) -> Option<Property
 
     if !timing.has_sample() {
         return None;
-    }
-
-    if timing.phase == TimingPhase::AfterEnd {
-        return keyframes.sample_at(1.0);
     }
 
     #[allow(

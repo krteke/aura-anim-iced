@@ -6,7 +6,7 @@ use crate::{
         BACKGROUND, OPACITY, PropertyEntry, PropertyKey, PropertySnapshot, PropertySpec,
         PropertyValue, SCALE, Size, Vector2, WIDTH,
     },
-    timing::{Delay, Easing, FillMode, Timing},
+    timing::{Delay, Direction, Easing, FillMode, IterationCount, Timing},
 };
 
 const OFFSET: PropertySpec<Vector2> = PropertySpec::new(PropertyKey::new("test", "offset"), 20);
@@ -219,4 +219,65 @@ fn easing_is_applied_between_neighboring_keyframes() {
         Easing::EaseIn.value(0.5),
         epsilon = 1e-5
     );
+}
+
+#[test]
+fn sample_completion_respects_direction_and_iteration_count() {
+    let sample_completion = |timing: Timing| {
+        Keyframes::new()
+            .with_timing(timing)
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0)
+            .sample_completion()
+            .expect("completion sample")
+    };
+
+    assert_approx_eq!(
+        f32,
+        scalar(&sample_completion(Timing::new(100.0)), OPACITY),
+        1.0,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(
+            &sample_completion(Timing::new(100.0).with_direction(Direction::Reverse)),
+            OPACITY
+        ),
+        0.0,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(
+            &sample_completion(
+                Timing::new(100.0)
+                    .with_direction(Direction::Alternate)
+                    .with_iterations(2)
+            ),
+            OPACITY
+        ),
+        0.0,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        scalar(
+            &sample_completion(
+                Timing::new(100.0)
+                    .with_direction(Direction::AlternateReverse)
+                    .with_iterations(2)
+            ),
+            OPACITY
+        ),
+        1.0,
+        epsilon = 1e-5
+    );
+
+    let infinite = Keyframes::new()
+        .with_timing(Timing::new(100.0).with_iterations(IterationCount::infinite()))
+        .opacity(0.0, 0.0)
+        .opacity(1.0, 1.0);
+
+    assert_eq!(infinite.sample_completion(), None);
 }

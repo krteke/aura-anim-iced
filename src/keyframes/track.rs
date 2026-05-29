@@ -164,6 +164,17 @@ impl Keyframes {
         sample_frames(&self.frames, offset, self.timing.easing())
     }
 
+    pub(crate) fn sample_completion(&self) -> Option<PropertySnapshot> {
+        let iteration_count = self.timing.iterations().finite_count()?;
+        let offset = self.timing.direction().end_progress(iteration_count);
+
+        #[allow(
+            clippy::cast_possible_truncation,
+            reason = "Normalized keyframe offsets are stored as f32 throughout the keyframe module."
+        )]
+        self.sample_at(offset as f32)
+    }
+
     fn upsert_frame(&mut self, frame: Keyframe) {
         if let Some(existing) = self
             .frames

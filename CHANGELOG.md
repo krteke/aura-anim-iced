@@ -98,3 +98,7 @@
 - Split keyframe storage, segment lookup, track operations, and tests into focused modules.
 - Defined duplicate keyframe offsets as merged snapshots where later values override earlier values for the same property.
 - Split timeline internals into focused modules while preserving the public timeline API.
+
+### Fixed
+
+- Fixed keyframe completion sampling so runtime completion output, timeline completion snapshots, and sequence holds respect playback `Direction` and finite iteration count.

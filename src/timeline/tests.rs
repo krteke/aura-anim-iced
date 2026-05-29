@@ -4,7 +4,7 @@ use super::{Hold, Parallel, Sequence, Timeline, TimelineStep, Track};
 use crate::{
     keyframes::Keyframes,
     property::{OPACITY, PropertySnapshot, PropertySpec, PropertyValue, SCALE, WIDTH},
-    timing::{Delay, Duration, Easing, Timing},
+    timing::{Delay, Direction, Duration, Easing, Timing},
 };
 
 fn track(
@@ -166,4 +166,36 @@ fn completion_snapshot_merges_final_state_from_all_visible_steps() {
 
     assert_approx_eq!(f32, scalar(&completed, OPACITY), 1.0, epsilon = 1e-5);
     assert_approx_eq!(f32, scalar(&completed, SCALE), 2.0, epsilon = 1e-5);
+}
+
+#[test]
+fn completion_snapshot_respects_track_direction() {
+    let track = Track::new(
+        Keyframes::new()
+            .with_timing(Timing::new(100.0).with_direction(Direction::Reverse))
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0),
+    );
+
+    let completed = track.completion_snapshot().expect("completion snapshot");
+
+    assert_approx_eq!(f32, scalar(&completed, OPACITY), 0.0, epsilon = 1e-5);
+}
+
+#[test]
+fn hold_keeps_direction_aware_completion_snapshot() {
+    let sequence = Sequence::new()
+        .track(Track::new(
+            Keyframes::new()
+                .with_timing(Timing::new(100.0).with_direction(Direction::Reverse))
+                .opacity(0.0, 0.0)
+                .opacity(1.0, 1.0),
+        ))
+        .hold(Duration::from_millis(50.0));
+
+    let held = sequence
+        .sample_at(Duration::from_millis(125.0))
+        .expect("hold should expose previous completion");
+
+    assert_approx_eq!(f32, scalar(&held, OPACITY), 0.0, epsilon = 1e-5);
 }
