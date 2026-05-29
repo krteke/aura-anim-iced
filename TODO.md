@@ -79,11 +79,11 @@
 
 ## Testing and Benchmarks
 
-- `[ ]` Add unit test modules for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
-- `[ ]` Add integration tests that run keyframes, timeline sequence, timeline parallel, runtime tick, and idle subscription behavior together.
-- `[ ]` Configure benchmark targets for 100, 1,000, and 10,000 property track samples with zero-allocation sampling assertions.
-- `[ ]` Add benchmark fixtures for scalar tracks, color tracks, geometry tracks, shadow tracks, and mixed-property timeline snapshots.
-- `[ ]` Add CI-friendly commands for `cargo fmt`, `cargo clippy`, `cargo test`, `cargo check --examples`, and benchmark compilation.
+- `[x]` Add unit test modules for `animatable`, `property`, `timing`, `keyframes`, `timeline`, `runtime`, and `iced_ext`.
+- `[x]` Add integration tests that run keyframes, timeline sequence, timeline parallel, runtime tick, and idle subscription behavior together.
+- `[x]` Configure benchmark targets for 100, 1,000, and 10,000 property track samples.
+- `[x]` Add benchmark fixtures for scalar tracks, color tracks, geometry tracks, shadow tracks, and mixed-property timeline snapshots.
+- `[ ]` Add zero-allocation sampling assertions after the sampling API supports caller-provided output buffers.
 
 ## Documentation
 

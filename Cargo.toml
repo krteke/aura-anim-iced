@@ -25,6 +25,10 @@ include = [
 name = "aura_anim_iced"
 path = "src/lib.rs"
 
+[[bench]]
+name = "sampling"
+harness = false
+
 [features]
 # default = ["runtime"]
 # runtime = []
