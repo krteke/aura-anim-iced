@@ -10,9 +10,9 @@ use iced::{
 };
 
 fn main() -> iced::Result {
-    iced::application(Demo::default, update, view)
+    iced::application(Demo::default, Demo::update, Demo::view)
         .title(title)
-        .subscription(subscription)
+        .subscription(Demo::subscription)
         .run()
 }
 
@@ -20,7 +20,7 @@ fn title(_: &Demo) -> String {
     String::from("aura-anim-iced animated button")
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum Message {
     HoverChanged(bool),
     PressChanged(bool),
@@ -44,10 +44,7 @@ impl Default for Demo {
         let button_target = AnimationTargetId::new();
         let effects = target_effects(ButtonVisualState::Rest);
 
-        runtime.register_timeline(
-            button_target,
-            button_timeline(effects.clone(), effects.clone()),
-        );
+        runtime.register_timeline(button_target, button_timeline(&effects, &effects));
 
         Self {
             runtime,
@@ -68,132 +65,134 @@ enum ButtonVisualState {
     Focused,
 }
 
-fn update(demo: &mut Demo, message: Message) -> Task<Message> {
-    match message {
-        Message::HoverChanged(hovered) => {
-            demo.hovered = hovered;
-            register_transition(demo);
-        }
-        Message::PressChanged(pressed) => {
-            demo.pressed = pressed;
-            register_transition(demo);
-        }
-        Message::FocusToggled => {
-            demo.focused = !demo.focused;
-            register_transition(demo);
-        }
-        Message::AnimationTick(tick_instant) => {
-            let tick = iced_ext::update_tick(&mut demo.runtime, tick_instant);
-            let effects = tick_effect_snapshot_for(&tick, demo.button_target);
+impl Demo {
+    fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::HoverChanged(hovered) => {
+                self.hovered = hovered;
+                self.register_transition();
+            }
+            Message::PressChanged(pressed) => {
+                self.pressed = pressed;
+                self.register_transition();
+            }
+            Message::FocusToggled => {
+                self.focused = !self.focused;
+                self.register_transition();
+            }
+            Message::AnimationTick(tick_instant) => {
+                let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
+                let effects = tick_effect_snapshot_for(&tick, self.button_target);
 
-            if !effects.is_empty() {
-                demo.effects = merge_effects(&demo.effects, &effects);
+                if !effects.is_empty() {
+                    self.effects = merge_effects(&self.effects, &effects);
+                }
             }
         }
+
+        Task::none()
     }
 
-    Task::none()
-}
+    fn view(&self) -> Element<'_, Message> {
+        let animated = self.animated_button();
+        let focus_toggle = button(text(if self.focused {
+            "Clear focus"
+        } else {
+            "Toggle focus"
+        }))
+        .width(150.0)
+        .on_press(Message::FocusToggled);
+        let state = row![
+            text(if self.hovered { "hover" } else { "rest" }).width(60.0),
+            text(if self.pressed { "pressed" } else { "released" }).width(60.0),
+            text(if self.focused { "focused" } else { "unfocused" }).width(60.0),
+        ]
+        .spacing(16);
 
-fn subscription(demo: &Demo) -> Subscription<Message> {
-    iced_ext::subscription(&demo.runtime, Message::AnimationTick)
-}
+        let button_container = container(animated)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .padding(48)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill);
+        let content_container = container(column![focus_toggle, state].spacing(24))
+            .width(Length::Fixed(180.0))
+            .height(Length::Fill)
+            .padding(48)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill);
 
-fn view(demo: &Demo) -> Element<'_, Message> {
-    let animated = animated_button(demo);
-    let focus_toggle = button(text(if demo.focused {
-        "Clear focus"
-    } else {
-        "Toggle focus"
-    }))
-    .width(150.0)
-    .on_press(Message::FocusToggled);
-    let state = row![
-        text(if demo.hovered { "hover" } else { "rest" }).width(60.0),
-        text(if demo.pressed { "pressed" } else { "released" }).width(60.0),
-        text(if demo.focused { "focused" } else { "unfocused" }).width(60.0),
-    ]
-    .spacing(16);
+        container(column![button_container, content_container].spacing(24)).into()
+    }
 
-    let button_container = container(animated)
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .padding(48)
-        .center_x(Length::Fill)
-        .center_y(Length::Fill);
-    let content_container = container(column![focus_toggle, state].spacing(24))
-        .width(Length::Fixed(180.0))
-        .height(Length::Fill)
-        .padding(48)
-        .center_x(Length::Fill)
-        .center_y(Length::Fill);
+    fn subscription(&self) -> Subscription<Message> {
+        iced_ext::subscription(&self.runtime, Message::AnimationTick)
+    }
 
-    container(column![button_container, content_container].spacing(24)).into()
-}
+    fn visual_state(&self) -> ButtonVisualState {
+        if self.pressed {
+            ButtonVisualState::Pressed
+        } else if self.focused {
+            ButtonVisualState::Focused
+        } else if self.hovered {
+            ButtonVisualState::Hovered
+        } else {
+            ButtonVisualState::Rest
+        }
+    }
 
-fn animated_button(demo: &Demo) -> Element<'_, Message> {
-    let scale = demo.effects.scale.unwrap_or(1.0);
-    let radius = demo.effects.radius.unwrap_or(14.0);
-    let background = demo
-        .effects
-        .background
-        .unwrap_or(Color::from_rgb(0.16, 0.24, 0.34));
-    let border_color = demo
-        .effects
-        .border_color
-        .unwrap_or(Color::from_rgb(0.45, 0.61, 0.78));
-    let text_color = demo.effects.text_color.unwrap_or(Color::WHITE);
-    let shadow = demo.effects.shadow.unwrap_or(Shadow {
-        color: Color::from_rgba(0.0, 0.0, 0.0, 0.24),
-        offset: Vector::new(0.0, 8.0),
-        blur_radius: 18.0,
-    });
+    fn register_transition(&mut self) {
+        let target = target_effects(self.visual_state());
+        let timeline = button_timeline(&self.effects, &target);
 
-    mouse_area(
-        container(text("Animated Button").size(18.0 * scale))
-            .width(Length::Fixed(190.0 * scale))
-            .height(Length::Fixed(56.0 * scale))
-            .align_x(Horizontal::Center)
-            .align_y(Vertical::Center)
-            .style(move |_theme: &Theme| container::Style {
-                text_color: Some(text_color),
-                background: Some(Background::Color(background)),
-                border: Border {
-                    color: border_color,
-                    width: if demo.focused { 3.0 } else { 1.5 },
-                    radius: radius.into(),
-                },
-                shadow,
-                ..container::Style::default()
-            }),
-    )
-    .on_enter(Message::HoverChanged(true))
-    .on_exit(Message::HoverChanged(false))
-    .on_press(Message::PressChanged(true))
-    .on_release(Message::PressChanged(false))
-    .into()
-}
+        self.runtime.register_timeline(self.button_target, timeline);
+    }
 
-fn register_transition(demo: &mut Demo) {
-    let target = target_effects(visual_state(demo));
-    let timeline = button_timeline(demo.effects.clone(), target);
+    fn animated_button(&self) -> Element<'_, Message> {
+        let scale = self.effects.scale.unwrap_or(1.0);
+        let radius = self.effects.radius.unwrap_or(14.0);
+        let background = self
+            .effects
+            .background
+            .unwrap_or(Color::from_rgb(0.16, 0.24, 0.34));
+        let border_color = self
+            .effects
+            .border_color
+            .unwrap_or(Color::from_rgb(0.45, 0.61, 0.78));
+        let text_color = self.effects.text_color.unwrap_or(Color::WHITE);
+        let shadow = self.effects.shadow.unwrap_or(Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.24),
+            offset: Vector::new(0.0, 8.0),
+            blur_radius: 18.0,
+        });
 
-    demo.runtime.register_timeline(demo.button_target, timeline);
-}
-
-fn visual_state(demo: &Demo) -> ButtonVisualState {
-    if demo.pressed {
-        ButtonVisualState::Pressed
-    } else if demo.focused {
-        ButtonVisualState::Focused
-    } else if demo.hovered {
-        ButtonVisualState::Hovered
-    } else {
-        ButtonVisualState::Rest
+        mouse_area(
+            container(text("Animated Button").size(18.0 * scale))
+                .width(Length::Fixed(190.0 * scale))
+                .height(Length::Fixed(56.0 * scale))
+                .align_x(Horizontal::Center)
+                .align_y(Vertical::Center)
+                .style(move |_theme: &Theme| container::Style {
+                    text_color: Some(text_color),
+                    background: Some(Background::Color(background)),
+                    border: Border {
+                        color: border_color,
+                        width: if self.focused { 3.0 } else { 1.5 },
+                        radius: radius.into(),
+                    },
+                    shadow,
+                    ..container::Style::default()
+                }),
+        )
+        .on_enter(Message::HoverChanged(true))
+        .on_exit(Message::HoverChanged(false))
+        .on_press(Message::PressChanged(true))
+        .on_release(Message::PressChanged(false))
+        .into()
     }
 }
 
-fn button_timeline(from: EffectSnapshot, to: EffectSnapshot) -> Timeline {
+fn button_timeline(from: &EffectSnapshot, to: &EffectSnapshot) -> Timeline {
     let timing = Timing::new(140.0).with_easing(Easing::EaseOut);
 
     Timeline::parallel([

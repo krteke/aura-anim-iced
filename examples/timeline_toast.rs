@@ -17,9 +17,9 @@ const TOAST_Y: PropertySpec<property::Scalar> =
     PropertySpec::new(PropertyKey::new("example", "toast-y"), 21);
 
 fn main() -> iced::Result {
-    iced::application(Demo::default, update, view)
+    iced::application(Demo::default, Demo::update, Demo::view)
         .title(title)
-        .subscription(subscription)
+        .subscription(Demo::subscription)
         .run()
 }
 
@@ -27,7 +27,7 @@ fn title(_: &Demo) -> String {
     String::from("aura-anim-iced timeline toast")
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum Message {
     ShowToast,
     DismissToast,
@@ -61,73 +61,101 @@ impl Default for Demo {
     }
 }
 
-fn update(demo: &mut Demo, message: Message) -> Task<Message> {
-    match message {
-        Message::ShowToast => show_toast(demo),
-        Message::DismissToast => dismiss_toast(demo),
-        Message::AnimationTick(tick_instant) => {
-            let tick = iced_ext::update_tick(&mut demo.runtime, tick_instant);
-            let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, demo.toast_target);
+impl Demo {
+    fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::ShowToast => self.show_toast(),
+            Message::DismissToast => self.dismiss_toast(),
+            Message::AnimationTick(tick_instant) => {
+                let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
+                let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, self.toast_target);
 
-            if !effects.is_empty() {
-                demo.effects = shared::merge_effects(&demo.effects, &effects);
-            }
+                if !effects.is_empty() {
+                    self.effects = shared::merge_effects(&self.effects, &effects);
+                }
 
-            if let Some(y) = shared::tick_scalar(&tick, demo.toast_target, TOAST_Y) {
-                demo.y_offset = y;
-            }
+                if let Some(y) = shared::tick_scalar(&tick, self.toast_target, TOAST_Y) {
+                    self.y_offset = y;
+                }
 
-            if let Some(toast) = &demo.toast
-                && tick.completed().contains(&toast.handle)
-            {
-                demo.toast = None;
-                demo.effects = hidden_effects();
-                demo.y_offset = 28.0;
+                if let Some(toast) = &self.toast
+                    && tick.completed().contains(&toast.handle)
+                {
+                    self.toast = None;
+                    self.effects = hidden_effects();
+                    self.y_offset = 28.0;
+                }
             }
         }
+
+        Task::none()
     }
 
-    Task::none()
-}
+    fn subscription(&self) -> Subscription<Message> {
+        iced_ext::subscription(&self.runtime, Message::AnimationTick)
+    }
 
-fn subscription(demo: &Demo) -> Subscription<Message> {
-    iced_ext::subscription(&demo.runtime, Message::AnimationTick)
-}
-
-fn view(demo: &Demo) -> Element<'_, Message> {
-    let controls = row![
-        button(text("Show toast")).on_press(Message::ShowToast),
-        button(text("Dismiss")).on_press_maybe(demo.toast.as_ref().map(|_| Message::DismissToast)),
-    ]
-    .spacing(12);
-
-    let toast_area: Element<'_, Message> = if let Some(toast) = &demo.toast {
-        column![
-            Space::new().height(Length::Fixed(demo.y_offset.max(0.0))),
-            toast_card(toast.text.clone(), &demo.effects),
+    fn view(&self) -> Element<'_, Message> {
+        let controls = row![
+            button(text("Show toast")).on_press(Message::ShowToast),
+            button(text("Dismiss"))
+                .on_press_maybe(self.toast.as_ref().map(|_| Message::DismissToast)),
         ]
-        .align_x(Horizontal::Center)
-        .into()
-    } else {
-        container(text("No active toast").size(16))
-            .width(Length::Fill)
-            .height(Length::Fixed(120.0))
-            .align_x(Horizontal::Center)
-            .align_y(Vertical::Center)
-            .into()
-    };
+        .spacing(12);
 
-    container(
-        column![controls, toast_area]
-            .spacing(28)
-            .align_x(Horizontal::Center),
-    )
-    .width(Length::Fill)
-    .height(Length::Fill)
-    .padding(48)
-    .center_x(Length::Fill)
-    .center_y(Length::Fill)
-    .into()
+        let toast_area: Element<'_, Message> = if let Some(toast) = &self.toast {
+            column![
+                Space::new().height(Length::Fixed(self.y_offset.max(0.0))),
+                toast_card(toast.text.clone(), &self.effects),
+            ]
+            .align_x(Horizontal::Center)
+            .into()
+        } else {
+            container(text("No active toast").size(16))
+                .width(Length::Fill)
+                .height(Length::Fixed(120.0))
+                .align_x(Horizontal::Center)
+                .align_y(Vertical::Center)
+                .into()
+        };
+
+        container(
+            column![controls, toast_area]
+                .spacing(28)
+                .align_x(Horizontal::Center),
+        )
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .padding(48)
+        .center_x(Length::Fill)
+        .center_y(Length::Fill)
+        .into()
+    }
+
+    fn show_toast(&mut self) {
+        let timeline = toast_lifecycle_timeline();
+        let registration = self.runtime.register_timeline(self.toast_target, timeline);
+
+        self.toast = Some(Toast {
+            text: String::from("Enter, hold, exit, then cleanup."),
+            handle: registration.handle(),
+        });
+        self.effects = hidden_effects();
+        self.y_offset = 28.0;
+    }
+
+    fn dismiss_toast(&mut self) {
+        if self.toast.is_none() {
+            return;
+        }
+
+        let timeline = toast_exit_timeline(&self.effects, self.y_offset);
+        let registration = self.runtime.register_timeline(self.toast_target, timeline);
+
+        if let Some(toast) = &mut self.toast {
+            toast.handle = registration.handle();
+        }
+    }
 }
 
 fn toast_card(label: String, effects: &EffectSnapshot) -> Element<'_, Message> {
@@ -183,31 +211,6 @@ fn toast_card(label: String, effects: &EffectSnapshot) -> Element<'_, Message> {
         ..container::Style::default()
     })
     .into()
-}
-
-fn show_toast(demo: &mut Demo) {
-    let timeline = toast_lifecycle_timeline();
-    let registration = demo.runtime.register_timeline(demo.toast_target, timeline);
-
-    demo.toast = Some(Toast {
-        text: String::from("Enter, hold, exit, then cleanup."),
-        handle: registration.handle(),
-    });
-    demo.effects = hidden_effects();
-    demo.y_offset = 28.0;
-}
-
-fn dismiss_toast(demo: &mut Demo) {
-    if demo.toast.is_none() {
-        return;
-    }
-
-    let timeline = toast_exit_timeline(&demo.effects, demo.y_offset);
-    let registration = demo.runtime.register_timeline(demo.toast_target, timeline);
-
-    if let Some(toast) = &mut demo.toast {
-        toast.handle = registration.handle();
-    }
 }
 
 fn toast_lifecycle_timeline() -> Timeline {

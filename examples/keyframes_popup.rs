@@ -12,9 +12,9 @@ use iced::{
 use std::time::Instant;
 
 fn main() -> iced::Result {
-    iced::application(Demo::default, update, view)
+    iced::application(Demo::default, Demo::update, Demo::view)
         .title(title)
-        .subscription(subscription)
+        .subscription(Demo::subscription)
         .run()
 }
 
@@ -22,7 +22,7 @@ fn title(_: &Demo) -> String {
     String::from("aura-anim-iced keyframes popup")
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum Message {
     TogglePopup,
     AnimationTick(Instant),
@@ -49,69 +49,93 @@ impl Default for Demo {
     }
 }
 
-fn update(demo: &mut Demo, message: Message) -> Task<Message> {
-    match message {
-        Message::TogglePopup => {
-            if demo.visible {
-                close_popup(demo);
-            } else {
-                open_popup(demo);
+impl Demo {
+    fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::TogglePopup => {
+                if self.visible {
+                    self.close_popup();
+                } else {
+                    self.open_popup();
+                }
+            }
+            Message::AnimationTick(tick_instant) => {
+                let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
+                let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, self.popup_target);
+
+                if !effects.is_empty() {
+                    self.effects = shared::merge_effects(&self.effects, &effects);
+                }
+
+                if self
+                    .closing
+                    .is_some_and(|handle| tick.completed().contains(&handle))
+                {
+                    self.visible = false;
+                    self.closing = None;
+                    self.effects = hidden_effects();
+                }
             }
         }
-        Message::AnimationTick(tick_instant) => {
-            let tick = iced_ext::update_tick(&mut demo.runtime, tick_instant);
-            let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, demo.popup_target);
 
-            if !effects.is_empty() {
-                demo.effects = shared::merge_effects(&demo.effects, &effects);
-            }
+        Task::none()
+    }
 
-            if demo
-                .closing
-                .is_some_and(|handle| tick.completed().contains(&handle))
-            {
-                demo.visible = false;
-                demo.closing = None;
-                demo.effects = hidden_effects();
-            }
+    fn view(&self) -> Element<'_, Message> {
+        let toggle_label = if self.visible {
+            "Close popup"
+        } else {
+            "Open popup"
+        };
+        let controls = row![button(text(toggle_label)).on_press(Message::TogglePopup)].spacing(12);
+        let mut content = column![controls].spacing(24).align_x(Horizontal::Center);
+
+        if self.visible {
+            content = content.push(popup_card(&self.effects));
+        } else {
+            content = content.push(
+                container(text("Popup hidden").size(16))
+                    .width(Length::Fixed(300.0))
+                    .height(Length::Fixed(120.0))
+                    .align_x(Horizontal::Center)
+                    .align_y(Vertical::Center),
+            );
+        }
+
+        container(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .padding(48)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .into()
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        iced_ext::subscription(&self.runtime, Message::AnimationTick)
+    }
+
+    fn open_popup(&mut self) {
+        self.visible = true;
+        self.closing = None;
+
+        let registration = self
+            .runtime
+            .register_keyframes(self.popup_target, popup_open_keyframes(&self.effects));
+
+        if let Some(properties) = registration.properties() {
+            self.effects =
+                shared::merge_effects(&self.effects, &EffectSnapshot::from_properties(properties));
         }
     }
 
-    Task::none()
-}
+    fn close_popup(&mut self) {
+        let registration = self
+            .runtime
+            .register_keyframes(self.popup_target, popup_close_keyframes(&self.effects));
 
-fn subscription(demo: &Demo) -> Subscription<Message> {
-    iced_ext::subscription(&demo.runtime, Message::AnimationTick)
-}
-
-fn view(demo: &Demo) -> Element<'_, Message> {
-    let toggle_label = if demo.visible {
-        "Close popup"
-    } else {
-        "Open popup"
-    };
-    let controls = row![button(text(toggle_label)).on_press(Message::TogglePopup)].spacing(12);
-    let mut content = column![controls].spacing(24).align_x(Horizontal::Center);
-
-    if demo.visible {
-        content = content.push(popup_card(&demo.effects));
-    } else {
-        content = content.push(
-            container(text("Popup hidden").size(16))
-                .width(Length::Fixed(300.0))
-                .height(Length::Fixed(120.0))
-                .align_x(Horizontal::Center)
-                .align_y(Vertical::Center),
-        );
+        self.closing = Some(registration.handle());
     }
-
-    container(content)
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .padding(48)
-        .center_x(Length::Fill)
-        .center_y(Length::Fill)
-        .into()
 }
 
 fn popup_card(effects: &EffectSnapshot) -> Element<'_, Message> {
@@ -168,28 +192,6 @@ fn popup_card(effects: &EffectSnapshot) -> Element<'_, Message> {
         ..container::Style::default()
     })
     .into()
-}
-
-fn open_popup(demo: &mut Demo) {
-    demo.visible = true;
-    demo.closing = None;
-
-    let registration = demo
-        .runtime
-        .register_keyframes(demo.popup_target, popup_open_keyframes(&demo.effects));
-
-    if let Some(properties) = registration.properties() {
-        demo.effects =
-            shared::merge_effects(&demo.effects, &EffectSnapshot::from_properties(properties));
-    }
-}
-
-fn close_popup(demo: &mut Demo) {
-    let registration = demo
-        .runtime
-        .register_keyframes(demo.popup_target, popup_close_keyframes(&demo.effects));
-
-    demo.closing = Some(registration.handle());
 }
 
 fn popup_open_keyframes(from: &EffectSnapshot) -> Keyframes {

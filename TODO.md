@@ -91,12 +91,12 @@
 - `[x]` Update `README.md` with the project positioning, the relationship to Iced `Animation<T>`, installation commands, and a minimal runtime example.
 - `[x]` Add README sections for animatable values, property tracks, keyframes, timeline orchestration, runtime ticking, and Iced subscription wiring.
 - `[x]` Add docs.rs examples to public types showing one compact usage snippet per Iced-first v0.1 module.
-- `[ ]` Add `CHANGELOG.md` with the `0.1.0-alpha.1` scope, implemented modules, example names, and benchmark entry points.
-- `[ ]` Add `LICENSE`, repository metadata, badges, and documentation links required for a clean crates.io package page.
+- `[x]` Add `CHANGELOG.md` with the `0.1.0-alpha.1` scope, implemented modules, example names, and benchmark entry points.
+- `[x]` Add `LICENSE`, repository metadata, badges, and documentation links required for a clean crates.io package page.
 
 ## Release
 
-- `[ ]` Run the v0.1 release gate with formatting, linting, tests, example checks, docs generation, and benchmark compilation.
-- `[ ]` Package the crate with `cargo package` and inspect the generated archive contents for source files, examples, README, changelog, and license.
-- `[ ]` Publish `0.1.0-alpha.1` to crates.io after the release gate passes and the package archive contains the documented v0.1 scope.
-- `[ ]` Tag the repository with `v0.1.0-alpha.1` and write release notes covering PropertyValue, Timing, Keyframes, Timeline, Runtime, Iced integration, examples, tests, and benchmarks.
+- `[x]` Run the v0.1 release gate with formatting, linting, tests, example checks, docs generation, and benchmark compilation.
+- `[x]` Package the crate with `cargo package` and inspect the generated archive contents for source files, examples, README, changelog, and license.
+- `[x]` Publish `0.1.0-alpha.1` to crates.io after the release gate passes and the package archive contains the documented v0.1 scope.
+- `[x]` Tag the repository with `v0.1.0-alpha.1` and write release notes covering PropertyValue, Timing, Keyframes, Timeline, Runtime, Iced integration, examples, tests, and benchmarks.

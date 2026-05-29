@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### Release Scope
+
+- Prepared `0.1.1-alpha.1` as an Iced-first animation foundation release for typed property snapshots, timing, keyframes, timeline orchestration, runtime ticking, and Iced integration helpers.
+- Kept higher-level behavior rules, widget wrappers, gesture drivers, layout transitions, theme transitions, and visual inspector UI outside this alpha scope.
+
+### Implemented Modules
+
+- `property`: typed property specs, sampled property values, composition ordering, property snapshots, and mismatch validation.
+- `timing`: duration, delay, direction, fill mode, iteration count, playback rate, easing, and elapsed-time normalization.
+- `keyframes`: normalized keyframe storage, duplicate-offset merging, per-property interpolation, and keyframe sampling.
+- `timeline`: tracks, sequences, parallel groups, holds, total-duration calculation, timeline sampling, and playback controls.
+- `runtime`: animation handles, target-scoped registration, active entry storage, deterministic test clocks, tick aggregation, completion reporting, and idle detection.
+- `iced_ext`: Iced subscription gating, runtime tick forwarding, and `EffectSnapshot` conversion for view code.
+- `prelude`: compact imports for the v0.1 public API surface.
+
+### Examples
+
+- `animated_button`: hover, press, focus, background, border, text color, shadow, radius, and scale animation using parallel timeline tracks.
+- `keyframes_popup`: popup open and close animation using opacity, scale overshoot, radius, color, shadow, and runtime completion cleanup.
+- `timeline_toast`: enter, hold, exit, opacity, scale, shadow, custom toast offset, and cleanup using a timeline sequence.
+
+### Benchmarks
+
+- `sampling`: Criterion benchmark target for `keyframes/sample_counts`, `keyframes/value_fixtures`, and `timeline/mixed_snapshots`.
+- `keyframes/sample_counts`: samples scalar keyframes at 100, 1,000, and 10,000 iterations.
+- `keyframes/value_fixtures`: compares scalar, color, geometry, and shadow keyframe sampling fixtures.
+- `timeline/mixed_snapshots`: samples mixed-property timeline snapshots at 100, 1,000, and 10,000 iterations.
+
 ### Added
 
 - Rebuilt the v0.1 crate skeleton with module declarations, public re-exports, and minimal compile-path placeholder types.
