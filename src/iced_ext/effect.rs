@@ -1,6 +1,6 @@
 use crate::{
-    property::{PropertySnapshot, PropertyValue, UiProperty},
-    runtime::AnimationTick,
+    property::{self, PropertySnapshot, PropertyValue},
+    runtime::{AnimationTargetId, AnimationTick},
 };
 
 /// View-friendly effects extracted from sampled animation properties.
@@ -8,6 +8,12 @@ use crate::{
 pub struct EffectSnapshot {
     /// Element opacity.
     pub opacity: Option<f32>,
+    /// Element width.
+    pub width: Option<f32>,
+    /// Element height.
+    pub height: Option<f32>,
+    /// Element padding.
+    pub padding: Option<f32>,
     /// Element translation.
     pub translation: Option<iced::Vector>,
     /// Element scale.
@@ -29,56 +35,52 @@ impl EffectSnapshot {
     #[must_use]
     pub fn from_properties(properties: &PropertySnapshot) -> Self {
         let mut effects = Self::default();
-        let mut translate_x = None;
-        let mut translate_y = None;
 
-        for (property, value) in properties {
-            match (property, value) {
-                (UiProperty::Opacity, PropertyValue::Scalar(value)) => {
+        for entry in properties.entries() {
+            match entry.value() {
+                PropertyValue::Scalar(value) if *entry.spec() == property::OPACITY.raw() => {
                     effects.opacity = Some(*value);
                 }
-                (UiProperty::TranslateX, PropertyValue::Scalar(value)) => {
-                    translate_x = Some(*value);
+                PropertyValue::Scalar(value) if *entry.spec() == property::WIDTH.raw() => {
+                    effects.width = Some(*value);
                 }
-                (UiProperty::TranslateY, PropertyValue::Scalar(value)) => {
-                    translate_y = Some(*value);
+                PropertyValue::Scalar(value) if *entry.spec() == property::HEIGHT.raw() => {
+                    effects.height = Some(*value);
                 }
-                (UiProperty::Scale, PropertyValue::Scalar(value)) => {
+                PropertyValue::Scalar(value) if *entry.spec() == property::PADDING.raw() => {
+                    effects.padding = Some(*value);
+                }
+                PropertyValue::Scalar(value) if *entry.spec() == property::SCALE.raw() => {
                     effects.scale = Some(*value);
                 }
-                (UiProperty::Radius, PropertyValue::Scalar(value)) => {
+                PropertyValue::Scalar(value) if *entry.spec() == property::RADIUS.raw() => {
                     effects.radius = Some(*value);
                 }
-                (UiProperty::Background, PropertyValue::Color(value)) => {
+                PropertyValue::Color(value) if *entry.spec() == property::BACKGROUND.raw() => {
                     effects.background = Some(*value);
                 }
-                (UiProperty::BorderColor, PropertyValue::Color(value)) => {
+                PropertyValue::Color(value) if *entry.spec() == property::BORDER_COLOR.raw() => {
                     effects.border_color = Some(*value);
                 }
-                (UiProperty::TextColor, PropertyValue::Color(value)) => {
+                PropertyValue::Color(value) if *entry.spec() == property::TEXT_COLOR.raw() => {
                     effects.text_color = Some(*value);
                 }
-                (UiProperty::Shadow, PropertyValue::Shadow(value)) => {
+                PropertyValue::Shadow(value) if *entry.spec() == property::SHADOW.raw() => {
                     effects.shadow = Some(*value);
                 }
                 _ => {}
             }
         }
 
-        if translate_x.is_some() || translate_y.is_some() {
-            effects.translation = Some(iced::Vector::new(
-                translate_x.unwrap_or_default(),
-                translate_y.unwrap_or_default(),
-            ));
-        }
-
         effects
     }
 
-    /// Extracts view-friendly effects from a runtime tick.
+    /// Extracts view-friendly effects from a runtime tick for one target.
     #[must_use]
-    pub fn from_tick(tick: &AnimationTick) -> Self {
-        Self::from_properties(tick.properties())
+    pub fn from_tick_for(tick: &AnimationTick, target: AnimationTargetId) -> Self {
+        tick.properties_for(target)
+            .map(Self::from_properties)
+            .unwrap_or_default()
     }
 
     /// Returns whether no effect was extracted.
@@ -94,8 +96,8 @@ pub fn effect_snapshot(properties: &PropertySnapshot) -> EffectSnapshot {
     EffectSnapshot::from_properties(properties)
 }
 
-/// Extracts view-friendly effects from a runtime tick.
+/// Extracts view-friendly effects from a runtime tick for one target.
 #[must_use]
-pub fn tick_effect_snapshot(tick: &AnimationTick) -> EffectSnapshot {
-    EffectSnapshot::from_tick(tick)
+pub fn tick_effect_snapshot_for(tick: &AnimationTick, target: AnimationTargetId) -> EffectSnapshot {
+    EffectSnapshot::from_tick_for(tick, target)
 }

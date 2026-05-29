@@ -10,7 +10,7 @@ use crate::runtime::{AnimationClock, AnimationRuntime, AnimationTick};
 #[cfg(test)]
 mod tests;
 
-pub use effect::{EffectSnapshot, effect_snapshot, tick_effect_snapshot};
+pub use effect::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 
 /// Returns whether the runtime should keep an Iced tick subscription active.
 #[must_use]
