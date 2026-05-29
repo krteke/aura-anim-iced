@@ -54,6 +54,7 @@
 - Added an animated button example covering hover, pressed, focus, background, border, shadow, and scale animation with parallel tracks.
 - Added real v0.1 feature flags for default builds, serde, tracing, inspector diagnostics, and testing.
 - Added feature-gated runtime diagnostics through `tracing`, with inspector-specific tick events for tooling builds.
+- Added README guidance for project positioning, installation, Iced `Animation<T>` boundaries, and minimal runtime integration.
 
 ### Changed
 
