@@ -6,7 +6,7 @@ pub use crate::property::{
     BACKGROUND, BORDER_COLOR, Color as ColorProperty, HEIGHT, OPACITY, PADDING, PropertyEntry,
     PropertyKey, PropertySnapshot, PropertySpec, PropertyValue, PropertyValueKind, RADIUS,
     RawPropertySpec, Rectangle as RectangleProperty, SCALE, SHADOW, Scalar as ScalarProperty,
-    Shadow as ShadowProperty, Size as SizeProperty, TEXT_COLOR, TransformValue,
+    Shadow as ShadowProperty, Size as SizeProperty, TEXT_COLOR, TRANSLATE, TransformValue,
     Vector2 as Vector2Property, WIDTH,
 };
 pub use crate::runtime::{

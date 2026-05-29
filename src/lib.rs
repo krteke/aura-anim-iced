@@ -39,7 +39,8 @@ pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use keyframes::{Keyframe, KeyframeSegment, Keyframes};
 pub use property::{
     BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyKey, PropertySnapshot,
-    PropertySpec, PropertyValue, RADIUS, SCALE, SHADOW, TEXT_COLOR, TransformValue, WIDTH,
+    PropertySpec, PropertyValue, RADIUS, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, TransformValue,
+    WIDTH,
 };
 pub use runtime::{
     AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,

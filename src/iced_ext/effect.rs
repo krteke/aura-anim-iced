@@ -50,6 +50,9 @@ impl EffectSnapshot {
                 PropertyValue::Scalar(value) if *entry.spec() == property::PADDING.raw() => {
                     effects.padding = Some(*value);
                 }
+                PropertyValue::Vector2(value) if *entry.spec() == property::TRANSLATE.raw() => {
+                    effects.translation = Some(*value);
+                }
                 PropertyValue::Scalar(value) if *entry.spec() == property::SCALE.raw() => {
                     effects.scale = Some(*value);
                 }

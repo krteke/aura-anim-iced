@@ -13,6 +13,9 @@ pub use value::{PropertyValue, TransformValue};
 /// Built-in opacity property.
 pub const OPACITY: PropertySpec<Scalar> =
     PropertySpec::new(PropertyKey::new("aura", "opacity"), 10);
+/// Built-in translate property.
+pub const TRANSLATE: PropertySpec<Vector2> =
+    PropertySpec::new(PropertyKey::new("aura", "translate"), 19);
 /// Built-in uniform scale property.
 pub const SCALE: PropertySpec<Scalar> = PropertySpec::new(PropertyKey::new("aura", "scale"), 20);
 /// Built-in width property.
