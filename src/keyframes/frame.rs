@@ -1,7 +1,7 @@
-use crate::{
-    prelude::RawPropertySpec,
-    property::{PropertyEntry, PropertySnapshot},
-};
+use crate::property::PropertySnapshot;
+
+#[cfg(test)]
+use crate::{prelude::RawPropertySpec, property::PropertyEntry};
 
 /// A property snapshot stored at a normalized keyframe offset.
 #[derive(Debug, Clone, PartialEq)]
@@ -38,6 +38,7 @@ impl Keyframe {
         self.snapshot.merge(snapshot);
     }
 
+    #[cfg(test)]
     pub(crate) fn find_property(&self, property: &RawPropertySpec) -> Option<&PropertyEntry> {
         self.snapshot.find_property(property)
     }

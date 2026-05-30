@@ -4,7 +4,7 @@ use super::{Keyframe, normalize_offset};
 
 /// A lookup result for a normalized keyframe offset.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum KeyframeSegment<'a> {
+pub(crate) enum KeyframeSegment<'a> {
     /// The track has no keyframes.
     Empty,
     /// The track has exactly one keyframe.
@@ -37,7 +37,7 @@ impl<'a> KeyframeSegment<'a> {
 
     /// Returns whether this segment can produce a sample without interpolation.
     #[must_use]
-    pub const fn is_resolved(self) -> bool {
+    pub(crate) const fn is_resolved(self) -> bool {
         matches!(self, Self::Single(_) | Self::Exact(_))
     }
 }

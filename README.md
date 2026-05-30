@@ -81,12 +81,13 @@ fn update(app: &mut App, message: Message) {
         Message::OpenPanel => {
             app.animations.register_keyframes(
                 app.panel,
-                Keyframes::new()
+                KeyframesBuilder::new()
                     .with_timing(Timing::new(180.0))
                     .opacity(0.0, 0.0)
                     .opacity(1.0, 1.0)
                     .scale(0.0, 0.96)
-                    .scale(1.0, 1.0),
+                    .scale(1.0, 1.0)
+                    .finish(),
             );
         }
         Message::AnimationTick(tick) => {
@@ -113,15 +114,16 @@ kept internal so application code works with typed properties and sampled
 snapshots instead of implementing animation traits.
 
 ```rust
-use aura_anim_iced::{Keyframes, Timing, property};
+use aura_anim_iced::{KeyframesBuilder, Timing, property};
 use iced::Color;
 
-let fade_and_color = Keyframes::new()
+let fade_and_color = KeyframesBuilder::new()
     .with_timing(Timing::new(160.0))
     .at(0.0, (property::OPACITY, 0.0))
     .at(1.0, (property::OPACITY, 1.0))
     .at(0.0, (property::BACKGROUND, Color::from_rgb(0.12, 0.14, 0.18)))
-    .at(1.0, (property::BACKGROUND, Color::from_rgb(0.20, 0.36, 0.52)));
+    .at(1.0, (property::BACKGROUND, Color::from_rgb(0.20, 0.36, 0.52)))
+    .finish();
 ```
 
 ## Property Tracks
@@ -144,20 +146,23 @@ result is sorted by composition order.
 
 ## Keyframes
 
-`Keyframes` store property snapshots at normalized offsets from `0.0` to `1.0`.
-Each keyframe track owns a `Timing`, so duration, easing, fill mode, direction,
-iterations, and playback rate stay attached to the sampled property data.
+Use `KeyframesBuilder` to collect property snapshots at normalized offsets from
+`0.0` to `1.0`, then call `finish()` to compile them into a `Keyframes` value.
+The finished keyframes own a `Timing`, so duration, easing, fill mode,
+direction, iterations, and playback rate stay attached to the sampled property
+data.
 
 ```rust
-use aura_anim_iced::{Easing, Keyframes, Timing, property};
+use aura_anim_iced::{Easing, KeyframesBuilder, Timing, property};
 
-let popup_open = Keyframes::new()
+let popup_open = KeyframesBuilder::new()
     .with_timing(Timing::new(280.0).with_easing(Easing::EaseOut))
     .at(0.0, (property::OPACITY, 0.0))
     .at(0.0, (property::SCALE, 0.92))
     .at(0.68, (property::SCALE, 1.07))
     .at(1.0, (property::OPACITY, 1.0))
-    .at(1.0, (property::SCALE, 1.0));
+    .at(1.0, (property::SCALE, 1.0))
+    .finish();
 ```
 
 Duplicate offsets are merged. If the same property appears multiple times at
@@ -170,20 +175,24 @@ Use sequences for lifecycle animation, parallel groups for coordinated property
 changes, and holds when a state should remain visible before the next step.
 
 ```rust
-use aura_anim_iced::{Duration, Easing, Hold, Keyframes, Timeline, Timing, Track, property};
+use aura_anim_iced::{
+    Duration, Easing, Hold, KeyframesBuilder, Timeline, Timing, Track, property,
+};
 
 let enter = Track::new(
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(220.0).with_easing(Easing::EaseOut))
         .at(0.0, (property::OPACITY, 0.0))
-        .at(1.0, (property::OPACITY, 1.0)),
+        .at(1.0, (property::OPACITY, 1.0))
+        .finish(),
 );
 
 let exit = Track::new(
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(180.0).with_easing(Easing::EaseIn))
         .at(0.0, (property::OPACITY, 1.0))
-        .at(1.0, (property::OPACITY, 0.0)),
+        .at(1.0, (property::OPACITY, 0.0))
+        .finish(),
 );
 
 let toast_lifecycle = Timeline::sequence([
@@ -203,17 +212,20 @@ source in `update`, keep the returned handle if completion cleanup matters, and
 route tick output back into application state.
 
 ```rust
-use aura_anim_iced::{AnimationRuntime, AnimationTargetId, Keyframes, Timing, property};
+use aura_anim_iced::{
+    AnimationRuntime, AnimationTargetId, KeyframesBuilder, Timing, property,
+};
 
 let mut runtime = AnimationRuntime::new();
 let target = AnimationTargetId::new();
 
 let registration = runtime.register_keyframes(
     target,
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(120.0))
         .at(0.0, (property::OPACITY, 0.0))
-        .at(1.0, (property::OPACITY, 1.0)),
+        .at(1.0, (property::OPACITY, 1.0))
+        .finish(),
 );
 
 let handle = registration.handle();

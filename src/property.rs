@@ -186,9 +186,8 @@ impl PropertyEntry {
         &self.value
     }
 
-    pub(crate) fn set_value(&mut self, value: PropertyValue) -> Self {
-        self.value = value;
-        *self
+    pub(crate) fn new_unchecked(spec: RawPropertySpec, value: PropertyValue) -> Self {
+        Self { spec, value }
     }
 }
 

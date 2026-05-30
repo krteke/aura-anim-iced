@@ -17,7 +17,7 @@ pub use marker::TimelineMarker;
 pub use parallel::Parallel;
 pub use sequence::Sequence;
 pub use step::TimelineStep;
-pub use track::Track;
+pub use track::{PropertyTrackBuilder, Track};
 
 use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 
@@ -27,20 +27,22 @@ use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 ///
 /// ```
 /// use aura_anim_iced::{
-///     Duration, Easing, Hold, Keyframes, Timeline, Timing, Track, property,
+///     Duration, Easing, Hold, KeyframesBuilder, Timeline, Timing, Track, property,
 /// };
 ///
 /// let enter = Track::new(
-///     Keyframes::new()
+///     KeyframesBuilder::new()
 ///         .with_timing(Timing::new(120.0).with_easing(Easing::EaseOut))
 ///         .at(0.0, (property::OPACITY, 0.0))
-///         .at(1.0, (property::OPACITY, 1.0)),
+///         .at(1.0, (property::OPACITY, 1.0))
+///         .finish(),
 /// );
 /// let exit = Track::new(
-///     Keyframes::new()
+///     KeyframesBuilder::new()
 ///         .with_timing(Timing::new(80.0).with_easing(Easing::EaseIn))
 ///         .at(0.0, (property::OPACITY, 1.0))
-///         .at(1.0, (property::OPACITY, 0.0)),
+///         .at(1.0, (property::OPACITY, 0.0))
+///         .finish(),
 /// );
 ///
 /// let timeline = Timeline::sequence([
