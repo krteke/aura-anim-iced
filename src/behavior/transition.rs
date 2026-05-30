@@ -102,6 +102,40 @@ where
 
         let from = self.current_visual_value(runtime).unwrap_or(previous);
 
+        Some(self.register_from(runtime, from, value))
+    }
+
+    /// Observes a new target value with an explicit current visual value.
+    ///
+    /// This is useful when application code already stores the rendered value
+    /// from the latest tick. The registered animation starts from `visual`
+    /// even if the previous target or runtime handle no longer represents what
+    /// is currently on screen.
+    pub fn transition_from_visual<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        visual: K::Inner,
+        value: K::Inner,
+    ) -> Option<AnimationRegistration> {
+        if self.current == Some(value) {
+            return None;
+        }
+
+        self.current = Some(value);
+
+        if visual == value {
+            return None;
+        }
+
+        Some(self.register_from(runtime, visual, value))
+    }
+
+    fn register_from<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        from: K::Inner,
+        value: K::Inner,
+    ) -> AnimationRegistration {
         if let Some(active) = self.active.take() {
             runtime.cancel(self.target, active);
         }
@@ -119,7 +153,7 @@ where
 
         self.active = Some(registration.handle());
 
-        Some(registration)
+        registration
     }
 
     fn current_visual_value<C: AnimationClock>(

@@ -168,3 +168,32 @@ fn property_transition_continues_from_running_visual_value() {
         epsilon = 1e-5
     );
 }
+
+#[test]
+fn property_transition_can_start_from_explicit_visual_value() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(120.0));
+
+    let registration = transition
+        .transition_from_visual(&mut runtime, 0.35, 0.95)
+        .expect("explicit visual value starts transition");
+
+    assert_eq!(transition.current_value(), Some(0.95));
+    assert_approx_eq!(
+        f32,
+        opacity(registration.properties().expect("registration output")),
+        0.35,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(60.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(target).expect("target output")),
+        0.65,
+        epsilon = 1e-5
+    );
+}

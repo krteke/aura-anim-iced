@@ -10,7 +10,7 @@
 - [x] Implement automatic transitions when a visual value changes from one value to another.
 - [x] Implement reusable rules that attach animation behavior to value changes.
 - [x] Implement smooth continuation when a running value receives a new target.
-- [ ] Implement value sampling that always starts from the current visual result during changes.
+- [x] Implement value sampling that always starts from the current visual result during changes.
 - [ ] Implement completion handling for property-driven animations.
 
 ## State Driven Animation
