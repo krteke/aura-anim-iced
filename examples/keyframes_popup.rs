@@ -3,7 +3,7 @@
 mod shared;
 
 use aura_anim_iced::{AnimationHandle, AnimationRuntime, AnimationTargetId, EffectSnapshot};
-use aura_anim_iced::{Easing, Keyframes, Timing, iced_ext, property};
+use aura_anim_iced::{Easing, Keyframes, KeyframesBuilder, Timing, iced_ext, property};
 use iced::{
     Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme,
     alignment::{Horizontal, Vertical},
@@ -195,7 +195,7 @@ fn popup_card(effects: &EffectSnapshot) -> Element<'_, Message> {
 }
 
 fn popup_open_keyframes(from: &EffectSnapshot) -> Keyframes {
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(280.0).with_easing(Easing::EaseOut))
         .at(0.0, (property::OPACITY, from.opacity.unwrap_or(0.0)))
         .at(0.0, (property::SCALE, from.scale.unwrap_or(0.92)))
@@ -217,15 +217,17 @@ fn popup_open_keyframes(from: &EffectSnapshot) -> Keyframes {
             1.0,
             (property::SHADOW, shared::card_shadow(0.28, 16.0, 32.0)),
         )
+        .finish()
 }
 
 fn popup_close_keyframes(from: &EffectSnapshot) -> Keyframes {
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(160.0).with_easing(Easing::EaseIn))
         .at(0.0, (property::OPACITY, from.opacity.unwrap_or(1.0)))
         .at(0.0, (property::SCALE, from.scale.unwrap_or(1.0)))
         .at(1.0, (property::OPACITY, 0.0))
         .at(1.0, (property::SCALE, 0.94))
+        .finish()
 }
 
 fn hidden_effects() -> EffectSnapshot {

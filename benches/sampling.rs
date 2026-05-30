@@ -2,7 +2,8 @@
 
 use aura_anim_iced::{
     BACKGROUND, BORDER_COLOR, Easing, HEIGHT, Keyframes, OPACITY, PropertyKey, PropertySnapshot,
-    PropertySpec, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, Timeline, Timing, Track, WIDTH, property,
+    PropertySpec, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, Timeline, Timing, Track, WIDTH,
+    keyframes::KeyframesBuilder, property,
 };
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
@@ -13,7 +14,7 @@ const BOX_SIZE: PropertySpec<property::Size> =
 
 fn bench_keyframe_sample_counts(c: &mut Criterion) {
     let mut group = c.benchmark_group("keyframes/sample_counts");
-    let keyframes = scalar_keyframes();
+    let keyframes = scalar_keyframes_builder().finish();
 
     for samples in SAMPLE_COUNTS {
         group.throughput(Throughput::Elements(samples));
@@ -32,10 +33,10 @@ fn bench_keyframe_sample_counts(c: &mut Criterion) {
 fn bench_keyframe_value_fixtures(c: &mut Criterion) {
     let mut group = c.benchmark_group("keyframes/value_fixtures");
     let fixtures = [
-        ("scalar", scalar_keyframes()),
-        ("color", color_keyframes()),
-        ("geometry", geometry_keyframes()),
-        ("shadow", shadow_keyframes()),
+        ("scalar", scalar_keyframes_builder().finish()),
+        ("color", color_keyframes_builder().finish()),
+        ("geometry", geometry_keyframes_builder().finish()),
+        ("shadow", shadow_keyframes_builder().finish()),
     ];
 
     for (name, keyframes) in fixtures {
@@ -94,8 +95,8 @@ fn progress_for(index: u64) -> f32 {
     }
 }
 
-fn scalar_keyframes() -> Keyframes {
-    Keyframes::new()
+fn scalar_keyframes_builder() -> KeyframesBuilder {
+    KeyframesBuilder::new()
         .with_timing(Timing::new(1_000.0).with_easing(Easing::EaseInOut))
         .at(
             0.0,
@@ -117,8 +118,8 @@ fn scalar_keyframes() -> Keyframes {
         )
 }
 
-fn color_keyframes() -> Keyframes {
-    Keyframes::new()
+fn color_keyframes_builder() -> KeyframesBuilder {
+    KeyframesBuilder::new()
         .with_timing(Timing::new(1_000.0).with_easing(Easing::EaseOut))
         .at(
             0.0,
@@ -138,8 +139,8 @@ fn color_keyframes() -> Keyframes {
         )
 }
 
-fn geometry_keyframes() -> Keyframes {
-    Keyframes::new()
+fn geometry_keyframes_builder() -> KeyframesBuilder {
+    KeyframesBuilder::new()
         .with_timing(Timing::new(1_000.0))
         .at(
             0.0,
@@ -157,8 +158,8 @@ fn geometry_keyframes() -> Keyframes {
         )
 }
 
-fn shadow_keyframes() -> Keyframes {
-    Keyframes::new()
+fn shadow_keyframes_builder() -> KeyframesBuilder {
+    KeyframesBuilder::new()
         .with_timing(Timing::new(1_000.0).with_easing(Easing::EaseOut))
         .at(0.0, (SHADOW, shadow(0.12, 4.0, 10.0)))
         .at(1.0, (SHADOW, shadow(0.28, 14.0, 32.0)))
@@ -168,10 +169,10 @@ fn mixed_timeline() -> Timeline {
     let timing = Timing::new(1_000.0).with_easing(Easing::EaseInOut);
 
     Timeline::parallel([
-        Track::new(scalar_keyframes().with_timing(timing)).into(),
-        Track::new(color_keyframes().with_timing(timing)).into(),
-        Track::new(geometry_keyframes().with_timing(timing)).into(),
-        Track::new(shadow_keyframes().with_timing(timing)).into(),
+        Track::new(scalar_keyframes_builder().with_timing(timing).finish()).into(),
+        Track::new(color_keyframes_builder().with_timing(timing).finish()).into(),
+        Track::new(geometry_keyframes_builder().with_timing(timing).finish()).into(),
+        Track::new(shadow_keyframes_builder().with_timing(timing).finish()).into(),
     ])
 }
 

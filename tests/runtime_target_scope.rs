@@ -1,8 +1,9 @@
 //! Integration coverage for target-scoped runtime behavior through the public API.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, Keyframes, OPACITY, PropertySpec, PropertyValue,
-    SCALE, Timing, WIDTH, prelude::PropertyEntry, tick_effect_snapshot_for,
+    AnimationRuntime, AnimationTargetId, Duration, Keyframes, KeyframesBuilder, OPACITY,
+    PropertySpec, PropertyValue, SCALE, Timing, WIDTH, prelude::PropertyEntry,
+    tick_effect_snapshot_for,
 };
 use float_cmp::assert_approx_eq;
 
@@ -11,10 +12,11 @@ fn keyframes(
     from: f32,
     to: f32,
 ) -> Keyframes {
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(100.0))
         .at(0.0, (spec, from))
         .at(1.0, (spec, to))
+        .finish()
 }
 
 #[test]

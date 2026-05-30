@@ -17,12 +17,13 @@ fn public_prelude_drives_iced_integration_helpers() {
 
     runtime.register_keyframes(
         target,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
             .opacity(1.0, 1.0)
             .scale(0.0, 1.0)
-            .scale(1.0, 2.0),
+            .scale(1.0, 2.0)
+            .finish(),
     );
 
     let _active_subscription = iced_ext::subscription(&runtime, animation_tick);
@@ -46,12 +47,13 @@ fn iced_integration_routes_ticks_updates_runtime_and_reports_idle_output() {
 
     runtime.register_keyframes(
         target,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
             .opacity(1.0, 1.0)
             .scale(0.0, 1.0)
-            .scale(1.0, 2.0),
+            .scale(1.0, 2.0)
+            .finish(),
     );
 
     assert!(iced_ext::should_subscribe(&runtime));

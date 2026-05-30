@@ -5,7 +5,7 @@ use super::{
     TickPolicy,
 };
 use crate::{
-    keyframes::Keyframes,
+    keyframes::{Keyframes, KeyframesBuilder},
     property::{OPACITY, PropertySnapshot, PropertyValue, SCALE, WIDTH},
     timeline::{Timeline, Track},
     timing::{Direction, Duration, Timing},
@@ -16,10 +16,11 @@ fn keyframes(
     from: f32,
     to: f32,
 ) -> Keyframes {
-    Keyframes::new()
+    KeyframesBuilder::new()
         .with_timing(Timing::new(100.0))
         .at(0.0, (spec, from))
         .at(1.0, (spec, to))
+        .finish()
 }
 
 fn scalar(
@@ -57,8 +58,13 @@ fn registration_returns_handle_initial_snapshot_and_completion_for_zero_duration
     let mut runtime = AnimationRuntime::with_clock(TestClock::at(Duration::from_millis(10.0)));
     let target = AnimationTargetId::new();
 
-    let registration =
-        runtime.register_keyframes(target, Keyframes::new().opacity(0.0, 0.0).opacity(1.0, 1.0));
+    let registration = runtime.register_keyframes(
+        target,
+        KeyframesBuilder::new()
+            .opacity(0.0, 0.0)
+            .opacity(1.0, 1.0)
+            .finish(),
+    );
 
     assert_eq!(registration.handle().id(), 1);
     assert_eq!(registration.state(), AnimationPlaybackState::Completed);
@@ -141,10 +147,11 @@ fn completion_output_respects_keyframe_direction() {
     let target = AnimationTargetId::new();
     let registration = runtime.register_keyframes(
         target,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0).with_direction(Direction::Reverse))
             .opacity(0.0, 0.0)
-            .opacity(1.0, 1.0),
+            .opacity(1.0, 1.0)
+            .finish(),
     );
 
     runtime.clock_mut().set_now(Duration::from_millis(100.0));

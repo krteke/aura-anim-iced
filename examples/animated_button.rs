@@ -247,10 +247,11 @@ fn scalar_track(
     timing: Timing,
 ) -> Track {
     Track::new(
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (property, from))
-            .at(1.0, (property, to)),
+            .at(1.0, (property, to))
+            .finish(),
     )
 }
 
@@ -261,19 +262,21 @@ fn color_track(
     timing: Timing,
 ) -> Track {
     Track::new(
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (property, from))
-            .at(1.0, (property, to)),
+            .at(1.0, (property, to))
+            .finish(),
     )
 }
 
 fn shadow_track(from: Shadow, to: Shadow, timing: Timing) -> Track {
     Track::new(
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (property::SHADOW, from))
-            .at(1.0, (property::SHADOW, to)),
+            .at(1.0, (property::SHADOW, to))
+            .finish(),
     )
 }
 
