@@ -3,6 +3,7 @@
 use iced::Color;
 
 use super::{Animatable, InterpolationProgress, interpolate_with_progress};
+use crate::animatable::lerp_f32_raw;
 
 impl Animatable for Color {
     fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
@@ -10,11 +11,20 @@ impl Animatable for Color {
             let progress = progress.value();
 
             Self {
-                r: f32::interpolate(from.r, to.r, progress),
-                g: f32::interpolate(from.g, to.g, progress),
-                b: f32::interpolate(from.b, to.b, progress),
-                a: f32::interpolate(from.a, to.a, progress),
+                r: lerp_f32_raw(from.r, to.r, progress),
+                g: lerp_f32_raw(from.g, to.g, progress),
+                b: lerp_f32_raw(from.b, to.b, progress),
+                a: lerp_f32_raw(from.a, to.a, progress),
             }
         })
+    }
+}
+
+pub(super) fn lerp_color_raw(from: Color, to: Color, progress: f32) -> Color {
+    Color {
+        r: lerp_f32_raw(from.r, to.r, progress),
+        g: lerp_f32_raw(from.g, to.g, progress),
+        b: lerp_f32_raw(from.b, to.b, progress),
+        a: lerp_f32_raw(from.a, to.a, progress),
     }
 }

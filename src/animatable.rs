@@ -154,3 +154,8 @@ macro_rules! impl_interpolate_tuple {
 impl_interpolate_tuple!(A: 0, B: 1);
 impl_interpolate_tuple!(A: 0, B: 1, C: 2);
 impl_interpolate_tuple!(A: 0, B: 1, C: 2, D: 3);
+
+#[inline]
+fn lerp_f32_raw(from: f32, to: f32, t: f32) -> f32 {
+    from + (to - from) * t
+}

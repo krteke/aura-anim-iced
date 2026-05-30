@@ -123,14 +123,7 @@ impl PropertySnapshot {
     /// Existing properties with the same raw spec are replaced; new properties
     /// are appended and the result is sorted by composition order.
     pub fn merge(&mut self, other: Self) {
-        other.entries.into_iter().for_each(|snapshot| {
-            if let Some(entry) = self.find_property_mut(&snapshot.spec) {
-                entry.value = snapshot.value;
-            } else {
-                self.entries.push(snapshot);
-            }
-        });
-
+        self.merge_unsorted(other);
         self.sort_by_composition_key();
     }
 
@@ -142,6 +135,22 @@ impl PropertySnapshot {
 
     pub(crate) fn push(&mut self, entry: PropertyEntry) {
         self.entries.push(entry);
+    }
+
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
+        Self {
+            entries: Vec::with_capacity(capacity),
+        }
+    }
+
+    pub(crate) fn merge_unsorted(&mut self, other: Self) {
+        other.entries.into_iter().for_each(|snapshot| {
+            if let Some(entry) = self.find_property_mut(&snapshot.spec) {
+                entry.value = snapshot.value;
+            } else {
+                self.entries.push(snapshot);
+            }
+        });
     }
 
     fn find_property_mut(&mut self, property: &RawPropertySpec) -> Option<&mut PropertyEntry> {

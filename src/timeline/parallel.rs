@@ -80,11 +80,11 @@ impl Parallel {
     #[must_use]
     pub fn sample_at(&self, offset: impl Into<Duration>) -> Option<PropertySnapshot> {
         let offset = offset.into();
-        let mut merged = PropertySnapshot::new();
+        let mut merged = PropertySnapshot::with_capacity(self.steps.len());
 
         for step in &self.steps {
             if let Some(snapshot) = step.sample_at(offset) {
-                merged.merge(snapshot);
+                merged.merge_unsorted(snapshot);
             }
         }
 
