@@ -197,3 +197,28 @@ fn property_transition_can_start_from_explicit_visual_value() {
         epsilon = 1e-5
     );
 }
+
+#[test]
+fn property_transition_handles_runtime_completion() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(100.0));
+
+    assert!(transition.transition_to(&mut runtime, 0.0).is_none());
+    let registration = transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("target change");
+
+    assert_eq!(transition.active_handle(), Some(registration.handle()));
+    assert!(transition.is_active(&runtime));
+    assert!(!transition.handle_completion(&runtime));
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(final_tick.completed(), &[registration.handle()]);
+    assert!(transition.handle_completion(&runtime));
+    assert_eq!(transition.active_handle(), None);
+    assert!(!transition.is_active(&runtime));
+    assert!(!transition.handle_completion(&runtime));
+}

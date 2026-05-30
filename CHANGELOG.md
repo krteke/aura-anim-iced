@@ -8,6 +8,7 @@
 - Added `BehaviorRule` so value change animation settings can be reused across multiple targets.
 - Added smooth continuation for property transitions that receive a new target while a previous transition is still running.
 - Added an explicit visual-value transition path so property changes can start from the value currently rendered on screen.
+- Added completion handling for property transitionsh.
 
 ## v0.1.1
 

@@ -81,6 +81,31 @@ where
         self.active
     }
 
+    /// Returns whether this tracker currently owns a runtime animation handle.
+    #[must_use]
+    pub fn is_active<C: AnimationClock>(&self, runtime: &AnimationRuntime<C>) -> bool {
+        match self.active {
+            Some(active) => runtime.last_properties(self.target, active).is_some(),
+            None => false,
+        }
+    }
+
+    /// Clears this tracker's active handle when it appears in completed output.
+    ///
+    /// Returns `true` when this transition handled its own completion.
+    pub fn handle_completion<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) -> bool {
+        let Some(active) = self.active else {
+            return false;
+        };
+
+        if runtime.last_properties(self.target, active).is_none() {
+            self.active = None;
+            return true;
+        }
+
+        false
+    }
+
     /// Observes a new target value and registers an animation when it changed.
     ///
     /// Returns `None` when the value only seeded the baseline or did not change.
@@ -91,6 +116,8 @@ where
         runtime: &mut AnimationRuntime<C>,
         value: K::Inner,
     ) -> Option<AnimationRegistration> {
+        self.invalidate_if_stale(runtime);
+
         let Some(previous) = self.current else {
             self.current = Some(value);
             return None;
@@ -165,5 +192,13 @@ where
         let entry = snapshot.find_property(&self.property.raw())?;
 
         K::unwrap_transition_value(entry.value())
+    }
+
+    fn invalidate_if_stale<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) {
+        if let Some(active) = self.active
+            && runtime.last_properties(self.target, active).is_none()
+        {
+            self.current = None;
+        }
     }
 }
