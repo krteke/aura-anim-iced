@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added `PropertyTransition` for automatically registering property animations when a tracked visual value changes.
+
 ## v0.1.1
 
 ### Performance Optimizations

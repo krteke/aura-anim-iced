@@ -17,6 +17,7 @@
 //! assert_ne!(target, AnimationTargetId::new());
 //! ```
 
+pub use crate::behavior::PropertyTransition;
 pub use crate::iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use crate::keyframes::{Keyframe, Keyframes, KeyframesBuilder};
 pub use crate::property::{

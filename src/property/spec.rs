@@ -38,11 +38,19 @@ impl RawPropertySpec {
 /// The generic marker controls which value type can be inserted for this
 /// property, while [`raw`](Self::raw) exposes the erased identity used by the
 /// runtime.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct PropertySpec<K: PropertyValueKind> {
     raw: RawPropertySpec,
     _kind: PhantomData<fn() -> K>,
 }
+
+impl<K: PropertyValueKind> Clone for PropertySpec<K> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<K: PropertyValueKind> Copy for PropertySpec<K> {}
 
 impl<K: PropertyValueKind> PropertySpec<K> {
     /// Creates a typed property declaration.

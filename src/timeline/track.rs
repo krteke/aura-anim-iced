@@ -31,7 +31,7 @@ impl Track {
 
     /// Creates a track with an initial value for `property` at offset `0.0`.
     #[must_use]
-    pub fn from<K: PropertyValueKind + Copy>(
+    pub fn from<K: PropertyValueKind>(
         property: PropertySpec<K>,
         value: K::Inner,
     ) -> PropertyTrackBuilder<K> {
@@ -92,7 +92,7 @@ impl Track {
     }
 }
 
-impl<K: PropertyValueKind + Copy> PropertyTrackBuilder<K> {
+impl<K: PropertyValueKind> PropertyTrackBuilder<K> {
     /// Creates an empty builder for `property`.
     #[must_use]
     pub fn new(property: PropertySpec<K>) -> Self {
@@ -145,7 +145,7 @@ impl<K: PropertyValueKind + Copy> PropertyTrackBuilder<K> {
     }
 }
 
-impl<K: PropertyValueKind + Copy> From<PropertyTrackBuilder<K>> for Track {
+impl<K: PropertyValueKind> From<PropertyTrackBuilder<K>> for Track {
     fn from(value: PropertyTrackBuilder<K>) -> Self {
         value.finish()
     }

@@ -27,6 +27,7 @@
 //! - `timeline_toast.rs` for enter, hold, exit, and cleanup sequencing.
 
 pub(crate) mod animatable;
+pub mod behavior;
 pub mod iced_ext;
 pub mod keyframes;
 pub mod prelude;
@@ -35,6 +36,7 @@ pub mod runtime;
 pub mod timeline;
 pub mod timing;
 
+pub use behavior::PropertyTransition;
 pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use keyframes::{Keyframe, Keyframes, KeyframesBuilder};
 pub use property::{
