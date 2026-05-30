@@ -32,7 +32,7 @@ use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 ///
 /// ```
 /// use aura_anim_iced::{
-///     AnimationRuntime, AnimationTargetId, Keyframes, Timing, property,
+///     AnimationRuntime, AnimationTargetId, KeyframesBuilder, Timing, property,
 /// };
 ///
 /// let mut runtime = AnimationRuntime::new();
@@ -40,10 +40,11 @@ use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
 ///
 /// let registration = runtime.register_keyframes(
 ///     target,
-///     Keyframes::new()
+///     KeyframesBuilder::new()
 ///         .with_timing(Timing::new(100.0))
 ///         .at(0.0, (property::OPACITY, 0.0))
-///         .at(1.0, (property::OPACITY, 1.0)),
+///         .at(1.0, (property::OPACITY, 1.0))
+///         .finish(),
 /// );
 ///
 /// assert_eq!(registration.handle().id(), 1);

@@ -1,5 +1,5 @@
 use crate::{
-    keyframes::Keyframes,
+    keyframes::{Keyframes, KeyframesBuilder},
     prelude::PropertyValueKind,
     property::{PropertyEntry, PropertySnapshot, PropertySpec},
     timing::{Duration, Easing, Timing},
@@ -12,10 +12,11 @@ pub struct Track {
     keyframes: Keyframes,
 }
 
-/// A builder for creating property tracks.
+/// A builder for creating a single-property timeline track.
+#[derive(Debug, Clone, PartialEq)]
 pub struct PropertyTrackBuilder<K: PropertyValueKind> {
     property: PropertySpec<K>,
-    keyframes: Keyframes,
+    builder: KeyframesBuilder,
 }
 
 impl Track {
@@ -36,7 +37,7 @@ impl Track {
     ) -> PropertyTrackBuilder<K> {
         PropertyTrackBuilder {
             property,
-            keyframes: Keyframes::new().at(0.0, (property, value)),
+            builder: KeyframesBuilder::new().at(0.0, (property, value)),
         }
     }
 
@@ -57,33 +58,6 @@ impl Track {
     #[must_use]
     pub const fn keyframes(&self) -> &Keyframes {
         &self.keyframes
-    }
-
-    /// Inserts a keyframe at the end of the track with the given property and value.
-    #[must_use]
-    pub fn keyframe_at_end(mut self, property: PropertyEntry) -> Self {
-        self.keyframes = self.keyframes.at(1.0, vec![property]);
-        self
-    }
-
-    /// Sets the active duration while preserving the rest of the timing configuration.
-    #[must_use]
-    pub fn duration(mut self, duration: impl Into<Duration>) -> Self {
-        let timing = *self.keyframes.timing();
-
-        self.keyframes = self
-            .keyframes
-            .with_timing(with_duration(timing, duration.into()));
-        self
-    }
-
-    /// Sets the easing curve on the track timing.
-    #[must_use]
-    pub fn easing(mut self, easing: Easing) -> Self {
-        let timing = self.keyframes.timing().with_easing(easing);
-
-        self.keyframes = self.keyframes.with_timing(timing);
-        self
     }
 
     /// Returns the finite total duration of the track, or `None` for infinite timing.
@@ -118,11 +92,62 @@ impl Track {
     }
 }
 
-impl<K: PropertyValueKind> PropertyTrackBuilder<K> {
+impl<K: PropertyValueKind + Copy> PropertyTrackBuilder<K> {
+    /// Creates an empty builder for `property`.
+    #[must_use]
+    pub fn new(property: PropertySpec<K>) -> Self {
+        Self {
+            property,
+            builder: KeyframesBuilder::default(),
+        }
+    }
+
     /// Inserts the final value and returns the completed track.
     #[must_use]
-    pub fn to(self, value: K::Inner) -> Track {
-        Track::new(self.keyframes.at(1.0, (self.property, value)))
+    pub fn to(self, value: K::Inner) -> Self {
+        let property = self.property;
+        let builder = self.builder.at(1.0, (property, value));
+
+        Self { property, builder }
+    }
+
+    /// Inserts a keyframe at the end of the track with the given property and value.
+    #[must_use]
+    pub fn keyframe_at_end(mut self, property: PropertyEntry) -> Self {
+        self.builder = self.builder.at(1.0, vec![property]);
+        self
+    }
+
+    /// Sets the active duration while preserving the rest of the timing configuration.
+    #[must_use]
+    pub fn duration(mut self, duration: impl Into<Duration>) -> Self {
+        let timing = *self.builder.timing();
+
+        self.builder = self
+            .builder
+            .with_timing(with_duration(timing, duration.into()));
+        self
+    }
+
+    /// Sets the easing curve on the track timing.
+    #[must_use]
+    pub fn easing(mut self, easing: Easing) -> Self {
+        let timing = self.builder.timing().with_easing(easing);
+
+        self.builder = self.builder.with_timing(timing);
+        self
+    }
+
+    /// Finishes the builder and returns a timeline track.
+    #[must_use]
+    pub fn finish(self) -> Track {
+        Track::new(self.builder.finish())
+    }
+}
+
+impl<K: PropertyValueKind + Copy> From<PropertyTrackBuilder<K>> for Track {
+    fn from(value: PropertyTrackBuilder<K>) -> Self {
+        value.finish()
     }
 }
 
