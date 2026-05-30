@@ -107,3 +107,64 @@ fn behavior_rule_can_be_reused_for_multiple_targets() {
         &[first_registration.handle(), second_registration.handle()]
     );
 }
+
+#[test]
+fn property_transition_continues_from_running_visual_value() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(100.0));
+
+    assert!(transition.transition_to(&mut runtime, 0.0).is_none());
+    let first_registration = transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("initial target change");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    let first_tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(first_tick.properties_for(target).expect("target output")),
+        0.4,
+        epsilon = 1e-5
+    );
+
+    let replacement = transition
+        .transition_to(&mut runtime, 0.2)
+        .expect("replacement target change");
+
+    assert_ne!(replacement.handle(), first_registration.handle());
+    assert_eq!(runtime.active_count(), 1);
+    assert_approx_eq!(
+        f32,
+        opacity(replacement.properties().expect("replacement output")),
+        0.4,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(90.0));
+    let continuation_tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(
+            continuation_tick
+                .properties_for(target)
+                .expect("target output")
+        ),
+        0.3,
+        epsilon = 1e-5
+    );
+    assert!(continuation_tick.completed().is_empty());
+
+    runtime.clock_mut().set_now(Duration::from_millis(140.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(final_tick.completed(), &[replacement.handle()]);
+    assert_approx_eq!(
+        f32,
+        opacity(final_tick.properties_for(target).expect("target output")),
+        0.2,
+        epsilon = 1e-5
+    );
+}

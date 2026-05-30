@@ -24,7 +24,9 @@ use crate::runtime::clock::TestClock;
 use crate::runtime::{
     entry::ActiveAnimation, registry::AnimationRegistry, source::AnimationSource,
 };
-use crate::{keyframes::Keyframes, timeline::Timeline, timing::Duration};
+use crate::{
+    keyframes::Keyframes, property::PropertySnapshot, timeline::Timeline, timing::Duration,
+};
 
 /// Runtime state owned by an Iced application.
 ///
@@ -199,6 +201,20 @@ impl<C: AnimationClock> AnimationRuntime<C> {
     /// Returns `true` when an entry was found and updated.
     pub fn pause(&mut self, target: AnimationTargetId, handle: AnimationHandle) -> bool {
         self.registry.pause(target, handle, self.clock.now())
+    }
+
+    pub(crate) fn last_properties(
+        &self,
+        target: AnimationTargetId,
+        handle: AnimationHandle,
+    ) -> Option<&PropertySnapshot> {
+        let entry = self.registry.get_by_handle(handle)?;
+
+        if entry.target() != target {
+            return None;
+        }
+
+        entry.last_snapshot()
     }
 }
 

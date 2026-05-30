@@ -36,7 +36,7 @@ pub mod runtime;
 pub mod timeline;
 pub mod timing;
 
-pub use behavior::{BehaviorRule, PropertyTransition};
+pub use behavior::{BehaviorRule, PropertyTransition, TransitionValueKind};
 pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use keyframes::{Keyframe, Keyframes, KeyframesBuilder};
 pub use property::{
