@@ -5,6 +5,7 @@
 ### Added
 
 - Added `PropertyTransition` for automatically registering property animations when a tracked visual value changes.
+- Added `BehaviorRule` so value change animation settings can be reused across multiple targets.
 
 ## v0.1.1
 

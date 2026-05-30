@@ -6,6 +6,55 @@ use crate::{
     runtime::AnimationClock,
 };
 
+/// Reusable animation behavior for value changes on one property.
+///
+/// A rule describes the property and timing independently from any concrete UI
+/// target. Bind it to a target to create a [`PropertyTransition`] tracker.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BehaviorRule<K: PropertyValueKind> {
+    property: PropertySpec<K>,
+    timing: Timing,
+}
+
+impl<K: PropertyValueKind> BehaviorRule<K> {
+    /// Creates a reusable rule with default timing.
+    #[must_use]
+    pub fn new(property: PropertySpec<K>) -> Self {
+        Self {
+            property,
+            timing: Timing::default(),
+        }
+    }
+
+    /// Replaces the timing used by transitions created from this rule.
+    #[must_use]
+    pub const fn with_timing(mut self, timing: Timing) -> Self {
+        self.timing = timing;
+        self
+    }
+
+    /// Returns the property animated by this rule.
+    #[must_use]
+    pub const fn property(&self) -> PropertySpec<K> {
+        self.property
+    }
+
+    /// Returns the timing used by transitions created from this rule.
+    #[must_use]
+    pub const fn timing(&self) -> Timing {
+        self.timing
+    }
+
+    /// Creates a target-bound value change tracker from this rule.
+    #[must_use]
+    pub fn bind(self, target: AnimationTargetId) -> PropertyTransition<K>
+    where
+        K::Inner: Copy + PartialEq,
+    {
+        PropertyTransition::from_rule(target, self)
+    }
+}
+
 /// Tracks one visual property and starts a transition when its target value changes.
 ///
 /// The first observed value becomes the stable baseline and does not start an
@@ -30,10 +79,16 @@ where
     /// Creates a property transition tracker with default timing.
     #[must_use]
     pub fn new(target: AnimationTargetId, property: PropertySpec<K>) -> Self {
+        Self::from_rule(target, BehaviorRule::new(property))
+    }
+
+    /// Creates a property transition tracker from a reusable behavior rule.
+    #[must_use]
+    pub const fn from_rule(target: AnimationTargetId, rule: BehaviorRule<K>) -> Self {
         Self {
             target,
-            property,
-            timing: Timing::default(),
+            property: rule.property,
+            timing: rule.timing,
             current: None,
         }
     }

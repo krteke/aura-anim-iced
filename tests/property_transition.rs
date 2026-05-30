@@ -1,8 +1,8 @@
 //! Public API coverage for property-driven value change animation.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, OPACITY, PropertySnapshot, PropertyTransition,
-    PropertyValue, Timing,
+    AnimationRuntime, AnimationTargetId, BehaviorRule, Duration, OPACITY, PropertySnapshot,
+    PropertyTransition, PropertyValue, Timing,
 };
 use float_cmp::assert_approx_eq;
 
@@ -59,4 +59,51 @@ fn property_transition_registers_animation_after_value_change() {
         epsilon = 1e-5
     );
     assert!(runtime.is_idle());
+}
+
+#[test]
+fn behavior_rule_can_be_reused_for_multiple_targets() {
+    let mut runtime = AnimationRuntime::testing();
+    let first = AnimationTargetId::new();
+    let second = AnimationTargetId::new();
+    let rule = BehaviorRule::new(OPACITY).with_timing(Timing::new(80.0));
+    let mut first_transition = rule.bind(first);
+    let mut second_transition = rule.bind(second);
+
+    assert_eq!(rule.property(), OPACITY);
+    assert_eq!(rule.timing(), Timing::new(80.0));
+    assert!(first_transition.transition_to(&mut runtime, 0.0).is_none());
+    assert!(second_transition.transition_to(&mut runtime, 0.5).is_none());
+
+    let first_registration = first_transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("first target changed");
+    let second_registration = second_transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("second target changed");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(first).expect("first target output")),
+        0.5,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(second).expect("second target output")),
+        0.75,
+        epsilon = 1e-5
+    );
+    assert!(tick.completed().is_empty());
+
+    runtime.clock_mut().set_now(Duration::from_millis(80.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(
+        final_tick.completed(),
+        &[first_registration.handle(), second_registration.handle()]
+    );
 }
