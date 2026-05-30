@@ -39,7 +39,7 @@ fn sample_property(track: &PropertyTrack, offset: f32, easing: Easing) -> Option
     }
 
     let upper = samples.partition_point(|s| s.offset() <= offset);
-    let sub = upper.checked_sub(upper).and_then(|i| samples.get(i));
+    let sub = upper.checked_sub(1).and_then(|i| samples.get(i));
 
     let exact = sub.filter(|s| nearly_equal_f32(s.offset(), offset));
 
