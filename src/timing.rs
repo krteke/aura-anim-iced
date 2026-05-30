@@ -15,8 +15,6 @@ pub use normalized::{NormalizedTiming, TimingPhase, TimingSampleState};
 #[cfg(test)]
 mod tests;
 
-pub(crate) use utils::sample_easing;
-
 use crate::{
     nearly_equal_f64,
     timing::utils::{completed_iterations_from, sanitize_non_negative, sanitize_playback_rate},
@@ -180,11 +178,7 @@ impl Timing {
         let delay_ms = self.delay.as_millis();
 
         if scaled_elapsed < delay_ms {
-            return NormalizedTiming::before_start(
-                self.fill_mode,
-                self.easing,
-                self.direction.start_progress(),
-            );
+            return NormalizedTiming::before_start(self.fill_mode, self.direction.start_progress());
         }
 
         let active_elapsed = scaled_elapsed - delay_ms;
@@ -196,7 +190,6 @@ impl Timing {
             return NormalizedTiming::after_end(
                 count,
                 self.fill_mode,
-                self.easing,
                 self.direction.end_progress(count),
             );
         }
@@ -210,7 +203,7 @@ impl Timing {
             return NormalizedTiming::after_end(
                 iteration_count,
                 self.fill_mode,
-                self.easing,
+                // self.easing,
                 self.direction.end_progress(iteration_count),
             );
         }
@@ -223,7 +216,7 @@ impl Timing {
                 completed_iterations,
                 directed_iteration_progress,
                 f64::from(completed_iterations),
-                self.easing,
+                // self.easing,
             );
         }
 
@@ -237,7 +230,7 @@ impl Timing {
             completed_iterations,
             directed_iteration_progress,
             active_progress,
-            self.easing,
+            // self.easing,
         )
     }
 }

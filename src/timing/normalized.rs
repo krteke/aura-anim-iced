@@ -1,4 +1,4 @@
-use super::{Easing, FillMode, sample_easing};
+use super::FillMode;
 
 /// The broad phase produced by elapsed-time normalization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,18 +56,12 @@ pub struct NormalizedTiming {
     pub completed_iterations: u32,
     /// Normalized progress inside the current iteration.
     pub iteration_progress: f64,
-    /// Eased progress inside the current iteration.
-    pub eased_iteration_progress: f64,
     /// Unclamped progress across active iterations.
     pub active_progress: f64,
 }
 
 impl NormalizedTiming {
-    pub(crate) fn before_start(
-        fill_mode: FillMode,
-        easing: Easing,
-        iteration_progress: f64,
-    ) -> Self {
+    pub(crate) fn before_start(fill_mode: FillMode, iteration_progress: f64) -> Self {
         let sample_state = if fill_mode.fills_before_start() {
             TimingSampleState::BackwardsFill
         } else {
@@ -80,7 +74,6 @@ impl NormalizedTiming {
             current_iteration_index: None,
             completed_iterations: 0,
             iteration_progress,
-            eased_iteration_progress: sample_easing(easing, iteration_progress),
             active_progress: 0.0,
         }
     }
@@ -89,7 +82,6 @@ impl NormalizedTiming {
         current_iteration_index: u32,
         iteration_progress: f64,
         active_progress: f64,
-        easing: Easing,
     ) -> Self {
         Self {
             phase: TimingPhase::Active,
@@ -97,7 +89,6 @@ impl NormalizedTiming {
             current_iteration_index: Some(current_iteration_index),
             completed_iterations: current_iteration_index,
             iteration_progress,
-            eased_iteration_progress: sample_easing(easing, iteration_progress),
             active_progress,
         }
     }
@@ -105,7 +96,6 @@ impl NormalizedTiming {
     pub(crate) fn after_end(
         iteration_count: u32,
         fill_mode: FillMode,
-        easing: Easing,
         iteration_progress: f64,
     ) -> Self {
         let sample_state = if fill_mode.fills_after_end() {
@@ -120,7 +110,6 @@ impl NormalizedTiming {
             current_iteration_index: None,
             completed_iterations: iteration_count,
             iteration_progress,
-            eased_iteration_progress: sample_easing(easing, iteration_progress),
             active_progress: f64::from(iteration_count),
         }
     }

@@ -60,46 +60,6 @@ fn timing_builder_stores_playback_configuration() {
 }
 
 #[test]
-fn easing_uses_iced_curves() {
-    assert_approx_eq!(
-        f64,
-        super::sample_easing(Easing::Linear, 0.25),
-        0.25,
-        epsilon = 1e-10
-    );
-    assert!(super::sample_easing(Easing::EaseIn, 0.5) < 0.5);
-    assert!(super::sample_easing(Easing::EaseOut, 0.5) > 0.5);
-
-    let first_half = super::sample_easing(Easing::EaseInOut, 0.25);
-    let second_half = super::sample_easing(Easing::EaseInOut, 0.75);
-
-    assert!(first_half < 0.25);
-    assert!(second_half > 0.75);
-}
-
-#[test]
-fn easing_clamps_invalid_progress() {
-    assert_approx_eq!(
-        f64,
-        super::sample_easing(Easing::Linear, -1.0),
-        0.0,
-        epsilon = 1e-10
-    );
-    assert_approx_eq!(
-        f64,
-        super::sample_easing(Easing::Linear, 2.0),
-        1.0,
-        epsilon = 1e-10
-    );
-    assert_approx_eq!(
-        f64,
-        super::sample_easing(Easing::Linear, f64::NAN),
-        0.0,
-        epsilon = 1e-10
-    );
-}
-
-#[test]
 fn iteration_count_clamps_zero_to_one() {
     assert_eq!(IterationCount::count(0).finite_count(), Some(1));
     assert_eq!(IterationCount::count(2).finite_count(), Some(2));
@@ -156,7 +116,6 @@ fn elapsed_time_normalizes_before_active_and_after_end() {
     assert_eq!(active.current_iteration_index, Some(1));
     assert_eq!(active.completed_iterations, 1);
     assert_approx_eq!(f64, active.iteration_progress, 0.25, epsilon = 1e-10);
-    assert_approx_eq!(f64, active.eased_iteration_progress, 0.25, epsilon = 1e-10);
     assert_approx_eq!(f64, active.active_progress, 1.25, epsilon = 1e-10);
 
     let after = timing.normalize_elapsed(250.0);
@@ -166,7 +125,6 @@ fn elapsed_time_normalizes_before_active_and_after_end() {
     assert_eq!(after.current_iteration_index, None);
     assert_eq!(after.completed_iterations, 2);
     assert_approx_eq!(f64, after.iteration_progress, 1.0, epsilon = 1e-10);
-    assert_approx_eq!(f64, after.eased_iteration_progress, 1.0, epsilon = 1e-10);
     assert_approx_eq!(f64, after.active_progress, 2.0, epsilon = 1e-10);
 }
 
@@ -198,29 +156,7 @@ fn zero_duration_normalizes_to_completion_state() {
     assert_eq!(normalized.current_iteration_index, None);
     assert_eq!(normalized.completed_iterations, 1);
     assert_approx_eq!(f64, normalized.iteration_progress, 1.0, epsilon = 1e-10);
-    assert_approx_eq!(
-        f64,
-        normalized.eased_iteration_progress,
-        1.0,
-        epsilon = 1e-10
-    );
     assert_approx_eq!(f64, normalized.active_progress, 1.0, epsilon = 1e-10);
-}
-
-#[test]
-fn elapsed_time_normalization_applies_easing() {
-    let timing = Timing::new(100.0).with_easing(Easing::EaseIn);
-
-    let normalized = timing.normalize_elapsed(50.0);
-
-    assert_approx_eq!(f64, normalized.iteration_progress, 0.5, epsilon = 1e-10);
-    assert_approx_eq!(
-        f64,
-        normalized.eased_iteration_progress,
-        super::sample_easing(Easing::EaseIn, 0.5),
-        epsilon = 1e-10
-    );
-    assert!(normalized.eased_iteration_progress < normalized.iteration_progress);
 }
 
 #[test]
@@ -294,7 +230,6 @@ fn backwards_fill_emits_the_first_sample_before_start_only() {
     assert!(before.has_sample());
     assert!(before.is_filled());
     assert_approx_eq!(f64, before.iteration_progress, 0.0, epsilon = 1e-10);
-    assert_approx_eq!(f64, before.eased_iteration_progress, 0.0, epsilon = 1e-10);
 
     let after = timing.normalize_elapsed(150.0);
     assert_eq!(after.sample_state, TimingSampleState::AfterEnd);
@@ -317,7 +252,6 @@ fn forwards_fill_emits_the_final_sample_after_end_only() {
     assert!(after.has_sample());
     assert!(after.is_filled());
     assert_approx_eq!(f64, after.iteration_progress, 1.0, epsilon = 1e-10);
-    assert_approx_eq!(f64, after.eased_iteration_progress, 1.0, epsilon = 1e-10);
 }
 
 #[test]
@@ -474,12 +408,6 @@ fn direction_sampling_applies_before_easing() {
     let normalized = timing.normalize_elapsed(25.0);
 
     assert_approx_eq!(f64, normalized.iteration_progress, 0.75, epsilon = 1e-10);
-    assert_approx_eq!(
-        f64,
-        normalized.eased_iteration_progress,
-        super::sample_easing(Easing::EaseIn, 0.75),
-        epsilon = 1e-10
-    );
 }
 
 #[test]
@@ -583,6 +511,5 @@ fn infinite_iterations_with_huge_elapsed_returns_valid_sample() {
     assert_eq!(normalized.sample_state, TimingSampleState::Active);
     assert!(normalized.has_sample());
     assert!(normalized.iteration_progress.is_finite());
-    assert!(normalized.eased_iteration_progress.is_finite());
     assert!(normalized.active_progress.is_finite());
 }

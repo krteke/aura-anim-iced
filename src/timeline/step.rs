@@ -48,6 +48,20 @@ impl TimelineStep {
         }
     }
 
+    pub(crate) fn sample_entry_hint(&self) -> usize {
+        match self {
+            Self::Track(track) => track.keyframes().track_count(),
+            Self::Sequence(sequence) => sequence.steps().iter().map(Self::sample_entry_hint).sum(),
+            Self::Parallel(parallel) => parallel
+                .steps()
+                .iter()
+                .map(Self::sample_entry_hint)
+                .max()
+                .unwrap_or(0),
+            Self::Hold(_) => 0,
+        }
+    }
+
     pub(crate) fn is_hold(&self) -> bool {
         matches!(self, Self::Hold(_))
     }

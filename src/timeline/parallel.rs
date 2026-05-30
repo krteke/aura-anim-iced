@@ -80,7 +80,9 @@ impl Parallel {
     #[must_use]
     pub fn sample_at(&self, offset: impl Into<Duration>) -> Option<PropertySnapshot> {
         let offset = offset.into();
-        let mut merged = PropertySnapshot::with_capacity(self.steps.len());
+        let mut merged = PropertySnapshot::with_capacity(
+            self.steps.iter().map(TimelineStep::sample_entry_hint).sum(),
+        );
 
         for step in &self.steps {
             if let Some(snapshot) = step.sample_at(offset) {

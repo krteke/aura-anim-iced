@@ -19,7 +19,7 @@ pub(crate) fn sample_frames(
     }
 
     let offset = normalize_offset(offset);
-    let mut sampled = PropertySnapshot::new();
+    let mut sampled = PropertySnapshot::with_capacity(tracks.len());
 
     for track in tracks {
         if let Some(entry) = sample_property(track, offset, easing) {
@@ -38,22 +38,17 @@ fn sample_property(track: &PropertyTrack, offset: f32, easing: Easing) -> Option
         return None;
     }
 
-    let exact = samples.binary_search_by(|sample| {
-        if nearly_equal_f32(sample.offset(), offset) {
-            std::cmp::Ordering::Equal
-        } else if sample.offset() < offset {
-            std::cmp::Ordering::Less
-        } else {
-            std::cmp::Ordering::Greater
-        }
-    });
+    let upper = samples.partition_point(|s| s.offset() <= offset);
+    let sub = upper.checked_sub(upper).and_then(|i| samples.get(i));
 
-    if let Ok(index) = exact {
-        return Some(PropertyEntry::new_unchecked(*spec, samples[index].value()));
+    let exact = sub.filter(|s| nearly_equal_f32(s.offset(), offset));
+
+    if let Some(sample) = exact {
+        return Some(PropertyEntry::new_unchecked(*spec, sample.value()));
     }
 
-    let before = before_sample(track, offset);
-    let after = after_sample(track, offset);
+    let before = sub.map(|s| (s.offset(), s.value()));
+    let after = samples.get(upper).map(|s| (s.offset(), s.value()));
 
     match (before, after) {
         (Some((before_offset, before_entry)), Some((after_offset, after_entry))) => {
@@ -71,24 +66,6 @@ fn sample_property(track: &PropertyTrack, offset: f32, easing: Easing) -> Option
         }
         (None, None) => None,
     }
-}
-
-fn before_sample(track: &PropertyTrack, offset: f32) -> Option<(f32, PropertyValue)> {
-    let samples = track.samples();
-
-    samples
-        .partition_point(|sample| sample.offset() < offset)
-        .checked_sub(1)
-        .and_then(|index| samples.get(index))
-        .map(|s| (s.offset(), s.value()))
-}
-
-fn after_sample(track: &PropertyTrack, offset: f32) -> Option<(f32, PropertyValue)> {
-    let samples = track.samples();
-
-    samples
-        .get(samples.partition_point(|sample| sample.offset() <= offset))
-        .map(|sample| (sample.offset(), sample.value()))
 }
 
 fn property_progress(from: f32, to: f32, offset: f32) -> f32 {
