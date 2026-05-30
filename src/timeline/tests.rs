@@ -2,7 +2,7 @@ use float_cmp::assert_approx_eq;
 
 use super::{Hold, Parallel, Sequence, Timeline, TimelineStep, Track};
 use crate::{
-    keyframes::Keyframes,
+    keyframes::KeyframesBuilder,
     property::{OPACITY, PropertySnapshot, PropertySpec, PropertyValue, SCALE, WIDTH},
     timing::{Delay, Direction, Duration, Easing, Timing},
 };
@@ -16,6 +16,7 @@ fn track(
     Track::from(spec, from)
         .to(to)
         .duration(Duration::from_millis(duration_ms))
+        .finish()
 }
 
 fn scalar(snapshot: &PropertySnapshot, spec: PropertySpec<crate::property::Scalar>) -> f32 {
@@ -41,19 +42,18 @@ fn timeline_starts_empty_and_samples_nothing() {
 }
 
 #[test]
-fn track_builder_preserves_timing_options_when_duration_is_changed() {
-    let keyframes = Keyframes::new()
+fn track_preserves_keyframe_timing_options() {
+    let keyframes = KeyframesBuilder::new()
         .with_timing(
-            Timing::new(10.0)
+            Timing::new(100.0)
                 .with_delay(Delay::from_millis(25.0))
                 .with_easing(Easing::EaseOut),
         )
         .opacity(0.0, 0.0)
-        .opacity(1.0, 1.0);
+        .opacity(1.0, 1.0)
+        .finish();
 
-    let track = Track::new(keyframes)
-        .with_name("fade")
-        .duration(Duration::from_millis(100.0));
+    let track = Track::new(keyframes).with_name("fade");
 
     assert_eq!(track.name(), Some("fade"));
     assert_eq!(track.total_duration(), Some(Duration::from_millis(125.0)));
@@ -171,10 +171,11 @@ fn completion_snapshot_merges_final_state_from_all_visible_steps() {
 #[test]
 fn completion_snapshot_respects_track_direction() {
     let track = Track::new(
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0).with_direction(Direction::Reverse))
             .opacity(0.0, 0.0)
-            .opacity(1.0, 1.0),
+            .opacity(1.0, 1.0)
+            .finish(),
     );
 
     let completed = track.completion_snapshot().expect("completion snapshot");
@@ -186,10 +187,11 @@ fn completion_snapshot_respects_track_direction() {
 fn hold_keeps_direction_aware_completion_snapshot() {
     let sequence = Sequence::new()
         .track(Track::new(
-            Keyframes::new()
+            KeyframesBuilder::new()
                 .with_timing(Timing::new(100.0).with_direction(Direction::Reverse))
                 .opacity(0.0, 0.0)
-                .opacity(1.0, 1.0),
+                .opacity(1.0, 1.0)
+                .finish(),
         ))
         .hold(Duration::from_millis(50.0));
 

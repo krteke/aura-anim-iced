@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use super::{EffectSnapshot, effect_snapshot, should_subscribe, subscription, update_tick};
 use crate::{
-    keyframes::Keyframes,
+    keyframes::KeyframesBuilder,
     property::{
         BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyEntry, PropertySnapshot,
         RADIUS, SCALE, SHADOW, TEXT_COLOR, WIDTH,
@@ -23,10 +23,11 @@ fn subscription_gate_tracks_runtime_playing_state() {
 
     runtime.register_keyframes(
         target,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
-            .opacity(1.0, 1.0),
+            .opacity(1.0, 1.0)
+            .finish(),
     );
 
     assert!(should_subscribe(&runtime));
@@ -43,10 +44,11 @@ fn update_tick_routes_iced_tick_into_runtime() {
 
     runtime.register_keyframes(
         target,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
-            .opacity(1.0, 1.0),
+            .opacity(1.0, 1.0)
+            .finish(),
     );
     runtime.clock_mut().set_now(Duration::from_millis(50.0));
 
@@ -124,17 +126,19 @@ fn tick_effect_snapshot_requires_explicit_target() {
 
     runtime.register_keyframes(
         first,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
-            .opacity(1.0, 1.0),
+            .opacity(1.0, 1.0)
+            .finish(),
     );
     runtime.register_keyframes(
         second,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .scale(0.0, 1.0)
-            .scale(1.0, 2.0),
+            .scale(1.0, 2.0)
+            .finish(),
     );
     runtime.clock_mut().set_now(Duration::from_millis(50.0));
 

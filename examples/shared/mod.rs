@@ -37,10 +37,11 @@ pub(crate) fn scalar_track(
     timing: aura_anim_iced::Timing,
 ) -> Track {
     Track::new(
-        aura_anim_iced::Keyframes::new()
+        aura_anim_iced::KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (spec, from))
-            .at(1.0, (spec, to)),
+            .at(1.0, (spec, to))
+            .finish(),
     )
 }
 
@@ -51,19 +52,21 @@ pub(crate) fn color_track(
     timing: aura_anim_iced::Timing,
 ) -> Track {
     Track::new(
-        aura_anim_iced::Keyframes::new()
+        aura_anim_iced::KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (spec, from))
-            .at(1.0, (spec, to)),
+            .at(1.0, (spec, to))
+            .finish(),
     )
 }
 
 pub(crate) fn shadow_track(from: Shadow, to: Shadow, timing: aura_anim_iced::Timing) -> Track {
     Track::new(
-        aura_anim_iced::Keyframes::new()
+        aura_anim_iced::KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (property::SHADOW, from))
-            .at(1.0, (property::SHADOW, to)),
+            .at(1.0, (property::SHADOW, to))
+            .finish(),
     )
 }
 

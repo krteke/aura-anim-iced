@@ -1,6 +1,6 @@
 use float_cmp::assert_approx_eq;
 
-use super::{Keyframe, KeyframeSegment, Keyframes};
+use super::{Keyframe, KeyframesBuilder, segment::KeyframeSegment};
 use crate::{
     property::{
         BACKGROUND, OPACITY, PropertyEntry, PropertyKey, PropertySnapshot, PropertySpec,
@@ -27,24 +27,25 @@ fn scalar(snapshot: &PropertySnapshot, spec: PropertySpec<crate::property::Scala
 
 #[test]
 fn new_keyframes_start_empty_with_default_timing() {
-    let keyframes = Keyframes::new();
+    let builder = KeyframesBuilder::new();
+    let keyframes = builder.clone().finish();
 
     assert!(keyframes.is_empty());
-    assert_eq!(keyframes.len(), 0);
-    assert!(keyframes.frames().is_empty());
-    assert_eq!(*keyframes.timing(), Timing::default());
+    assert_eq!(keyframes.track_count(), 0);
+    assert!(builder.frames.is_empty());
+    assert_eq!(*builder.timing(), Timing::default());
 }
 
 #[test]
 fn offsets_are_normalized_sorted_and_duplicate_offsets_merge() {
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .at(1.25, (OPACITY, 1.0))
         .at(-0.25, (OPACITY, 0.0))
         .at(f32::NAN, (SCALE, 1.5))
         .at(0.0, (OPACITY, 0.25));
 
     let offsets = keyframes
-        .frames()
+        .frames
         .iter()
         .map(Keyframe::offset)
         .collect::<Vec<_>>();
@@ -52,13 +53,13 @@ fn offsets_are_normalized_sorted_and_duplicate_offsets_merge() {
     assert_eq!(offsets, vec![0.0, 1.0]);
     assert_approx_eq!(
         f32,
-        scalar(keyframes.frames()[0].snapshot(), OPACITY),
+        scalar(keyframes.frames[0].snapshot(), OPACITY),
         0.25,
         epsilon = 1e-5
     );
     assert_approx_eq!(
         f32,
-        scalar(keyframes.frames()[0].snapshot(), SCALE),
+        scalar(keyframes.frames[0].snapshot(), SCALE),
         1.5,
         epsilon = 1e-5
     );
@@ -67,21 +68,21 @@ fn offsets_are_normalized_sorted_and_duplicate_offsets_merge() {
 #[test]
 fn helper_builders_insert_common_typed_properties() {
     let color = iced::Color::from_rgb(0.2, 0.3, 0.4);
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .background_color(0.5, color)
         .opacity(0.5, 0.8)
         .scale(1.0, 1.2)
         .with_timing(Timing::new(120.0).with_delay(Delay::from_millis(20.0)));
 
-    assert_eq!(keyframes.len(), 2);
+    assert_eq!(keyframes.frames.len(), 2);
     assert_approx_eq!(
         f32,
-        scalar(keyframes.frames()[0].snapshot(), OPACITY),
+        scalar(keyframes.frames[0].snapshot(), OPACITY),
         0.8,
         epsilon = 1e-5
     );
     assert_eq!(
-        keyframes.frames()[0]
+        keyframes.frames[0]
             .find_property(&BACKGROUND.raw())
             .map(PropertyEntry::value),
         Some(&PropertyValue::Color(color))
@@ -91,21 +92,26 @@ fn helper_builders_insert_common_typed_properties() {
 
 #[test]
 fn segment_lookup_covers_empty_single_exact_and_between_cases() {
-    assert_eq!(Keyframes::new().segment_at(0.5), KeyframeSegment::Empty);
+    assert_eq!(
+        KeyframeSegment::find(&KeyframesBuilder::new().frames, 0.5),
+        KeyframeSegment::Empty
+    );
 
-    let single = Keyframes::new().at(0.5, (OPACITY, 0.5));
-    assert!(single.segment_at(0.2).is_resolved());
+    let single = KeyframesBuilder::new().at(0.5, (OPACITY, 0.5));
+    assert!(KeyframeSegment::find(&single.frames, 0.2).is_resolved());
 
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .at(0.25, (OPACITY, 0.25))
         .at(0.75, (OPACITY, 0.75));
 
-    let KeyframeSegment::Exact(first) = keyframes.segment_at(0.0) else {
+    let KeyframeSegment::Exact(first) = KeyframeSegment::find(&keyframes.frames, 0.0) else {
         panic!("expected edge exact segment");
     };
     assert_approx_eq!(f32, first.offset(), 0.25, epsilon = 1e-5);
 
-    let KeyframeSegment::Between { from, to, progress } = keyframes.segment_at(0.5) else {
+    let KeyframeSegment::Between { from, to, progress } =
+        KeyframeSegment::find(&keyframes.frames, 0.5)
+    else {
         panic!("expected interpolating segment");
     };
     assert_approx_eq!(f32, from.offset(), 0.25, epsilon = 1e-5);
@@ -117,7 +123,7 @@ fn segment_lookup_covers_empty_single_exact_and_between_cases() {
 fn sample_at_interpolates_scalar_color_vector_and_size_values() {
     let from_color = iced::Color::from_rgb(0.0, 0.2, 0.4);
     let to_color = iced::Color::from_rgb(1.0, 0.6, 0.0);
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .at(
             0.0,
             PropertySnapshot::from(vec![
@@ -137,7 +143,8 @@ fn sample_at_interpolates_scalar_color_vector_and_size_values() {
                 PropertyEntry::new(BOX_SIZE, iced::Size::new(40.0, 80.0)),
                 PropertyEntry::new(BACKGROUND, to_color),
             ]),
-        );
+        )
+        .finish();
 
     let sampled = keyframes.sample_at(0.5).expect("sample");
 
@@ -167,7 +174,7 @@ fn sample_at_interpolates_scalar_color_vector_and_size_values() {
 
 #[test]
 fn mismatched_value_shapes_drop_that_property_instead_of_panicking() {
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .at(
             0.0,
             PropertySnapshot::from(vec![PropertyEntry::new(SCALE, 1.0)]),
@@ -175,7 +182,8 @@ fn mismatched_value_shapes_drop_that_property_instead_of_panicking() {
         .at(
             1.0,
             PropertySnapshot::from(vec![PropertyEntry::new(SCALE_AS_COLOR, iced::Color::WHITE)]),
-        );
+        )
+        .finish();
 
     let sampled = keyframes.sample_at(0.5).expect("empty sample");
 
@@ -184,7 +192,7 @@ fn mismatched_value_shapes_drop_that_property_instead_of_panicking() {
 
 #[test]
 fn timing_fill_controls_elapsed_sampling() {
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .with_timing(
             Timing::new(100.0)
                 .with_delay(Delay::from_millis(50.0))
@@ -206,10 +214,11 @@ fn timing_fill_controls_elapsed_sampling() {
 
 #[test]
 fn easing_is_applied_between_neighboring_keyframes() {
-    let keyframes = Keyframes::new()
+    let keyframes = KeyframesBuilder::new()
         .with_timing(Timing::new(100.0).with_easing(Easing::EaseIn))
         .opacity(0.0, 0.0)
-        .opacity(1.0, 1.0);
+        .opacity(1.0, 1.0)
+        .finish();
 
     let sampled = keyframes.sample_at(0.5).expect("sample");
 
@@ -224,10 +233,11 @@ fn easing_is_applied_between_neighboring_keyframes() {
 #[test]
 fn sample_completion_respects_direction_and_iteration_count() {
     let sample_completion = |timing: Timing| {
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .opacity(0.0, 0.0)
             .opacity(1.0, 1.0)
+            .finish()
             .sample_completion()
             .expect("completion sample")
     };
@@ -274,10 +284,11 @@ fn sample_completion_respects_direction_and_iteration_count() {
         epsilon = 1e-5
     );
 
-    let infinite = Keyframes::new()
+    let infinite = KeyframesBuilder::new()
         .with_timing(Timing::new(100.0).with_iterations(IterationCount::infinite()))
         .opacity(0.0, 0.0)
-        .opacity(1.0, 1.0);
+        .opacity(1.0, 1.0)
+        .finish();
 
     assert_eq!(infinite.sample_completion(), None);
 }

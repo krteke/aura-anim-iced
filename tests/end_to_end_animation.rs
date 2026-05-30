@@ -1,9 +1,9 @@
 //! End-to-end integration coverage across keyframes, timelines, runtime ticks, and subscription gates.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, Easing, Hold, Keyframes, OPACITY, Parallel,
-    PropertySnapshot, PropertySpec, PropertyValue, SCALE, Sequence, Timeline, Timing, Track, WIDTH,
-    iced_ext,
+    AnimationRuntime, AnimationTargetId, Duration, Easing, Hold, KeyframesBuilder, OPACITY,
+    Parallel, PropertySnapshot, PropertySpec, PropertyValue, SCALE, Sequence, Timeline, Timing,
+    Track, WIDTH, iced_ext,
 };
 use float_cmp::assert_approx_eq;
 
@@ -28,10 +28,11 @@ fn scalar_track(
     duration_ms: f64,
 ) -> Track {
     Track::new(
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(duration_ms).with_easing(Easing::EaseInOut))
             .at(0.0, (spec, from))
-            .at(1.0, (spec, to)),
+            .at(1.0, (spec, to))
+            .finish(),
     )
 }
 
@@ -44,10 +45,11 @@ fn keyframes_sequence_parallel_and_runtime_ticks_work_together() {
 
     runtime.register_keyframes(
         keyframes_target,
-        Keyframes::new()
+        KeyframesBuilder::new()
             .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
-            .opacity(1.0, 1.0),
+            .opacity(1.0, 1.0)
+            .finish(),
     );
     runtime.register_timeline(
         sequence_target,
