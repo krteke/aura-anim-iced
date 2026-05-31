@@ -1,7 +1,8 @@
 use crate::{
     ActiveRouteTransition, AnimationHandle, AnimationRuntime, AnimationTargetId,
-    RouteScreenTargets, RouteScreenTransition, RouteScreenTransitionRegistration, RouteTransition,
-    RouteTransitionRegistration, RouteTransitionSet, StateAnimator, runtime::AnimationClock,
+    RouteScreenTargets, RouteScreenTransitionRegistration, RouteTransition,
+    RouteTransitionRegistration, RouteTransitionSet, StateAnimator,
+    route::transition::RouteScreenTransition, runtime::AnimationClock,
 };
 
 /// Tracks the current application route and starts timelines for route changes.

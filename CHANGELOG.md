@@ -22,6 +22,7 @@
 - Added replacement cleanup for interrupted property and state animations so superseded handles no longer complete after their replacement starts.
 - Added route transition primitives for reusable screen-to-screen timeline behavior.
 - Added route screen transitions that register outgoing and incoming screen animations on separate targets.
+- Added built-in incoming route screen motion that fades and translates the entering screen into place.
 
 ## v0.1.1
 

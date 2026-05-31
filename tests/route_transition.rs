@@ -2,8 +2,8 @@
 
 use aura_anim_iced::{
     ActiveRouteTransition, AnimationRuntime, AnimationTargetId, Duration, OPACITY,
-    PropertySnapshot, PropertyValue, RouteAnimator, RouteScreenTargets, RouteScreenTransition,
-    RouteTransition, RouteTransitionSet, Timeline, Track,
+    PropertySnapshot, PropertyValue, RouteAnimator, RouteIncomingMotion, RouteScreenTargets,
+    RouteScreenTransition, RouteTransition, RouteTransitionSet, TRANSLATE, Timeline, Track,
 };
 use float_cmp::assert_approx_eq;
 
@@ -28,6 +28,17 @@ fn opacity(snapshot: &PropertySnapshot) -> f32 {
     };
     let PropertyValue::Scalar(value) = entry.value() else {
         panic!("expected scalar value");
+    };
+
+    *value
+}
+
+fn translate(snapshot: &PropertySnapshot) -> iced::Vector {
+    let Some(entry) = snapshot.find_property(&TRANSLATE.raw()) else {
+        panic!("expected translate property");
+    };
+    let PropertyValue::Vector2(value) = entry.value() else {
+        panic!("expected vector value");
     };
 
     *value
@@ -154,10 +165,7 @@ fn route_screen_transition_runs_outgoing_before_incoming_reaches_final_state() {
         transition.total_duration(),
         Some(Duration::from_millis(140.0))
     );
-    assert_eq!(
-        transition.outgoing_finishes_before_incoming_final(),
-        Some(true)
-    );
+    assert_eq!(transition.outgoing_shorter(), Some(true));
 
     let registration = animator
         .transition_screens_with(
@@ -232,5 +240,63 @@ fn route_screen_transition_runs_outgoing_before_incoming_reaches_final_state() {
         !incoming_end_tick
             .completed()
             .contains(&registration.outgoing().handle())
+    );
+}
+
+#[test]
+fn route_screen_transition_can_build_incoming_opacity_and_position_motion() {
+    let mut runtime = AnimationRuntime::testing();
+    let route_target = AnimationTargetId::new();
+    let outgoing_target = AnimationTargetId::new();
+    let incoming_target = AnimationTargetId::new();
+    let incoming =
+        RouteIncomingMotion::new(iced::Vector::new(24.0, 8.0), Duration::from_millis(120.0));
+    let transition = RouteScreenTransition::with_incoming_motion(
+        Route::Home,
+        Route::Details,
+        opacity_timeline(1.0, 0.0, 80.0),
+        incoming,
+    );
+    let mut animator = RouteAnimator::new(route_target, Route::Home);
+
+    assert_eq!(incoming.offset(), iced::Vector::new(24.0, 8.0));
+    assert_eq!(incoming.duration(), Duration::from_millis(120.0));
+
+    let registration = animator
+        .transition_screens_with(
+            &mut runtime,
+            &transition,
+            RouteScreenTargets::new(outgoing_target, incoming_target),
+        )
+        .expect("screen transition starts");
+    let initial = registration
+        .incoming()
+        .properties()
+        .expect("incoming initial output");
+
+    assert_approx_eq!(f32, opacity(initial), 0.0, epsilon = 1e-5);
+    assert_eq!(translate(initial), iced::Vector::new(24.0, 8.0));
+
+    runtime.clock_mut().set_now(Duration::from_millis(60.0));
+    let mid_tick = runtime.tick();
+    let mid = mid_tick
+        .properties_for(incoming_target)
+        .expect("incoming mid output");
+
+    assert_approx_eq!(f32, opacity(mid), 0.5, epsilon = 1e-5);
+    assert_eq!(translate(mid), iced::Vector::new(12.0, 4.0));
+
+    runtime.clock_mut().set_now(Duration::from_millis(120.0));
+    let final_tick = runtime.tick();
+    let final_snapshot = final_tick
+        .properties_for(incoming_target)
+        .expect("incoming final output");
+
+    assert_approx_eq!(f32, opacity(final_snapshot), 1.0, epsilon = 1e-5);
+    assert_eq!(translate(final_snapshot), iced::Vector::new(0.0, 0.0));
+    assert!(
+        final_tick
+            .completed()
+            .contains(&registration.incoming().handle())
     );
 }

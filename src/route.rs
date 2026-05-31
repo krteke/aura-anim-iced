@@ -1,14 +1,18 @@
 //! Route transition helpers for screen-to-screen animation.
 
 mod animator;
+mod motion;
 mod screen;
+mod transition;
 
 use crate::{
     ActiveStateTransition, StateTransition, StateTransitionRegistration, StateTransitionSet,
 };
 
 pub use animator::RouteAnimator;
-pub use screen::{RouteScreenTargets, RouteScreenTransition, RouteScreenTransitionRegistration};
+pub use motion::RouteIncomingMotion;
+pub use screen::{RouteScreenTargets, RouteScreenTransitionRegistration};
+pub use transition::RouteScreenTransition;
 
 /// Active route transition metadata tracked by a [`RouteAnimator`].
 pub type ActiveRouteTransition<R> = ActiveStateTransition<R>;
