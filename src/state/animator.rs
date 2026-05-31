@@ -1,6 +1,6 @@
 use crate::{
-    ActiveStateTransition, AnimationHandle, AnimationRegistration, AnimationRuntime,
-    AnimationTargetId, Duration, StateTransition, StateTransitionProgress, StateTransitionSet,
+    ActiveStateTransition, AnimationHandle, AnimationRuntime, AnimationTargetId, Duration,
+    StateTransition, StateTransitionProgress, StateTransitionRegistration, StateTransitionSet,
     Timeline, runtime::AnimationClock,
 };
 
@@ -99,15 +99,11 @@ where
         &mut self,
         runtime: &mut AnimationRuntime<C>,
         transition: &StateTransition<S>,
-    ) -> Option<AnimationRegistration> {
+    ) -> Option<StateTransitionRegistration<S>> {
         self.invalidate_if_stale(runtime);
 
         if self.current != transition.from() || transition.from() == transition.to() {
             return None;
-        }
-
-        if let Some(active) = self.active.take() {
-            runtime.cancel(self.target, active.handle());
         }
 
         Some(self.register_timeline(
@@ -128,7 +124,7 @@ where
         runtime: &mut AnimationRuntime<C>,
         to: S,
         transitions: &StateTransitionSet<S>,
-    ) -> Option<AnimationRegistration> {
+    ) -> Option<StateTransitionRegistration<S>> {
         self.invalidate_if_stale(runtime);
 
         if self.current == to {
@@ -150,8 +146,10 @@ where
         from: S,
         to: S,
         timeline: Timeline,
-    ) -> AnimationRegistration {
-        if let Some(active) = self.active.take() {
+    ) -> StateTransitionRegistration<S> {
+        let replaced = self.active.take();
+
+        if let Some(active) = replaced {
             runtime.cancel(self.target, active.handle());
         }
 
@@ -169,7 +167,7 @@ where
             duration,
         ));
 
-        registration
+        StateTransitionRegistration::new(registration, replaced)
     }
 
     fn invalidate_if_stale<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) {

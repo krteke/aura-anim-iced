@@ -51,7 +51,7 @@ pub use runtime::{
 };
 pub use state::{
     ActiveStateTransition, StateAnimator, StateTransition, StateTransitionProgress,
-    StateTransitionSet,
+    StateTransitionRegistration, StateTransitionSet,
 };
 pub use timeline::{
     Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,

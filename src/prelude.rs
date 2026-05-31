@@ -33,7 +33,7 @@ pub use crate::runtime::{
 };
 pub use crate::state::{
     ActiveStateTransition, StateAnimator, StateTransition, StateTransitionProgress,
-    StateTransitionSet,
+    StateTransitionRegistration, StateTransitionSet,
 };
 pub use crate::timeline::{
     Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,

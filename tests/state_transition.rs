@@ -135,6 +135,10 @@ fn state_animator_matches_state_change_to_correct_transition() {
         .expect("open to closed transition");
 
     assert_ne!(open.handle(), close.handle());
+    let replaced = close.replaced().expect("open transition was replaced");
+    assert_eq!(replaced.handle(), open.handle());
+    assert_eq!(replaced.from(), PanelState::Closed);
+    assert_eq!(replaced.to(), PanelState::Open);
     assert_eq!(runtime.active_count(), 1);
     assert_eq!(animator.current(), PanelState::Closed);
     assert_eq!(animator.active_handle(), Some(close.handle()));
