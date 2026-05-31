@@ -17,6 +17,7 @@
 - Added `PropertyTransition::retarget_to` for changing the destination of a running property animation from its current visual value.
 - Added `PropertyTransition::interrupt_from_visual` for replacing interrupted animations from the value currently rendered on screen.
 - Added `StateTransitionRegistration` so repeated state changes report the active transition they replaced.
+- Added `PropertyTransitionRegistration` so property transitions report the runtime handle they replaced.
 
 ## v0.1.1
 

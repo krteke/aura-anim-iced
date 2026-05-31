@@ -1,6 +1,6 @@
 use crate::{
-    AnimationHandle, AnimationRegistration, AnimationRuntime, AnimationTargetId, BehaviorRule,
-    KeyframesBuilder, Timing, behavior::TransitionValueKind, property::PropertySpec,
+    AnimationHandle, AnimationRuntime, AnimationTargetId, BehaviorRule, KeyframesBuilder,
+    PropertyTransitionRegistration, Timing, behavior::TransitionValueKind, property::PropertySpec,
     runtime::AnimationClock,
 };
 
@@ -116,7 +116,7 @@ where
         &mut self,
         runtime: &mut AnimationRuntime<C>,
         value: K::Inner,
-    ) -> Option<AnimationRegistration> {
+    ) -> Option<PropertyTransitionRegistration> {
         self.invalidate_if_stale(runtime);
 
         let Some(previous) = self.current else {
@@ -144,7 +144,7 @@ where
         runtime: &mut AnimationRuntime<C>,
         visual: K::Inner,
         value: K::Inner,
-    ) -> Option<AnimationRegistration> {
+    ) -> Option<PropertyTransitionRegistration> {
         self.invalidate_if_stale(runtime);
 
         if self.current == Some(value) {
@@ -170,7 +170,7 @@ where
         &mut self,
         runtime: &mut AnimationRuntime<C>,
         value: K::Inner,
-    ) -> Option<AnimationRegistration> {
+    ) -> Option<PropertyTransitionRegistration> {
         self.invalidate_if_stale(runtime);
 
         if self.current == Some(value) {
@@ -194,7 +194,7 @@ where
         runtime: &mut AnimationRuntime<C>,
         visual: K::Inner,
         value: K::Inner,
-    ) -> Option<AnimationRegistration> {
+    ) -> Option<PropertyTransitionRegistration> {
         self.invalidate_if_stale(runtime);
 
         if self.active.is_none() && self.current == Some(value) {
@@ -219,8 +219,10 @@ where
         runtime: &mut AnimationRuntime<C>,
         from: K::Inner,
         value: K::Inner,
-    ) -> AnimationRegistration {
-        if let Some(active) = self.active.take() {
+    ) -> PropertyTransitionRegistration {
+        let replaced = self.active.take();
+
+        if let Some(active) = replaced {
             runtime.cancel(self.target, active);
         }
 
@@ -237,7 +239,7 @@ where
 
         self.active = Some(registration.handle());
 
-        registration
+        PropertyTransitionRegistration::new(registration, replaced)
     }
 
     fn current_visual_value<C: AnimationClock>(

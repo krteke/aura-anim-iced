@@ -35,7 +35,10 @@ fn property_transition_registers_animation_after_value_change() {
         .expect("changed value registers animation");
 
     assert_eq!(transition.current_value(), Some(1.0));
-    assert_eq!(registration.properties().map(opacity), Some(0.25));
+    assert_eq!(
+        registration.registration().properties().map(opacity),
+        Some(0.25)
+    );
     assert_eq!(runtime.active_count(), 1);
 
     runtime.clock_mut().set_now(Duration::from_millis(50.0));
@@ -134,10 +137,16 @@ fn property_transition_continues_from_running_visual_value() {
         .expect("replacement target change");
 
     assert_ne!(replacement.handle(), first_registration.handle());
+    assert_eq!(replacement.replaced(), Some(first_registration.handle()));
     assert_eq!(runtime.active_count(), 1);
     assert_approx_eq!(
         f32,
-        opacity(replacement.properties().expect("replacement output")),
+        opacity(
+            replacement
+                .registration()
+                .properties()
+                .expect("replacement output")
+        ),
         0.4,
         epsilon = 1e-5
     );
@@ -182,7 +191,12 @@ fn property_transition_can_start_from_explicit_visual_value() {
     assert_eq!(transition.current_value(), Some(0.95));
     assert_approx_eq!(
         f32,
-        opacity(registration.properties().expect("registration output")),
+        opacity(
+            registration
+                .registration()
+                .properties()
+                .expect("registration output")
+        ),
         0.35,
         epsilon = 1e-5
     );
@@ -251,12 +265,18 @@ fn property_transition_retargets_running_animation_to_new_destination() {
         .expect("running transition retargets");
 
     assert_ne!(initial.handle(), retargeted.handle());
+    assert_eq!(retargeted.replaced(), Some(initial.handle()));
     assert_eq!(transition.current_value(), Some(0.75));
     assert_eq!(transition.active_handle(), Some(retargeted.handle()));
     assert_eq!(runtime.active_count(), 1);
     assert_approx_eq!(
         f32,
-        opacity(retargeted.properties().expect("retarget output")),
+        opacity(
+            retargeted
+                .registration()
+                .properties()
+                .expect("retarget output")
+        ),
         0.4,
         epsilon = 1e-5
     );
@@ -298,12 +318,18 @@ fn property_transition_interrupts_running_animation_from_explicit_visual_value()
         .expect("same-target interruption restarts from visual value");
 
     assert_ne!(initial.handle(), interrupted.handle());
+    assert_eq!(interrupted.replaced(), Some(initial.handle()));
     assert_eq!(transition.current_value(), Some(1.0));
     assert_eq!(transition.active_handle(), Some(interrupted.handle()));
     assert_eq!(runtime.active_count(), 1);
     assert_approx_eq!(
         f32,
-        opacity(interrupted.properties().expect("interrupted output")),
+        opacity(
+            interrupted
+                .registration()
+                .properties()
+                .expect("interrupted output")
+        ),
         0.4,
         epsilon = 1e-5
     );
