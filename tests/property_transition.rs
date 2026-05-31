@@ -2,13 +2,27 @@
 
 use aura_anim_iced::{
     AnimationRuntime, AnimationTargetId, BehaviorRule, Duration, OPACITY, PropertySnapshot,
-    PropertyTransition, PropertyValue, Timing,
+    PropertySpec, PropertyTransition, PropertyValue, Timing, WIDTH,
 };
 use float_cmp::assert_approx_eq;
 
 fn opacity(snapshot: &PropertySnapshot) -> f32 {
     let Some(entry) = snapshot.find_property(&OPACITY.raw()) else {
         panic!("expected opacity property");
+    };
+    let PropertyValue::Scalar(value) = entry.value() else {
+        panic!("expected scalar value");
+    };
+
+    *value
+}
+
+fn scalar(
+    snapshot: &PropertySnapshot,
+    spec: PropertySpec<aura_anim_iced::property::Scalar>,
+) -> f32 {
+    let Some(entry) = snapshot.find_property(&spec.raw()) else {
+        panic!("expected scalar property {}", spec.raw().key().name());
     };
     let PropertyValue::Scalar(value) = entry.value() else {
         panic!("expected scalar value");
@@ -108,6 +122,39 @@ fn behavior_rule_can_be_reused_for_multiple_targets() {
     assert_eq!(
         final_tick.completed(),
         &[first_registration.handle(), second_registration.handle()]
+    );
+}
+
+#[test]
+fn behavior_width_example_flow_animates_changing_width_value() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let rule = BehaviorRule::new(WIDTH).with_timing(Timing::new(420.0));
+    let mut transition = rule.bind(target);
+
+    assert!(transition.transition_to(&mut runtime, 160.0).is_none());
+
+    let registration = transition
+        .transition_to(&mut runtime, 340.0)
+        .expect("width value change starts animation");
+
+    assert_eq!(
+        registration
+            .registration()
+            .properties()
+            .map(|properties| scalar(properties, WIDTH)),
+        Some(160.0)
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(210.0));
+    let tick = runtime.tick();
+
+    assert_eq!(transition.current_value(), Some(340.0));
+    assert_approx_eq!(
+        f32,
+        scalar(tick.properties_for(target).expect("width output"), WIDTH),
+        250.0,
+        epsilon = 1e-5
     );
 }
 

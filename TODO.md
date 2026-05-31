@@ -35,11 +35,11 @@
 - [x] Implement outgoing screen animation before the incoming screen reaches its final state.
 - [x] Implement incoming screen animation with opacity and position movement.
 - [x] Implement route transition state tracking across repeated navigation actions.
-- [ ] Implement a runnable route transition example that demonstrates screen switching.
+- [x] Implement a runnable route transition example that demonstrates screen switching.
 
 ## Behavior Example
 
-- [ ] Implement a runnable example that animates a changing width value.
+- [x] Implement a runnable example that animates a changing width value.
 - [ ] Implement controls that trigger repeated value changes for the example.
 - [ ] Implement visual output that clearly shows the transition from the current value to the next value.
 - [ ] Implement example text that explains the animated behavior in plain terms.
