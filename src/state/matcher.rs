@@ -1,4 +1,4 @@
-use crate::StateTransition;
+use crate::{StateTransition, Timeline};
 
 /// Reusable collection that matches state pairs to transition timelines.
 #[derive(Debug, Clone, PartialEq)]
@@ -7,6 +7,7 @@ where
     S: Copy + Eq,
 {
     transitions: Vec<StateTransition<S>>,
+    fallback: Option<Timeline>,
 }
 
 impl<S> StateTransitionSet<S>
@@ -18,6 +19,7 @@ where
     pub const fn new() -> Self {
         Self {
             transitions: Vec::new(),
+            fallback: None,
         }
     }
 
@@ -26,7 +28,15 @@ where
     pub fn from_transitions(transitions: impl IntoIterator<Item = StateTransition<S>>) -> Self {
         Self {
             transitions: transitions.into_iter().collect(),
+            fallback: None,
         }
+    }
+
+    /// Sets the fallback timeline used when no state-pair transition matches.
+    #[must_use]
+    pub fn with_fallback(mut self, fallback: Timeline) -> Self {
+        self.fallback = Some(fallback);
+        self
     }
 
     /// Adds a transition to the set.
@@ -38,6 +48,12 @@ where
     #[must_use]
     pub fn transitions(&self) -> &[StateTransition<S>] {
         &self.transitions
+    }
+
+    /// Returns the fallback timeline, if one is configured.
+    #[must_use]
+    pub fn fallback(&self) -> Option<&Timeline> {
+        self.fallback.as_ref()
     }
 
     /// Returns the first transition matching `from` and `to`.

@@ -11,6 +11,7 @@
 - Added completion handling for property transitions.
 - Added `StateAnimator` and `StateTransition` for registering timelines when application state changes.
 - Added `StateTransitionSet` so state changes can match and launch the correct transition timeline.
+- Added fallback timelines for state switches that do not have a custom transition.
 
 ## v0.1.1
 

@@ -1,6 +1,6 @@
 use crate::{
     AnimationHandle, AnimationRegistration, AnimationRuntime, AnimationTargetId, StateTransition,
-    StateTransitionSet, runtime::AnimationClock,
+    StateTransitionSet, Timeline, runtime::AnimationClock,
 };
 
 /// Tracks an application state and starts timelines for explicit state changes.
@@ -69,19 +69,14 @@ where
             runtime.cancel(self.target, active);
         }
 
-        self.current = transition.to();
-
-        let registration = runtime.register_timeline(self.target, transition.timeline().clone());
-
-        self.active = Some(registration.handle());
-
-        Some(registration)
+        Some(self.register_timeline(runtime, transition.to(), transition.timeline().clone()))
     }
 
     /// Finds and starts a transition from the current state to `to`.
     ///
-    /// Returns `None` when no matching transition exists, or when `to` is the
-    /// current state.
+    /// Uses the transition set fallback when no exact state-pair transition
+    /// matches. Returns `None` when `to` is the current state or no transition
+    /// behavior is available.
     pub fn transition_to<C: AnimationClock>(
         &mut self,
         runtime: &mut AnimationRuntime<C>,
@@ -92,8 +87,31 @@ where
             return None;
         }
 
-        let transition = transitions.find(self.current, to)?;
+        if let Some(transition) = transitions.find(self.current, to) {
+            return self.transition_with(runtime, transition);
+        }
 
-        self.transition_with(runtime, transition)
+        let fallback = transitions.fallback()?;
+
+        Some(self.register_timeline(runtime, to, fallback.clone()))
+    }
+
+    fn register_timeline<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        to: S,
+        timeline: Timeline,
+    ) -> AnimationRegistration {
+        if let Some(active) = self.active.take() {
+            runtime.cancel(self.target, active);
+        }
+
+        self.current = to;
+
+        let registration = runtime.register_timeline(self.target, timeline);
+
+        self.active = Some(registration.handle());
+
+        registration
     }
 }

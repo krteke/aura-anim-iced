@@ -17,7 +17,7 @@
 
 - [x] Implement animated transitions between application states.
 - [x] Implement state change matching so each state switch can launch the correct animation flow.
-- [ ] Implement fallback behavior for state switches without a custom transition.
+- [x] Implement fallback behavior for state switches without a custom transition.
 - [ ] Implement state transition progress tracking for active animations.
 - [ ] Implement state completion handling after the visual transition reaches its end.
 

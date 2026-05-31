@@ -156,3 +156,41 @@ fn state_animator_matches_state_change_to_correct_transition() {
     );
     assert_eq!(animator.current(), PanelState::Closed);
 }
+
+#[test]
+fn state_animator_uses_fallback_when_no_custom_transition_matches() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transitions = StateTransitionSet::from_transitions([StateTransition::new(
+        PanelState::Closed,
+        PanelState::Open,
+        opacity_timeline(0.0, 1.0, 100.0),
+    )])
+    .with_fallback(opacity_timeline(0.2, 0.8, 120.0));
+    let mut animator = StateAnimator::new(target, PanelState::Open);
+
+    assert!(transitions.fallback().is_some());
+    assert!(
+        transitions
+            .find(PanelState::Open, PanelState::Disabled)
+            .is_none()
+    );
+
+    let registration = animator
+        .transition_to(&mut runtime, PanelState::Disabled, &transitions)
+        .expect("fallback transition starts");
+
+    assert_eq!(animator.current(), PanelState::Disabled);
+    assert_eq!(animator.active_handle(), Some(registration.handle()));
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(60.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(target).expect("fallback output")),
+        0.5,
+        epsilon = 1e-5
+    );
+}
