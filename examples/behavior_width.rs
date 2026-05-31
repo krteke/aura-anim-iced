@@ -9,7 +9,7 @@ use aura_anim_iced::{
 use iced::{
     Background, Border, Color, Element, Length, Subscription, Task, Theme,
     alignment::{Horizontal, Vertical},
-    widget::{button, column, container, row, text},
+    widget::{Space, button, column, container, row, stack, text},
 };
 use std::time::Instant;
 
@@ -17,6 +17,7 @@ const INITIAL_WIDTH: f32 = 90.0;
 const MEDIUM_WIDTH: f32 = 240.0;
 const WIDE_WIDTH: f32 = 420.0;
 const TRANSITION_MS: f64 = 1_800.0;
+const BEHAVIOR_SUMMARY: &str = "Each button sets a new target width. The bar animates from the width currently rendered on screen to that selected target.";
 
 fn main() -> iced::Result {
     iced::application(Demo::default, Demo::update, Demo::view)
@@ -99,16 +100,22 @@ impl Demo {
 
         container(
             column![
+                text(BEHAVIOR_SUMMARY)
+                    .width(Length::Fixed(WIDE_WIDTH))
+                    .size(15)
+                    .color(Color::from_rgb(0.70, 0.79, 0.84)),
                 controls,
-                container(text("Width").size(18).color(Color::WHITE))
-                    .width(Length::Fixed(width))
-                    .height(Length::Fixed(72.0))
-                    .align_x(Horizontal::Center)
-                    .align_y(Vertical::Center)
-                    .style(bar_style),
-                text(format!("{width:.0}px"))
-                    .size(16)
-                    .color(Color::from_rgb(0.62, 0.72, 0.78)),
+                width_stage(width, self.target_width),
+                row![
+                    text(format!("Current {width:.0}px"))
+                        .size(16)
+                        .color(Color::from_rgb(0.78, 0.86, 0.90)),
+                    text(format!("Target {:.0}px", self.target_width))
+                        .size(16)
+                        .color(Color::from_rgb(0.48, 0.70, 0.76)),
+                ]
+                .spacing(24)
+                .align_y(Vertical::Center),
             ]
             .spacing(16)
             .align_x(Horizontal::Center),
@@ -137,6 +144,29 @@ fn width_button(label: &'static str, width: f32, current: f32) -> Element<'stati
         .into()
 }
 
+fn width_stage(width: f32, target_width: f32) -> Element<'static, Message> {
+    stack![
+        width_outline(target_width),
+        container(text("Width").size(18).color(Color::WHITE))
+            .width(Length::Fixed(width))
+            .height(Length::Fixed(72.0))
+            .align_x(Horizontal::Center)
+            .align_y(Vertical::Center)
+            .style(bar_style),
+    ]
+    .width(Length::Fixed(WIDE_WIDTH))
+    .height(Length::Fixed(72.0))
+    .into()
+}
+
+fn width_outline(width: f32) -> Element<'static, Message> {
+    container(Space::new())
+        .width(Length::Fixed(width))
+        .height(Length::Fixed(72.0))
+        .style(target_style)
+        .into()
+}
+
 fn width_effects(width: f32) -> EffectSnapshot {
     EffectSnapshot {
         width: Some(width),
@@ -154,5 +184,29 @@ fn bar_style(_theme: &Theme) -> container::Style {
             radius: 10.0.into(),
         },
         ..container::Style::default()
+    }
+}
+
+fn target_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgba(0.50, 0.78, 0.82, 0.12))),
+        border: Border {
+            color: Color::from_rgb(0.50, 0.78, 0.82),
+            width: 1.0,
+            radius: 10.0.into(),
+        },
+        ..container::Style::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BEHAVIOR_SUMMARY;
+
+    #[test]
+    fn behavior_summary_describes_current_and_target_widths() {
+        assert!(BEHAVIOR_SUMMARY.contains("target width"));
+        assert!(BEHAVIOR_SUMMARY.contains("currently rendered"));
+        assert!(BEHAVIOR_SUMMARY.contains("selected target"));
     }
 }

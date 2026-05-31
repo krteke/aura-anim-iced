@@ -27,6 +27,8 @@
 - Added a runnable route transition example that demonstrates repeated screen switching.
 - Added a runnable width behavior example driven by `BehaviorRule` and `PropertyTransition`.
 - Added width behavior example controls for repeatedly triggering value changes from the current rendered width.
+- Added current and target width visualization to the width behavior example.
+- Added plain-language behavior text to the width behavior example.
 
 ## v0.1.1
 

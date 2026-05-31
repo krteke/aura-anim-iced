@@ -188,9 +188,14 @@ fn behavior_width_controls_can_trigger_repeated_value_changes() {
     let medium = transition
         .transition_from_visual(&mut runtime, visual_width, 240.0)
         .expect("medium control retargets width animation");
+    let active = transition
+        .active_transition()
+        .expect("active width transition metadata");
 
     assert_eq!(medium.replaced(), Some(wide.handle()));
     assert_eq!(runtime.active_count(), 1);
+    assert_eq!(active.from(), visual_width);
+    assert_eq!(active.to(), 240.0);
     assert_eq!(
         medium
             .registration()
