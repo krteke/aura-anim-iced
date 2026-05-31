@@ -31,7 +31,10 @@ pub use crate::runtime::{
     AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
     AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
 };
-pub use crate::state::{StateAnimator, StateTransition, StateTransitionSet};
+pub use crate::state::{
+    ActiveStateTransition, StateAnimator, StateTransition, StateTransitionProgress,
+    StateTransitionSet,
+};
 pub use crate::timeline::{
     Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
 };

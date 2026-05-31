@@ -194,3 +194,49 @@ fn state_animator_uses_fallback_when_no_custom_transition_matches() {
         epsilon = 1e-5
     );
 }
+
+#[test]
+fn state_animator_tracks_active_transition_progress() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transition = StateTransition::new(
+        PanelState::Closed,
+        PanelState::Open,
+        opacity_timeline(0.0, 1.0, 200.0),
+    );
+    let mut animator = StateAnimator::new(target, PanelState::Closed);
+
+    let registration = animator
+        .transition_with(&mut runtime, &transition)
+        .expect("state transition starts");
+    let active = animator
+        .active_transition()
+        .expect("active transition metadata");
+
+    assert_eq!(active.handle(), registration.handle());
+    assert_eq!(active.from(), PanelState::Closed);
+    assert_eq!(active.to(), PanelState::Open);
+    assert_eq!(active.started_at(), Duration::ZERO);
+    assert_eq!(active.duration(), Some(Duration::from_millis(200.0)));
+
+    runtime.clock_mut().set_now(Duration::from_millis(50.0));
+    let tick = runtime.tick();
+    let progress = animator
+        .active_progress_at(tick.timestamp())
+        .expect("active transition progress");
+
+    assert_eq!(progress.handle(), registration.handle());
+    assert_eq!(progress.from(), PanelState::Closed);
+    assert_eq!(progress.to(), PanelState::Open);
+    assert_eq!(progress.elapsed(), Duration::from_millis(50.0));
+    assert_eq!(progress.duration(), Some(Duration::from_millis(200.0)));
+    assert_approx_eq!(f32, progress.progress().expect("finite progress"), 0.25);
+
+    runtime.clock_mut().set_now(Duration::from_millis(250.0));
+    let over_tick = runtime.tick();
+    let over_progress = animator
+        .active_progress_at(over_tick.timestamp())
+        .expect("active transition progress");
+
+    assert_eq!(over_progress.progress(), Some(1.0));
+}

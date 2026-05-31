@@ -1,6 +1,7 @@
 use crate::{
-    AnimationHandle, AnimationRegistration, AnimationRuntime, AnimationTargetId, StateTransition,
-    StateTransitionSet, Timeline, runtime::AnimationClock,
+    ActiveStateTransition, AnimationHandle, AnimationRegistration, AnimationRuntime,
+    AnimationTargetId, Duration, StateTransition, StateTransitionProgress, StateTransitionSet,
+    Timeline, runtime::AnimationClock,
 };
 
 /// Tracks an application state and starts timelines for explicit state changes.
@@ -11,7 +12,7 @@ where
 {
     target: AnimationTargetId,
     current: S,
-    active: Option<AnimationHandle>,
+    active: Option<ActiveStateTransition<S>>,
 }
 
 impl<S> StateAnimator<S>
@@ -43,13 +44,30 @@ where
     /// Returns the active runtime handle created by this animator, if any.
     #[must_use]
     pub const fn active_handle(&self) -> Option<AnimationHandle> {
-        self.active
+        match self.active {
+            Some(active) => Some(active.handle()),
+            None => None,
+        }
     }
 
     /// Returns whether this animator currently owns a runtime animation handle.
     #[must_use]
     pub const fn is_active(&self) -> bool {
         self.active.is_some()
+    }
+
+    /// Returns metadata for the active state transition, if any.
+    #[must_use]
+    pub const fn active_transition(&self) -> Option<&ActiveStateTransition<S>> {
+        self.active.as_ref()
+    }
+
+    /// Returns sampled progress for the active transition at `timestamp`.
+    #[must_use]
+    pub fn active_progress_at(&self, timestamp: Duration) -> Option<StateTransitionProgress<S>> {
+        self.active
+            .as_ref()
+            .map(|active| active.progress_at(timestamp))
     }
 
     /// Starts `transition` when it matches the animator's current state.
@@ -66,10 +84,15 @@ where
         }
 
         if let Some(active) = self.active.take() {
-            runtime.cancel(self.target, active);
+            runtime.cancel(self.target, active.handle());
         }
 
-        Some(self.register_timeline(runtime, transition.to(), transition.timeline().clone()))
+        Some(self.register_timeline(
+            runtime,
+            transition.from(),
+            transition.to(),
+            transition.timeline().clone(),
+        ))
     }
 
     /// Finds and starts a transition from the current state to `to`.
@@ -93,24 +116,33 @@ where
 
         let fallback = transitions.fallback()?;
 
-        Some(self.register_timeline(runtime, to, fallback.clone()))
+        Some(self.register_timeline(runtime, self.current, to, fallback.clone()))
     }
 
     fn register_timeline<C: AnimationClock>(
         &mut self,
         runtime: &mut AnimationRuntime<C>,
+        from: S,
         to: S,
         timeline: Timeline,
     ) -> AnimationRegistration {
         if let Some(active) = self.active.take() {
-            runtime.cancel(self.target, active);
+            runtime.cancel(self.target, active.handle());
         }
 
+        let started_at = runtime.clock().now();
+        let duration = timeline.total_duration();
         self.current = to;
 
         let registration = runtime.register_timeline(self.target, timeline);
 
-        self.active = Some(registration.handle());
+        self.active = Some(ActiveStateTransition::new(
+            registration.handle(),
+            from,
+            to,
+            started_at,
+            duration,
+        ));
 
         registration
     }
