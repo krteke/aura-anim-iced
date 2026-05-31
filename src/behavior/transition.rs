@@ -21,6 +21,7 @@ where
     active: Option<AnimationHandle>,
 }
 
+// TODO: may need optimization
 impl<K> PropertyTransition<K>
 where
     K: TransitionValueKind,

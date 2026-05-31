@@ -33,6 +33,7 @@ pub mod keyframes;
 pub mod prelude;
 pub mod property;
 pub mod runtime;
+pub mod state;
 pub mod timeline;
 pub mod timing;
 
@@ -48,6 +49,7 @@ pub use runtime::{
     AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
     AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
 };
+pub use state::{StateAnimator, StateTransition};
 pub use timeline::{
     Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
 };
