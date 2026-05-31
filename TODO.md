@@ -27,7 +27,7 @@
 - [x] Implement interruption handling that continues from the current visual frame.
 - [x] Implement replacement behavior for repeated state changes during the same interaction.
 - [x] Implement consistent progress handling when an animation changes direction.
-- [ ] Implement cleanup for interrupted animations after their replacement starts.
+- [x] Implement cleanup for interrupted animations after their replacement starts.
 
 ## Route Transition
 

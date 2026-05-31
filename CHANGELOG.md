@@ -19,6 +19,7 @@
 - Added `StateTransitionRegistration` so repeated state changes report the active transition they replaced.
 - Added `PropertyTransitionRegistration` so property transitions report the runtime handle they replaced.
 - Added active property transition progress tracking so direction changes report progress from the replacement animation.
+- Added replacement cleanup for interrupted property and state animations so superseded handles no longer complete after their replacement starts.
 
 ## v0.1.1
 

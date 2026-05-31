@@ -1,8 +1,9 @@
 //! Public API coverage for state-driven animation.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, OPACITY, PropertySnapshot, PropertyValue,
-    StateAnimator, StateTransition, StateTransitionSet, Timeline, Track,
+    ActiveStateTransition, AnimationRuntime, AnimationTargetId, Duration, OPACITY,
+    PropertySnapshot, PropertyValue, StateAnimator, StateTransition, StateTransitionSet, Timeline,
+    Track,
 };
 use float_cmp::assert_approx_eq;
 
@@ -338,4 +339,52 @@ fn state_animator_refreshes_stale_active_cache_before_new_transition() {
     assert_eq!(animator.active_handle(), Some(close.handle()));
     assert!(animator.is_active(&runtime));
     assert_eq!(animator.current(), PanelState::Closed);
+}
+
+#[test]
+fn state_animator_cleans_replaced_transition_after_replacement_starts() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transitions = StateTransitionSet::from_transitions([
+        StateTransition::new(
+            PanelState::Closed,
+            PanelState::Open,
+            opacity_timeline(0.0, 1.0, 100.0),
+        ),
+        StateTransition::new(
+            PanelState::Open,
+            PanelState::Closed,
+            opacity_timeline(1.0, 0.0, 100.0),
+        ),
+    ]);
+    let mut animator = StateAnimator::new(target, PanelState::Closed);
+
+    let open = animator
+        .transition_to(&mut runtime, PanelState::Open, &transitions)
+        .expect("open transition starts");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    runtime.tick();
+
+    let close = animator
+        .transition_to(&mut runtime, PanelState::Closed, &transitions)
+        .expect("close replacement starts");
+
+    assert_eq!(
+        close.replaced().map(ActiveStateTransition::handle),
+        Some(open.handle())
+    );
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let original_end_tick = runtime.tick();
+
+    assert!(original_end_tick.completed().is_empty());
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(140.0));
+    let replacement_end_tick = runtime.tick();
+
+    assert_eq!(replacement_end_tick.completed(), &[close.handle()]);
+    assert!(runtime.is_idle());
 }

@@ -149,10 +149,6 @@ where
     ) -> StateTransitionRegistration<S> {
         let replaced = self.active.take();
 
-        if let Some(active) = replaced {
-            runtime.cancel(self.target, active.handle());
-        }
-
         let started_at = runtime.clock().now();
         let duration = timeline.total_duration();
         self.current = to;
@@ -167,7 +163,19 @@ where
             duration,
         ));
 
+        self.cleanup_replaced(runtime, replaced);
+
         StateTransitionRegistration::new(registration, replaced)
+    }
+
+    fn cleanup_replaced<C: AnimationClock>(
+        &self,
+        runtime: &mut AnimationRuntime<C>,
+        replaced: Option<ActiveStateTransition<S>>,
+    ) {
+        if let Some(active) = replaced {
+            runtime.cancel(self.target, active.handle());
+        }
     }
 
     fn invalidate_if_stale<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) {

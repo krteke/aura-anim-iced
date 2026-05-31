@@ -240,10 +240,6 @@ where
         let replaced = self.active.take();
         let replaced_handle = replaced.as_ref().map(ActivePropertyTransition::handle);
 
-        if let Some(active) = replaced {
-            runtime.cancel(self.target, active.handle());
-        }
-
         self.current = Some(value);
 
         let registration = runtime.register_keyframes(
@@ -263,7 +259,19 @@ where
             self.timing.total_duration(),
         ));
 
+        self.cleanup_replaced(runtime, replaced);
+
         PropertyTransitionRegistration::new(registration, replaced_handle)
+    }
+
+    fn cleanup_replaced<C: AnimationClock>(
+        &self,
+        runtime: &mut AnimationRuntime<C>,
+        replaced: Option<ActivePropertyTransition<K>>,
+    ) {
+        if let Some(active) = replaced {
+            runtime.cancel(self.target, active.handle());
+        }
     }
 
     fn current_visual_value<C: AnimationClock>(

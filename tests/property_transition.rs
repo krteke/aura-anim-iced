@@ -350,6 +350,50 @@ fn property_transition_interrupts_running_animation_from_explicit_visual_value()
 }
 
 #[test]
+fn property_transition_cleans_interrupted_animation_after_replacement_starts() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(100.0));
+
+    assert!(transition.transition_to(&mut runtime, 0.0).is_none());
+    let initial = transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("initial target change");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    runtime.tick();
+
+    let interrupted = transition
+        .interrupt_from_visual(&mut runtime, 0.4, 1.0)
+        .expect("same-target interruption restarts from visual value");
+
+    assert_eq!(interrupted.replaced(), Some(initial.handle()));
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let original_end_tick = runtime.tick();
+
+    assert!(original_end_tick.completed().is_empty());
+    assert_eq!(runtime.active_count(), 1);
+    assert_approx_eq!(
+        f32,
+        opacity(
+            original_end_tick
+                .properties_for(target)
+                .expect("replacement output")
+        ),
+        0.76,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(140.0));
+    let replacement_end_tick = runtime.tick();
+
+    assert_eq!(replacement_end_tick.completed(), &[interrupted.handle()]);
+    assert!(runtime.is_idle());
+}
+
+#[test]
 fn property_transition_tracks_progress_after_direction_change() {
     let mut runtime = AnimationRuntime::testing();
     let target = AnimationTargetId::new();
