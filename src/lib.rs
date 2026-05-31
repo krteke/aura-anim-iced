@@ -49,7 +49,7 @@ pub use runtime::{
     AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
     AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
 };
-pub use state::{StateAnimator, StateTransition};
+pub use state::{StateAnimator, StateTransition, StateTransitionSet};
 pub use timeline::{
     Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
 };

@@ -1,6 +1,6 @@
 use crate::{
     AnimationHandle, AnimationRegistration, AnimationRuntime, AnimationTargetId, StateTransition,
-    runtime::AnimationClock,
+    StateTransitionSet, runtime::AnimationClock,
 };
 
 /// Tracks an application state and starts timelines for explicit state changes.
@@ -76,5 +76,24 @@ where
         self.active = Some(registration.handle());
 
         Some(registration)
+    }
+
+    /// Finds and starts a transition from the current state to `to`.
+    ///
+    /// Returns `None` when no matching transition exists, or when `to` is the
+    /// current state.
+    pub fn transition_to<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        to: S,
+        transitions: &StateTransitionSet<S>,
+    ) -> Option<AnimationRegistration> {
+        if self.current == to {
+            return None;
+        }
+
+        let transition = transitions.find(self.current, to)?;
+
+        self.transition_with(runtime, transition)
     }
 }

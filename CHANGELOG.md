@@ -10,6 +10,7 @@
 - Added an explicit visual-value transition path so property changes can start from the value currently rendered on screen.
 - Added completion handling for property transitions.
 - Added `StateAnimator` and `StateTransition` for registering timelines when application state changes.
+- Added `StateTransitionSet` so state changes can match and launch the correct transition timeline.
 
 ## v0.1.1
 
