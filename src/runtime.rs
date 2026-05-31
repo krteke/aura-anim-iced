@@ -216,6 +216,12 @@ impl<C: AnimationClock> AnimationRuntime<C> {
 
         entry.last_snapshot()
     }
+
+    pub(crate) fn contains(&self, target: AnimationTargetId, handle: AnimationHandle) -> bool {
+        self.registry
+            .get_by_handle(handle)
+            .is_some_and(|entry| entry.target() == target)
+    }
 }
 
 impl<C> AnimationRuntime<C> {

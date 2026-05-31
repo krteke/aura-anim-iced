@@ -51,7 +51,7 @@ fn state_animator_registers_timeline_for_explicit_state_transition() {
 
     assert_eq!(animator.current(), PanelState::Open);
     assert_eq!(animator.active_handle(), Some(registration.handle()));
-    assert!(animator.is_active());
+    assert!(animator.is_active(&runtime));
     assert_eq!(runtime.active_count(), 1);
 
     runtime.clock_mut().set_now(Duration::from_millis(50.0));
@@ -239,4 +239,99 @@ fn state_animator_tracks_active_transition_progress() {
         .expect("active transition progress");
 
     assert_eq!(over_progress.progress(), Some(1.0));
+}
+
+#[test]
+fn state_animator_handles_transition_completion() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transition = StateTransition::new(
+        PanelState::Closed,
+        PanelState::Open,
+        opacity_timeline(0.0, 1.0, 100.0),
+    );
+    let mut animator = StateAnimator::new(target, PanelState::Closed);
+
+    let registration = animator
+        .transition_with(&mut runtime, &transition)
+        .expect("state transition starts");
+
+    assert_eq!(animator.active_handle(), Some(registration.handle()));
+    assert!(animator.is_active(&runtime));
+    assert!(!animator.handle_completion(&runtime));
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(final_tick.completed(), &[registration.handle()]);
+    assert!(animator.handle_completion(&runtime));
+    assert_eq!(animator.current(), PanelState::Open);
+    assert_eq!(animator.active_handle(), None);
+    assert_eq!(animator.active_transition(), None);
+    assert_eq!(animator.active_progress_at(final_tick.timestamp()), None);
+    assert!(!animator.is_active(&runtime));
+    assert!(!animator.handle_completion(&runtime));
+}
+
+#[test]
+fn state_animator_clears_active_transition_after_external_cancel() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transition = StateTransition::new(
+        PanelState::Closed,
+        PanelState::Open,
+        opacity_timeline(0.0, 1.0, 100.0),
+    );
+    let mut animator = StateAnimator::new(target, PanelState::Closed);
+
+    let registration = animator
+        .transition_with(&mut runtime, &transition)
+        .expect("state transition starts");
+
+    assert!(animator.is_active(&runtime));
+
+    assert!(runtime.cancel(target, registration.handle()));
+    assert!(!animator.is_active(&runtime));
+    assert!(animator.handle_completion(&runtime));
+    assert_eq!(animator.active_handle(), None);
+    assert_eq!(animator.active_transition(), None);
+}
+
+#[test]
+fn state_animator_refreshes_stale_active_cache_before_new_transition() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transitions = StateTransitionSet::from_transitions([
+        StateTransition::new(
+            PanelState::Closed,
+            PanelState::Open,
+            opacity_timeline(0.0, 1.0, 100.0),
+        ),
+        StateTransition::new(
+            PanelState::Open,
+            PanelState::Closed,
+            opacity_timeline(1.0, 0.0, 100.0),
+        ),
+    ]);
+    let mut animator = StateAnimator::new(target, PanelState::Closed);
+
+    let open = animator
+        .transition_to(&mut runtime, PanelState::Open, &transitions)
+        .expect("open transition starts");
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(final_tick.completed(), &[open.handle()]);
+    assert_eq!(animator.active_handle(), Some(open.handle()));
+    assert!(!animator.is_active(&runtime));
+
+    let close = animator
+        .transition_to(&mut runtime, PanelState::Closed, &transitions)
+        .expect("close transition starts after stale active cache is refreshed");
+
+    assert_ne!(open.handle(), close.handle());
+    assert_eq!(animator.active_handle(), Some(close.handle()));
+    assert!(animator.is_active(&runtime));
+    assert_eq!(animator.current(), PanelState::Closed);
 }

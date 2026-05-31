@@ -52,8 +52,11 @@ where
 
     /// Returns whether this animator currently owns a runtime animation handle.
     #[must_use]
-    pub const fn is_active(&self) -> bool {
-        self.active.is_some()
+    pub fn is_active<C: AnimationClock>(&self, runtime: &AnimationRuntime<C>) -> bool {
+        match self.active {
+            Some(active) => runtime.contains(self.target, active.handle()),
+            None => false,
+        }
     }
 
     /// Returns metadata for the active state transition, if any.
@@ -70,6 +73,24 @@ where
             .map(|active| active.progress_at(timestamp))
     }
 
+    /// Refreshes active transition metadata when its runtime handle is gone.
+    ///
+    /// Transition start methods refresh stale active metadata automatically.
+    /// Call this when application code needs the cached active transition state
+    /// to be accurate before starting another transition.
+    pub fn handle_completion<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) -> bool {
+        let Some(active) = self.active else {
+            return false;
+        };
+
+        if runtime.contains(self.target, active.handle()) {
+            return false;
+        }
+
+        self.active = None;
+        true
+    }
+
     /// Starts `transition` when it matches the animator's current state.
     ///
     /// Returns `None` when `transition` does not start from the current state,
@@ -79,6 +100,8 @@ where
         runtime: &mut AnimationRuntime<C>,
         transition: &StateTransition<S>,
     ) -> Option<AnimationRegistration> {
+        self.invalidate_if_stale(runtime);
+
         if self.current != transition.from() || transition.from() == transition.to() {
             return None;
         }
@@ -106,6 +129,8 @@ where
         to: S,
         transitions: &StateTransitionSet<S>,
     ) -> Option<AnimationRegistration> {
+        self.invalidate_if_stale(runtime);
+
         if self.current == to {
             return None;
         }
@@ -145,5 +170,13 @@ where
         ));
 
         registration
+    }
+
+    fn invalidate_if_stale<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) {
+        if let Some(active) = self.active
+            && !runtime.contains(self.target, active.handle())
+        {
+            self.active = None;
+        }
     }
 }

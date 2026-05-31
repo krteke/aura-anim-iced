@@ -13,6 +13,7 @@
 - Added `StateTransitionSet` so state changes can match and launch the correct transition timeline.
 - Added fallback timelines for state switches that do not have a custom transition.
 - Added active state transition progress tracking with elapsed time and normalized progress.
+- Added state transition active-cache refresh so completed or canceled runtime handles are cleared automatically before starting another state transition, with manual refresh available when exact active metadata is needed.
 
 ## v0.1.1
 

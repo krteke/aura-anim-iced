@@ -86,7 +86,7 @@ where
     #[must_use]
     pub fn is_active<C: AnimationClock>(&self, runtime: &AnimationRuntime<C>) -> bool {
         match self.active {
-            Some(active) => runtime.last_properties(self.target, active).is_some(),
+            Some(active) => runtime.contains(self.target, active),
             None => false,
         }
     }
@@ -99,12 +99,12 @@ where
             return false;
         };
 
-        if runtime.last_properties(self.target, active).is_none() {
-            self.active = None;
-            return true;
+        if runtime.contains(self.target, active) {
+            return false;
         }
 
-        false
+        self.active = None;
+        true
     }
 
     /// Observes a new target value and registers an animation when it changed.
@@ -145,6 +145,8 @@ where
         visual: K::Inner,
         value: K::Inner,
     ) -> Option<AnimationRegistration> {
+        self.invalidate_if_stale(runtime);
+
         if self.current == Some(value) {
             return None;
         }
@@ -197,9 +199,9 @@ where
 
     fn invalidate_if_stale<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) {
         if let Some(active) = self.active
-            && runtime.last_properties(self.target, active).is_none()
+            && !runtime.contains(self.target, active)
         {
-            self.current = None;
+            self.active = None;
         }
     }
 }
