@@ -459,3 +459,120 @@ fn route_screen_transition_can_build_incoming_opacity_and_position_motion() {
             .contains(&registration.incoming().handle())
     );
 }
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn route_screen_transition_reports_progress_from_outgoing_to_incoming_screen() {
+    let mut runtime = AnimationRuntime::testing();
+    let route_target = AnimationTargetId::new();
+    let outgoing_target = AnimationTargetId::new();
+    let incoming_target = AnimationTargetId::new();
+    let transition = RouteScreenTransition::with_incoming_motion(
+        Route::Home,
+        Route::Settings,
+        opacity_timeline(1.0, 0.0, 80.0),
+        RouteIncomingMotion::new(iced::Vector::new(32.0, 0.0), Duration::from_millis(160.0)),
+    );
+    let mut animator = RouteAnimator::new(route_target, Route::Home);
+
+    let registration = animator
+        .transition_screens_with(
+            &mut runtime,
+            &transition,
+            RouteScreenTargets::new(outgoing_target, incoming_target),
+        )
+        .expect("screen transition starts");
+    let active = animator
+        .active_screen_transition()
+        .expect("active screen transition metadata");
+
+    assert_eq!(
+        active.route().duration(),
+        Some(Duration::from_millis(160.0))
+    );
+    assert_eq!(active.outgoing_handle(), registration.outgoing().handle());
+    assert_eq!(active.incoming_handle(), registration.incoming().handle());
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    let first_tick = runtime.tick();
+    let route_progress = active.route().progress_at(first_tick.timestamp());
+
+    assert_eq!(route_progress.progress(), Some(0.25));
+    assert_approx_eq!(
+        f32,
+        opacity(
+            first_tick
+                .properties_for(outgoing_target)
+                .expect("outgoing output")
+        ),
+        0.5,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        opacity(
+            first_tick
+                .properties_for(incoming_target)
+                .expect("incoming output")
+        ),
+        0.25,
+        epsilon = 1e-5
+    );
+    assert_eq!(
+        translate(
+            first_tick
+                .properties_for(incoming_target)
+                .expect("incoming output")
+        ),
+        iced::Vector::new(24.0, 0.0)
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(80.0));
+    let outgoing_done_tick = runtime.tick();
+
+    assert!(
+        outgoing_done_tick
+            .completed()
+            .contains(&registration.outgoing().handle())
+    );
+    assert!(
+        !outgoing_done_tick
+            .completed()
+            .contains(&registration.incoming().handle())
+    );
+    assert_eq!(
+        animator
+            .active_screen_transition()
+            .expect("screen transition still active")
+            .route()
+            .progress_at(outgoing_done_tick.timestamp())
+            .progress(),
+        Some(0.5)
+    );
+    assert_approx_eq!(
+        f32,
+        opacity(
+            outgoing_done_tick
+                .properties_for(incoming_target)
+                .expect("incoming output")
+        ),
+        0.5,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(160.0));
+    let final_tick = runtime.tick();
+
+    assert!(
+        final_tick
+            .completed()
+            .contains(&registration.route().handle())
+    );
+    assert!(
+        final_tick
+            .completed()
+            .contains(&registration.incoming().handle())
+    );
+    assert!(animator.handle_completion(&runtime));
+    assert!(animator.active_screen_transition().is_none());
+}

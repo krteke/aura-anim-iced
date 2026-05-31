@@ -79,6 +79,41 @@ fn property_transition_registers_animation_after_value_change() {
 }
 
 #[test]
+fn tracked_value_changes_start_automatic_transition_from_previous_value() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, WIDTH).with_timing(Timing::new(120.0));
+
+    assert!(transition.transition_to(&mut runtime, 120.0).is_none());
+    assert_eq!(transition.current_value(), Some(120.0));
+    assert!(runtime.is_idle());
+
+    let registration = transition
+        .transition_to(&mut runtime, 300.0)
+        .expect("changed tracked value starts an automatic transition");
+
+    assert_eq!(transition.current_value(), Some(300.0));
+    assert_eq!(transition.active_handle(), Some(registration.handle()));
+    assert_eq!(
+        registration
+            .registration()
+            .properties()
+            .map(|properties| scalar(properties, WIDTH)),
+        Some(120.0)
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(60.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        scalar(tick.properties_for(target).expect("width output"), WIDTH),
+        210.0,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
 fn behavior_rule_can_be_reused_for_multiple_targets() {
     let mut runtime = AnimationRuntime::testing();
     let first = AnimationTargetId::new();
@@ -194,8 +229,8 @@ fn behavior_width_controls_can_trigger_repeated_value_changes() {
 
     assert_eq!(medium.replaced(), Some(wide.handle()));
     assert_eq!(runtime.active_count(), 1);
-    assert_eq!(active.from(), visual_width);
-    assert_eq!(active.to(), 240.0);
+    assert_approx_eq!(f32, active.from(), visual_width, epsilon = 1e-5);
+    assert_approx_eq!(f32, active.to(), 240.0, epsilon = 1e-5);
     assert_eq!(
         medium
             .registration()
@@ -382,6 +417,54 @@ fn property_transition_retargets_running_animation_to_new_destination() {
         f32,
         opacity(retarget_tick.properties_for(target).expect("target output")),
         0.575,
+        epsilon = 1e-5
+    );
+}
+
+#[test]
+fn retargeting_uses_current_visual_result_instead_of_previous_target() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, WIDTH).with_timing(Timing::new(100.0));
+
+    assert!(transition.transition_to(&mut runtime, 10.0).is_none());
+    let initial = transition
+        .transition_to(&mut runtime, 110.0)
+        .expect("initial width change starts");
+
+    runtime.clock_mut().set_now(Duration::from_millis(25.0));
+    let initial_tick = runtime.tick();
+    let visual = scalar(
+        initial_tick.properties_for(target).expect("width output"),
+        WIDTH,
+    );
+
+    assert_approx_eq!(f32, visual, 35.0, epsilon = 1e-5);
+
+    let retargeted = transition
+        .retarget_to(&mut runtime, 75.0)
+        .expect("active transition retargets");
+
+    assert_eq!(retargeted.replaced(), Some(initial.handle()));
+    assert_eq!(
+        retargeted
+            .registration()
+            .properties()
+            .map(|properties| scalar(properties, WIDTH)),
+        Some(visual)
+    );
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(75.0));
+    let retarget_tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        scalar(
+            retarget_tick.properties_for(target).expect("width output"),
+            WIDTH
+        ),
+        55.0,
         epsilon = 1e-5
     );
 }

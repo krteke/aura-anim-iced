@@ -46,11 +46,11 @@
 
 ## Tests
 
-- [ ] Test automatic transitions after tracked values change.
-- [ ] Test retargeting from the current visual result during an active animation.
-- [ ] Test interruption behavior during repeated state changes.
-- [ ] Test state transition matching across multiple state pairs.
-- [ ] Test route transition progress from outgoing screen to incoming screen.
+- [x] Test automatic transitions after tracked values change.
+- [x] Test retargeting from the current visual result during an active animation.
+- [x] Test interruption behavior during repeated state changes.
+- [x] Test state transition matching across multiple state pairs.
+- [x] Test route transition progress from outgoing screen to incoming screen.
 
 ## Documentation
 

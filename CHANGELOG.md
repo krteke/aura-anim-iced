@@ -29,6 +29,11 @@
 - Added width behavior example controls for repeatedly triggering value changes from the current rendered width.
 - Added current and target width visualization to the width behavior example.
 - Added plain-language behavior text to the width behavior example.
+- Added focused regression coverage for automatic property transitions after tracked value changes.
+- Added focused regression coverage for property retargeting from the current visual result during active animation.
+- Added focused regression coverage for repeated state-change interruption and replacement cleanup.
+- Added focused regression coverage for matching multiple state transition pairs to distinct timelines.
+- Added focused regression coverage for route screen transition progress from outgoing to incoming screens.
 
 ## v0.1.1
 

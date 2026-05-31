@@ -388,3 +388,157 @@ fn state_animator_cleans_replaced_transition_after_replacement_starts() {
     assert_eq!(replacement_end_tick.completed(), &[close.handle()]);
     assert!(runtime.is_idle());
 }
+
+#[test]
+fn repeated_state_changes_interrupt_active_transition_and_continue_with_latest_state() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let transitions = StateTransitionSet::from_transitions([
+        StateTransition::new(
+            PanelState::Closed,
+            PanelState::Open,
+            opacity_timeline(0.0, 1.0, 100.0),
+        ),
+        StateTransition::new(
+            PanelState::Open,
+            PanelState::Disabled,
+            opacity_timeline(1.0, 0.2, 120.0),
+        ),
+        StateTransition::new(
+            PanelState::Disabled,
+            PanelState::Closed,
+            opacity_timeline(0.2, 0.8, 80.0),
+        ),
+    ]);
+    let mut animator = StateAnimator::new(target, PanelState::Closed);
+
+    let open = animator
+        .transition_to(&mut runtime, PanelState::Open, &transitions)
+        .expect("open transition starts");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    runtime.tick();
+
+    let disabled = animator
+        .transition_to(&mut runtime, PanelState::Disabled, &transitions)
+        .expect("second state change interrupts open transition");
+
+    assert_eq!(
+        disabled.replaced().map(ActiveStateTransition::handle),
+        Some(open.handle())
+    );
+    assert_eq!(animator.current(), PanelState::Disabled);
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    let disabled_tick = runtime.tick();
+
+    assert!(disabled_tick.completed().is_empty());
+    assert_approx_eq!(
+        f32,
+        opacity(
+            disabled_tick
+                .properties_for(target)
+                .expect("disabled output")
+        ),
+        0.6,
+        epsilon = 1e-5
+    );
+
+    let closed = animator
+        .transition_to(&mut runtime, PanelState::Closed, &transitions)
+        .expect("third state change interrupts disabled transition");
+
+    assert_eq!(
+        closed.replaced().map(ActiveStateTransition::handle),
+        Some(disabled.handle())
+    );
+    assert_eq!(animator.current(), PanelState::Closed);
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(160.0));
+    let stale_tick = runtime.tick();
+
+    assert!(
+        !stale_tick.completed().contains(&open.handle()),
+        "first interrupted state transition should be canceled"
+    );
+    assert!(
+        !stale_tick.completed().contains(&disabled.handle()),
+        "second interrupted state transition should be canceled"
+    );
+    assert_eq!(runtime.active_count(), 1);
+
+    runtime.clock_mut().set_now(Duration::from_millis(180.0));
+    let final_tick = runtime.tick();
+
+    assert_eq!(final_tick.completed(), &[closed.handle()]);
+    assert!(runtime.is_idle());
+}
+
+#[test]
+fn state_transition_set_matches_multiple_state_pairs_to_distinct_timelines() {
+    let mut runtime = AnimationRuntime::testing();
+    let first_target = AnimationTargetId::new();
+    let second_target = AnimationTargetId::new();
+    let transitions = StateTransitionSet::from_transitions([
+        StateTransition::new(
+            PanelState::Closed,
+            PanelState::Open,
+            opacity_timeline(0.0, 1.0, 100.0),
+        ),
+        StateTransition::new(
+            PanelState::Open,
+            PanelState::Disabled,
+            opacity_timeline(1.0, 0.2, 240.0),
+        ),
+        StateTransition::new(
+            PanelState::Disabled,
+            PanelState::Closed,
+            opacity_timeline(0.2, 0.8, 300.0),
+        ),
+    ]);
+
+    assert_eq!(
+        transitions
+            .find(PanelState::Open, PanelState::Disabled)
+            .expect("open to disabled transition")
+            .timeline()
+            .total_duration(),
+        Some(Duration::from_millis(240.0))
+    );
+    assert_eq!(
+        transitions
+            .find(PanelState::Disabled, PanelState::Closed)
+            .expect("disabled to closed transition")
+            .timeline()
+            .total_duration(),
+        Some(Duration::from_millis(300.0))
+    );
+
+    let mut open_animator = StateAnimator::new(first_target, PanelState::Open);
+    let mut disabled_animator = StateAnimator::new(second_target, PanelState::Disabled);
+
+    open_animator
+        .transition_to(&mut runtime, PanelState::Disabled, &transitions)
+        .expect("open to disabled matches exact pair");
+    disabled_animator
+        .transition_to(&mut runtime, PanelState::Closed, &transitions)
+        .expect("disabled to closed matches exact pair");
+
+    runtime.clock_mut().set_now(Duration::from_millis(120.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(first_target).expect("first output")),
+        0.6,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(second_target).expect("second output")),
+        0.44,
+        epsilon = 1e-5
+    );
+}
