@@ -182,6 +182,38 @@ where
         Some(self.register_from(runtime, from, value))
     }
 
+    /// Interrupts the current transition and continues from an explicit visual value.
+    ///
+    /// Unlike [`transition_from_visual`](Self::transition_from_visual), this
+    /// method can replace an active animation even when `value` is already the
+    /// current target. This is useful when an external interaction interrupts
+    /// playback and application code wants the replacement animation to start
+    /// from the exact value currently rendered on screen.
+    pub fn interrupt_from_visual<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        visual: K::Inner,
+        value: K::Inner,
+    ) -> Option<AnimationRegistration> {
+        self.invalidate_if_stale(runtime);
+
+        if self.active.is_none() && self.current == Some(value) {
+            return None;
+        }
+
+        self.current = Some(value);
+
+        if visual == value {
+            if let Some(active) = self.active.take() {
+                runtime.cancel(self.target, active);
+            }
+
+            return None;
+        }
+
+        Some(self.register_from(runtime, visual, value))
+    }
+
     fn register_from<C: AnimationClock>(
         &mut self,
         runtime: &mut AnimationRuntime<C>,

@@ -15,6 +15,7 @@
 - Added active state transition progress tracking with elapsed time and normalized progress.
 - Added state transition active-cache refresh so completed or canceled runtime handles are cleared automatically before starting another state transition, with manual refresh available when exact active metadata is needed.
 - Added `PropertyTransition::retarget_to` for changing the destination of a running property animation from its current visual value.
+- Added `PropertyTransition::interrupt_from_visual` for replacing interrupted animations from the value currently rendered on screen.
 
 ## v0.1.1
 

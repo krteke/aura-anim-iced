@@ -271,3 +271,54 @@ fn property_transition_retargets_running_animation_to_new_destination() {
         epsilon = 1e-5
     );
 }
+
+#[test]
+fn property_transition_interrupts_running_animation_from_explicit_visual_value() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(100.0));
+
+    assert!(transition.transition_to(&mut runtime, 0.0).is_none());
+    let initial = transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("initial target change");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(target).expect("target output")),
+        0.4,
+        epsilon = 1e-5
+    );
+
+    let interrupted = transition
+        .interrupt_from_visual(&mut runtime, 0.4, 1.0)
+        .expect("same-target interruption restarts from visual value");
+
+    assert_ne!(initial.handle(), interrupted.handle());
+    assert_eq!(transition.current_value(), Some(1.0));
+    assert_eq!(transition.active_handle(), Some(interrupted.handle()));
+    assert_eq!(runtime.active_count(), 1);
+    assert_approx_eq!(
+        f32,
+        opacity(interrupted.properties().expect("interrupted output")),
+        0.4,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(90.0));
+    let interrupted_tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(
+            interrupted_tick
+                .properties_for(target)
+                .expect("target output")
+        ),
+        0.7,
+        epsilon = 1e-5
+    );
+}
