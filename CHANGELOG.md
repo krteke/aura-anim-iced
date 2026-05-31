@@ -23,6 +23,7 @@
 - Added route transition primitives for reusable screen-to-screen timeline behavior.
 - Added route screen transitions that register outgoing and incoming screen animations on separate targets.
 - Added built-in incoming route screen motion that fades and translates the entering screen into place.
+- Added active route screen transition tracking so repeated navigation actions replace and cancel superseded screen animations.
 
 ## v0.1.1
 

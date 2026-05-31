@@ -31,8 +31,8 @@ pub use crate::property::{
     Vector2 as Vector2Property, WIDTH,
 };
 pub use crate::route::{
-    ActiveRouteTransition, RouteAnimator, RouteIncomingMotion, RouteScreenTargets,
-    RouteScreenTransition, RouteScreenTransitionRegistration, RouteTransition,
+    ActiveRouteScreenTransition, ActiveRouteTransition, RouteAnimator, RouteIncomingMotion,
+    RouteScreenTargets, RouteScreenTransition, RouteScreenTransitionRegistration, RouteTransition,
     RouteTransitionRegistration, RouteTransitionSet,
 };
 pub use crate::runtime::{

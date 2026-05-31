@@ -1,6 +1,6 @@
 use crate::{
-    ActiveRouteTransition, AnimationHandle, AnimationRuntime, AnimationTargetId,
-    RouteScreenTargets, RouteScreenTransitionRegistration, RouteTransition,
+    ActiveRouteScreenTransition, ActiveRouteTransition, AnimationHandle, AnimationRuntime,
+    AnimationTargetId, RouteScreenTargets, RouteScreenTransitionRegistration, RouteTransition,
     RouteTransitionRegistration, RouteTransitionSet, StateAnimator,
     route::transition::RouteScreenTransition, runtime::AnimationClock,
 };
@@ -12,6 +12,7 @@ where
     R: Copy + Eq,
 {
     inner: StateAnimator<R>,
+    active_screen: Option<ActiveRouteScreenTransition<R>>,
 }
 
 impl<R> RouteAnimator<R>
@@ -23,13 +24,17 @@ where
     pub const fn new(target: AnimationTargetId, initial: R) -> Self {
         Self {
             inner: StateAnimator::new(target, initial),
+            active_screen: None,
         }
     }
 
     /// Creates a route animator from the shared state animator implementation.
     #[must_use]
     pub const fn from_state_animator(inner: StateAnimator<R>) -> Self {
-        Self { inner }
+        Self {
+            inner,
+            active_screen: None,
+        }
     }
 
     /// Returns the shared state animator used by this route animator.
@@ -74,13 +79,22 @@ where
         self.inner.active_transition()
     }
 
+    /// Returns metadata for the active screen transition, if any.
+    #[must_use]
+    pub const fn active_screen_transition(&self) -> Option<&ActiveRouteScreenTransition<R>> {
+        self.active_screen.as_ref()
+    }
+
     /// Refreshes active transition metadata when its runtime handle is gone.
     ///
     /// Transition start methods refresh stale active metadata automatically.
     /// Call this when application code needs the cached active transition state
     /// to be accurate before starting another route transition.
     pub fn handle_completion<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) -> bool {
-        self.inner.handle_completion(runtime)
+        let route_changed = self.inner.handle_completion(runtime);
+        let screen_changed = self.invalidate_screen_if_stale(runtime);
+
+        route_changed || screen_changed
     }
 
     /// Starts `transition` when it matches the animator's current route.
@@ -92,7 +106,14 @@ where
         runtime: &mut AnimationRuntime<C>,
         transition: &RouteTransition<R>,
     ) -> Option<RouteTransitionRegistration<R>> {
-        self.inner.transition_with(runtime, transition)
+        self.invalidate_screen_if_stale(runtime);
+
+        let registration = self.inner.transition_with(runtime, transition)?;
+        let replaced = self.active_screen.take();
+
+        cleanup_replaced_screen(runtime, replaced);
+
+        Some(registration)
     }
 
     /// Finds and starts a transition from the current route to `to`.
@@ -106,7 +127,14 @@ where
         to: R,
         transitions: &RouteTransitionSet<R>,
     ) -> Option<RouteTransitionRegistration<R>> {
-        self.inner.transition_to(runtime, to, transitions)
+        self.invalidate_screen_if_stale(runtime);
+
+        let registration = self.inner.transition_to(runtime, to, transitions)?;
+        let replaced = self.active_screen.take();
+
+        cleanup_replaced_screen(runtime, replaced);
+
+        Some(registration)
     }
 
     /// Starts a route change with separate outgoing and incoming screen timelines.
@@ -120,13 +148,61 @@ where
         transition: &RouteScreenTransition<R>,
         targets: RouteScreenTargets,
     ) -> Option<RouteScreenTransitionRegistration<R>> {
+        self.invalidate_screen_if_stale(runtime);
+
         let route_transition = transition.route_transition();
-        let route = self.transition_with(runtime, &route_transition)?;
+        let route = self.inner.transition_with(runtime, &route_transition)?;
+        let replaced = self.active_screen.take();
+
+        cleanup_replaced_screen(runtime, replaced);
+
         let outgoing = runtime.register_timeline(targets.outgoing(), transition.outgoing().clone());
         let incoming = runtime.register_timeline(targets.incoming(), transition.incoming().clone());
+        let active_route = *self.inner.active_transition()?;
+
+        self.active_screen = Some(ActiveRouteScreenTransition::new(
+            active_route,
+            self.inner.target(),
+            targets,
+            outgoing.handle(),
+            incoming.handle(),
+        ));
 
         Some(RouteScreenTransitionRegistration::new(
-            route, outgoing, incoming,
+            route, outgoing, incoming, replaced,
         ))
+    }
+
+    fn invalidate_screen_if_stale<C: AnimationClock>(
+        &mut self,
+        runtime: &AnimationRuntime<C>,
+    ) -> bool {
+        let Some(active) = self.active_screen else {
+            return false;
+        };
+
+        if runtime.contains(active.route_target(), active.route().handle())
+            || runtime.contains(active.outgoing_target(), active.outgoing_handle())
+            || runtime.contains(active.incoming_target(), active.incoming_handle())
+        {
+            return false;
+        }
+
+        self.active_screen = None;
+        true
+    }
+}
+
+fn cleanup_replaced_screen<C, R>(
+    runtime: &mut AnimationRuntime<C>,
+    replaced: Option<ActiveRouteScreenTransition<R>>,
+) where
+    C: AnimationClock,
+    R: Copy + Eq,
+{
+    if let Some(active) = replaced {
+        runtime.cancel(active.route_target(), active.route().handle());
+        runtime.cancel(active.outgoing_target(), active.outgoing_handle());
+        runtime.cancel(active.incoming_target(), active.incoming_handle());
     }
 }

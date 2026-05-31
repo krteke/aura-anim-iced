@@ -11,7 +11,9 @@ use crate::{
 
 pub use animator::RouteAnimator;
 pub use motion::RouteIncomingMotion;
-pub use screen::{RouteScreenTargets, RouteScreenTransitionRegistration};
+pub use screen::{
+    ActiveRouteScreenTransition, RouteScreenTargets, RouteScreenTransitionRegistration,
+};
 pub use transition::RouteScreenTransition;
 
 /// Active route transition metadata tracked by a [`RouteAnimator`].

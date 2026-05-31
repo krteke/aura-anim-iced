@@ -244,6 +244,109 @@ fn route_screen_transition_runs_outgoing_before_incoming_reaches_final_state() {
 }
 
 #[test]
+fn route_screen_transition_tracks_and_replaces_repeated_navigation_actions() {
+    let mut runtime = AnimationRuntime::testing();
+    let route_target = AnimationTargetId::new();
+    let first_outgoing_target = AnimationTargetId::new();
+    let first_incoming_target = AnimationTargetId::new();
+    let second_outgoing_target = AnimationTargetId::new();
+    let second_incoming_target = AnimationTargetId::new();
+    let home_to_settings = RouteScreenTransition::new(
+        Route::Home,
+        Route::Settings,
+        opacity_timeline(1.0, 0.0, 80.0),
+        opacity_timeline(0.0, 1.0, 140.0),
+    );
+    let settings_to_details = RouteScreenTransition::new(
+        Route::Settings,
+        Route::Details,
+        opacity_timeline(1.0, 0.0, 80.0),
+        opacity_timeline(0.0, 1.0, 140.0),
+    );
+    let mut animator = RouteAnimator::new(route_target, Route::Home);
+
+    let first = animator
+        .transition_screens_with(
+            &mut runtime,
+            &home_to_settings,
+            RouteScreenTargets::new(first_outgoing_target, first_incoming_target),
+        )
+        .expect("first screen transition starts");
+    let first_active = *animator
+        .active_screen_transition()
+        .expect("first active screen transition");
+
+    assert!(first.replaced().is_none());
+    assert_eq!(first_active.route().handle(), first.route().handle());
+    assert_eq!(first_active.route_target(), route_target);
+    assert_eq!(first_active.outgoing_target(), first_outgoing_target);
+    assert_eq!(first_active.outgoing_handle(), first.outgoing().handle());
+    assert_eq!(first_active.incoming_target(), first_incoming_target);
+    assert_eq!(first_active.incoming_handle(), first.incoming().handle());
+    assert_eq!(runtime.active_count(), 3);
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    runtime.tick();
+
+    let second = animator
+        .transition_screens_with(
+            &mut runtime,
+            &settings_to_details,
+            RouteScreenTargets::new(second_outgoing_target, second_incoming_target),
+        )
+        .expect("second screen transition starts");
+    let replaced = second
+        .replaced()
+        .expect("second screen transition reports replaced transition");
+    let second_active = animator
+        .active_screen_transition()
+        .expect("second active screen transition");
+
+    assert_eq!(animator.current(), Route::Details);
+    assert_eq!(
+        second.route().replaced().map(ActiveRouteTransition::handle),
+        Some(first.route().handle())
+    );
+    assert_eq!(replaced.route().from(), Route::Home);
+    assert_eq!(replaced.route().to(), Route::Settings);
+    assert_eq!(replaced.route().handle(), first.route().handle());
+    assert_eq!(replaced.outgoing_handle(), first.outgoing().handle());
+    assert_eq!(replaced.incoming_handle(), first.incoming().handle());
+    assert_eq!(second_active.route().handle(), second.route().handle());
+    assert_eq!(second_active.outgoing_target(), second_outgoing_target);
+    assert_eq!(second_active.incoming_target(), second_incoming_target);
+    assert_eq!(runtime.active_count(), 3);
+
+    runtime.clock_mut().set_now(Duration::from_millis(140.0));
+    let repeated_tick = runtime.tick();
+
+    assert!(
+        !repeated_tick.completed().contains(&first.route().handle()),
+        "replaced route handle should be canceled before it can complete"
+    );
+    assert!(
+        !repeated_tick
+            .completed()
+            .contains(&first.outgoing().handle()),
+        "replaced outgoing screen handle should be canceled before it can complete"
+    );
+    assert!(
+        !repeated_tick
+            .completed()
+            .contains(&first.incoming().handle()),
+        "replaced incoming screen handle should be canceled before it can complete"
+    );
+    assert!(animator.active_screen_transition().is_some());
+
+    runtime.clock_mut().set_now(Duration::from_millis(180.0));
+    runtime.tick();
+
+    assert!(animator.handle_completion(&runtime));
+    assert!(animator.active_screen_transition().is_none());
+    assert!(animator.active_transition().is_none());
+}
+
+#[test]
 fn route_screen_transition_can_build_incoming_opacity_and_position_motion() {
     let mut runtime = AnimationRuntime::testing();
     let route_target = AnimationTargetId::new();
