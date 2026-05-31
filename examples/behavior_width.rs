@@ -9,12 +9,13 @@ use aura_anim_iced::{
 use iced::{
     Background, Border, Color, Element, Length, Subscription, Task, Theme,
     alignment::{Horizontal, Vertical},
-    widget::{column, container, text},
+    widget::{button, column, container, row, text},
 };
 use std::time::Instant;
 
 const INITIAL_WIDTH: f32 = 90.0;
-const TARGET_WIDTH: f32 = 420.0;
+const MEDIUM_WIDTH: f32 = 240.0;
+const WIDE_WIDTH: f32 = 420.0;
 const TRANSITION_MS: f64 = 1_800.0;
 
 fn main() -> iced::Result {
@@ -30,6 +31,7 @@ fn title(_: &Demo) -> String {
 
 #[derive(Debug, Clone, Copy)]
 enum Message {
+    SetWidth(f32),
     AnimationTick(Instant),
 }
 
@@ -39,6 +41,7 @@ struct Demo {
     width_target: AnimationTargetId,
     width_transition: PropertyTransition<aura_anim_iced::property::Scalar>,
     effects: EffectSnapshot,
+    target_width: f32,
 }
 
 impl Default for Demo {
@@ -50,13 +53,13 @@ impl Default for Demo {
         let mut width_transition = rule.bind(width_target);
 
         width_transition.transition_to(&mut runtime, INITIAL_WIDTH);
-        width_transition.transition_to(&mut runtime, TARGET_WIDTH);
 
         Self {
             runtime,
             width_target,
             width_transition,
             effects: width_effects(INITIAL_WIDTH),
+            target_width: INITIAL_WIDTH,
         }
     }
 }
@@ -64,6 +67,7 @@ impl Default for Demo {
 impl Demo {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::SetWidth(width) => self.set_width(width),
             Message::AnimationTick(tick_instant) => {
                 let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
                 let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, self.width_target);
@@ -85,9 +89,17 @@ impl Demo {
 
     fn view(&self) -> Element<'_, Message> {
         let width = self.effects.width.unwrap_or(INITIAL_WIDTH);
+        let controls = row![
+            width_button("Narrow", INITIAL_WIDTH, self.target_width),
+            width_button("Medium", MEDIUM_WIDTH, self.target_width),
+            width_button("Wide", WIDE_WIDTH, self.target_width),
+        ]
+        .spacing(12)
+        .align_y(Vertical::Center);
 
         container(
             column![
+                controls,
                 container(text("Width").size(18).color(Color::WHITE))
                     .width(Length::Fixed(width))
                     .height(Length::Fixed(72.0))
@@ -108,6 +120,21 @@ impl Demo {
         .center_y(Length::Fill)
         .into()
     }
+
+    fn set_width(&mut self, width: f32) {
+        let visual = self.effects.width.unwrap_or(INITIAL_WIDTH);
+
+        self.target_width = width;
+        self.width_transition
+            .transition_from_visual(&mut self.runtime, visual, width);
+    }
+}
+
+#[allow(clippy::float_cmp)]
+fn width_button(label: &'static str, width: f32, current: f32) -> Element<'static, Message> {
+    button(text(label))
+        .on_press_maybe((width != current).then_some(Message::SetWidth(width)))
+        .into()
 }
 
 fn width_effects(width: f32) -> EffectSnapshot {

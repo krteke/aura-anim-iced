@@ -159,6 +159,48 @@ fn behavior_width_example_flow_animates_changing_width_value() {
 }
 
 #[test]
+fn behavior_width_controls_can_trigger_repeated_value_changes() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let rule = BehaviorRule::new(WIDTH).with_timing(Timing::new(420.0));
+    let mut transition = rule.bind(target);
+    let mut visual_width = 90.0;
+
+    assert!(
+        transition
+            .transition_to(&mut runtime, visual_width)
+            .is_none()
+    );
+
+    let wide = transition
+        .transition_from_visual(&mut runtime, visual_width, 420.0)
+        .expect("wide control starts width animation");
+
+    runtime.clock_mut().set_now(Duration::from_millis(210.0));
+    let wide_tick = runtime.tick();
+    visual_width = scalar(
+        wide_tick.properties_for(target).expect("wide output"),
+        WIDTH,
+    );
+
+    assert_approx_eq!(f32, visual_width, 255.0, epsilon = 1e-5);
+
+    let medium = transition
+        .transition_from_visual(&mut runtime, visual_width, 240.0)
+        .expect("medium control retargets width animation");
+
+    assert_eq!(medium.replaced(), Some(wide.handle()));
+    assert_eq!(runtime.active_count(), 1);
+    assert_eq!(
+        medium
+            .registration()
+            .properties()
+            .map(|properties| scalar(properties, WIDTH)),
+        Some(visual_width)
+    );
+}
+
+#[test]
 fn property_transition_continues_from_running_visual_value() {
     let mut runtime = AnimationRuntime::testing();
     let target = AnimationTargetId::new();

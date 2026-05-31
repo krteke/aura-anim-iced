@@ -26,6 +26,7 @@
 - Added active route screen transition tracking so repeated navigation actions replace and cancel superseded screen animations.
 - Added a runnable route transition example that demonstrates repeated screen switching.
 - Added a runnable width behavior example driven by `BehaviorRule` and `PropertyTransition`.
+- Added width behavior example controls for repeatedly triggering value changes from the current rendered width.
 
 ## v0.1.1
 

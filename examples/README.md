@@ -18,7 +18,8 @@ radius, colors, and shadow.
 ## behavior_width
 
 Shows a width value change animated through a reusable `BehaviorRule` bound to a
-`PropertyTransition`.
+`PropertyTransition`. The controls trigger repeated width changes from the
+current rendered width.
 
 ## keyframes_popup
 

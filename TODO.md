@@ -40,7 +40,7 @@
 ## Behavior Example
 
 - [x] Implement a runnable example that animates a changing width value.
-- [ ] Implement controls that trigger repeated value changes for the example.
+- [x] Implement controls that trigger repeated value changes for the example.
 - [ ] Implement visual output that clearly shows the transition from the current value to the next value.
 - [ ] Implement example text that explains the animated behavior in plain terms.
 - [ ] Implement example checks that keep the behavior working during future changes.
