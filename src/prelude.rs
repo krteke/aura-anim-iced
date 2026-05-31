@@ -30,6 +30,10 @@ pub use crate::property::{
     Shadow as ShadowProperty, Size as SizeProperty, TEXT_COLOR, TRANSLATE, TransformValue,
     Vector2 as Vector2Property, WIDTH,
 };
+pub use crate::route::{
+    ActiveRouteTransition, RouteAnimator, RouteTransition, RouteTransitionRegistration,
+    RouteTransitionSet,
+};
 pub use crate::runtime::{
     AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
     AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,

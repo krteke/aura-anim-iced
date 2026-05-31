@@ -32,6 +32,7 @@ pub mod iced_ext;
 pub mod keyframes;
 pub mod prelude;
 pub mod property;
+pub mod route;
 pub mod runtime;
 pub mod state;
 pub mod timeline;
@@ -47,6 +48,10 @@ pub use property::{
     BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyKey, PropertySnapshot,
     PropertySpec, PropertyValue, RADIUS, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, TransformValue,
     WIDTH,
+};
+pub use route::{
+    ActiveRouteTransition, RouteAnimator, RouteTransition, RouteTransitionRegistration,
+    RouteTransitionSet,
 };
 pub use runtime::{
     AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,

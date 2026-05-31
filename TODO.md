@@ -31,7 +31,7 @@
 
 ## Route Transition
 
-- [ ] Implement reusable page transition behavior for switching between screens.
+- [x] Implement reusable page transition behavior for switching between screens.
 - [ ] Implement outgoing screen animation before the incoming screen reaches its final state.
 - [ ] Implement incoming screen animation with opacity and position movement.
 - [ ] Implement route transition state tracking across repeated navigation actions.
