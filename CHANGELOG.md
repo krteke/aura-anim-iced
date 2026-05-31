@@ -21,6 +21,7 @@
 - Added active property transition progress tracking so direction changes report progress from the replacement animation.
 - Added replacement cleanup for interrupted property and state animations so superseded handles no longer complete after their replacement starts.
 - Added route transition primitives for reusable screen-to-screen timeline behavior.
+- Added route screen transitions that register outgoing and incoming screen animations on separate targets.
 
 ## v0.1.1
 

@@ -2,8 +2,8 @@
 
 use aura_anim_iced::{
     ActiveRouteTransition, AnimationRuntime, AnimationTargetId, Duration, OPACITY,
-    PropertySnapshot, PropertyValue, RouteAnimator, RouteTransition, RouteTransitionSet, Timeline,
-    Track,
+    PropertySnapshot, PropertyValue, RouteAnimator, RouteScreenTargets, RouteScreenTransition,
+    RouteTransition, RouteTransitionSet, Timeline, Track,
 };
 use float_cmp::assert_approx_eq;
 
@@ -131,5 +131,106 @@ fn route_transition_set_matches_screen_switches_and_uses_fallback() {
         ),
         0.5,
         epsilon = 1e-5
+    );
+}
+
+#[test]
+fn route_screen_transition_runs_outgoing_before_incoming_reaches_final_state() {
+    let mut runtime = AnimationRuntime::testing();
+    let route_target = AnimationTargetId::new();
+    let outgoing_target = AnimationTargetId::new();
+    let incoming_target = AnimationTargetId::new();
+    let transition = RouteScreenTransition::new(
+        Route::Home,
+        Route::Settings,
+        opacity_timeline(1.0, 0.0, 80.0),
+        opacity_timeline(0.0, 1.0, 140.0),
+    );
+    let mut animator = RouteAnimator::new(route_target, Route::Home);
+
+    assert_eq!(transition.from(), Route::Home);
+    assert_eq!(transition.to(), Route::Settings);
+    assert_eq!(
+        transition.total_duration(),
+        Some(Duration::from_millis(140.0))
+    );
+    assert_eq!(
+        transition.outgoing_finishes_before_incoming_final(),
+        Some(true)
+    );
+
+    let registration = animator
+        .transition_screens_with(
+            &mut runtime,
+            &transition,
+            RouteScreenTargets::new(outgoing_target, incoming_target),
+        )
+        .expect("screen transition starts");
+
+    assert_eq!(animator.current(), Route::Settings);
+    assert_eq!(
+        animator.active_handle(),
+        Some(registration.route().handle())
+    );
+    assert_eq!(runtime.active_count(), 3);
+    assert_approx_eq!(
+        f32,
+        opacity(
+            registration
+                .outgoing()
+                .properties()
+                .expect("outgoing initial output")
+        ),
+        1.0,
+        epsilon = 1e-5
+    );
+    assert_approx_eq!(
+        f32,
+        opacity(
+            registration
+                .incoming()
+                .properties()
+                .expect("incoming initial output")
+        ),
+        0.0,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(80.0));
+    let outgoing_end_tick = runtime.tick();
+
+    assert_eq!(
+        outgoing_end_tick.completed(),
+        &[registration.outgoing().handle()]
+    );
+    assert!(animator.is_active(&runtime));
+    assert_approx_eq!(
+        f32,
+        opacity(
+            outgoing_end_tick
+                .properties_for(incoming_target)
+                .expect("incoming output")
+        ),
+        80.0 / 140.0,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(140.0));
+    let incoming_end_tick = runtime.tick();
+
+    assert!(
+        incoming_end_tick
+            .completed()
+            .contains(&registration.route().handle())
+    );
+    assert!(
+        incoming_end_tick
+            .completed()
+            .contains(&registration.incoming().handle())
+    );
+    assert!(
+        !incoming_end_tick
+            .completed()
+            .contains(&registration.outgoing().handle())
     );
 }

@@ -6,7 +6,7 @@ use std::{
 use crate::timing::utils::std_duration_from_secs;
 
 /// A non-negative animation duration.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Duration(StdDuration);
 
 impl Duration {

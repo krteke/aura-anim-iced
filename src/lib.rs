@@ -50,7 +50,8 @@ pub use property::{
     WIDTH,
 };
 pub use route::{
-    ActiveRouteTransition, RouteAnimator, RouteTransition, RouteTransitionRegistration,
+    ActiveRouteTransition, RouteAnimator, RouteScreenTargets, RouteScreenTransition,
+    RouteScreenTransitionRegistration, RouteTransition, RouteTransitionRegistration,
     RouteTransitionSet,
 };
 pub use runtime::{

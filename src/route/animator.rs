@@ -1,5 +1,6 @@
 use crate::{
-    ActiveRouteTransition, AnimationHandle, AnimationRuntime, AnimationTargetId, RouteTransition,
+    ActiveRouteTransition, AnimationHandle, AnimationRuntime, AnimationTargetId,
+    RouteScreenTargets, RouteScreenTransition, RouteScreenTransitionRegistration, RouteTransition,
     RouteTransitionRegistration, RouteTransitionSet, StateAnimator, runtime::AnimationClock,
 };
 
@@ -105,5 +106,26 @@ where
         transitions: &RouteTransitionSet<R>,
     ) -> Option<RouteTransitionRegistration<R>> {
         self.inner.transition_to(runtime, to, transitions)
+    }
+
+    /// Starts a route change with separate outgoing and incoming screen timelines.
+    ///
+    /// The route state transition is delegated to the shared state animator.
+    /// Screen timelines are then registered on their own targets so the outgoing
+    /// screen can animate before the incoming screen reaches its final state.
+    pub fn transition_screens_with<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        transition: &RouteScreenTransition<R>,
+        targets: RouteScreenTargets,
+    ) -> Option<RouteScreenTransitionRegistration<R>> {
+        let route_transition = transition.route_transition();
+        let route = self.transition_with(runtime, &route_transition)?;
+        let outgoing = runtime.register_timeline(targets.outgoing(), transition.outgoing().clone());
+        let incoming = runtime.register_timeline(targets.incoming(), transition.incoming().clone());
+
+        Some(RouteScreenTransitionRegistration::new(
+            route, outgoing, incoming,
+        ))
     }
 }
