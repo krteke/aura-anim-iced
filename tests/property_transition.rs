@@ -222,3 +222,52 @@ fn property_transition_handles_runtime_completion() {
     assert!(!transition.is_active(&runtime));
     assert!(!transition.handle_completion(&runtime));
 }
+
+#[test]
+fn property_transition_retargets_running_animation_to_new_destination() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(100.0));
+
+    assert!(transition.retarget_to(&mut runtime, 1.0).is_none());
+    assert!(transition.transition_to(&mut runtime, 0.0).is_none());
+    let initial = transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("initial target change");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    let tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(tick.properties_for(target).expect("target output")),
+        0.4,
+        epsilon = 1e-5
+    );
+    assert!(transition.retarget_to(&mut runtime, 1.0).is_none());
+
+    let retargeted = transition
+        .retarget_to(&mut runtime, 0.75)
+        .expect("running transition retargets");
+
+    assert_ne!(initial.handle(), retargeted.handle());
+    assert_eq!(transition.current_value(), Some(0.75));
+    assert_eq!(transition.active_handle(), Some(retargeted.handle()));
+    assert_eq!(runtime.active_count(), 1);
+    assert_approx_eq!(
+        f32,
+        opacity(retargeted.properties().expect("retarget output")),
+        0.4,
+        epsilon = 1e-5
+    );
+
+    runtime.clock_mut().set_now(Duration::from_millis(90.0));
+    let retarget_tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(retarget_tick.properties_for(target).expect("target output")),
+        0.575,
+        epsilon = 1e-5
+    );
+}

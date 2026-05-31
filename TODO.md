@@ -23,7 +23,7 @@
 
 ## Retarget And Interruption
 
-- [ ] Implement retargeting for animations that receive a new destination while still running.
+- [x] Implement retargeting for animations that receive a new destination while still running.
 - [ ] Implement interruption handling that continues from the current visual frame.
 - [ ] Implement replacement behavior for repeated state changes during the same interaction.
 - [ ] Implement consistent progress handling when an animation changes direction.

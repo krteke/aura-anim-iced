@@ -160,6 +160,28 @@ where
         Some(self.register_from(runtime, visual, value))
     }
 
+    /// Retargets a currently running transition to a new destination.
+    ///
+    /// Returns `None` when there is no active runtime animation, the active
+    /// handle is stale, or the new destination is already the current target.
+    /// The replacement animation starts from the active animation's last
+    /// sampled visual value.
+    pub fn retarget_to<C: AnimationClock>(
+        &mut self,
+        runtime: &mut AnimationRuntime<C>,
+        value: K::Inner,
+    ) -> Option<AnimationRegistration> {
+        self.invalidate_if_stale(runtime);
+
+        if self.current == Some(value) {
+            return None;
+        }
+
+        let from = self.current_visual_value(runtime)?;
+
+        Some(self.register_from(runtime, from, value))
+    }
+
     fn register_from<C: AnimationClock>(
         &mut self,
         runtime: &mut AnimationRuntime<C>,
