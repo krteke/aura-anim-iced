@@ -18,6 +18,7 @@
 - Added `PropertyTransition::interrupt_from_visual` for replacing interrupted animations from the value currently rendered on screen.
 - Added `StateTransitionRegistration` so repeated state changes report the active transition they replaced.
 - Added `PropertyTransitionRegistration` so property transitions report the runtime handle they replaced.
+- Added active property transition progress tracking so direction changes report progress from the replacement animation.
 
 ## v0.1.1
 

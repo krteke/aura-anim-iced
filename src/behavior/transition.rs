@@ -1,7 +1,7 @@
 use crate::{
-    AnimationHandle, AnimationRuntime, AnimationTargetId, BehaviorRule, KeyframesBuilder,
-    PropertyTransitionRegistration, Timing, behavior::TransitionValueKind, property::PropertySpec,
-    runtime::AnimationClock,
+    ActivePropertyTransition, AnimationHandle, AnimationRuntime, AnimationTargetId, BehaviorRule,
+    Duration, KeyframesBuilder, PropertyTransitionProgress, PropertyTransitionRegistration, Timing,
+    behavior::TransitionValueKind, property::PropertySpec, runtime::AnimationClock,
 };
 
 /// Tracks one visual property and starts a transition when its target value changes.
@@ -18,7 +18,7 @@ where
     property: PropertySpec<K>,
     timing: Timing,
     current: Option<K::Inner>,
-    active: Option<AnimationHandle>,
+    active: Option<ActivePropertyTransition<K>>,
 }
 
 // TODO: may need optimization
@@ -79,14 +79,17 @@ where
     /// Returns the active runtime handle created by this tracker, if any.
     #[must_use]
     pub const fn active_handle(&self) -> Option<AnimationHandle> {
-        self.active
+        match &self.active {
+            Some(active) => Some(active.handle()),
+            None => None,
+        }
     }
 
     /// Returns whether this tracker currently owns a runtime animation handle.
     #[must_use]
     pub fn is_active<C: AnimationClock>(&self, runtime: &AnimationRuntime<C>) -> bool {
-        match self.active {
-            Some(active) => runtime.contains(self.target, active),
+        match &self.active {
+            Some(active) => runtime.contains(self.target, active.handle()),
             None => false,
         }
     }
@@ -95,16 +98,30 @@ where
     ///
     /// Returns `true` when this transition handled its own completion.
     pub fn handle_completion<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) -> bool {
-        let Some(active) = self.active else {
+        let Some(active) = &self.active else {
             return false;
         };
 
-        if runtime.contains(self.target, active) {
+        if runtime.contains(self.target, active.handle()) {
             return false;
         }
 
         self.active = None;
         true
+    }
+
+    /// Returns metadata for the active property transition, if any.
+    #[must_use]
+    pub const fn active_transition(&self) -> Option<&ActivePropertyTransition<K>> {
+        self.active.as_ref()
+    }
+
+    /// Returns sampled progress for the active transition at `timestamp`.
+    #[must_use]
+    pub fn active_progress_at(&self, timestamp: Duration) -> Option<PropertyTransitionProgress<K>> {
+        self.active
+            .as_ref()
+            .map(|active| active.progress_at(timestamp))
     }
 
     /// Observes a new target value and registers an animation when it changed.
@@ -205,7 +222,7 @@ where
 
         if visual == value {
             if let Some(active) = self.active.take() {
-                runtime.cancel(self.target, active);
+                runtime.cancel(self.target, active.handle());
             }
 
             return None;
@@ -221,9 +238,10 @@ where
         value: K::Inner,
     ) -> PropertyTransitionRegistration {
         let replaced = self.active.take();
+        let replaced_handle = replaced.as_ref().map(ActivePropertyTransition::handle);
 
         if let Some(active) = replaced {
-            runtime.cancel(self.target, active);
+            runtime.cancel(self.target, active.handle());
         }
 
         self.current = Some(value);
@@ -237,25 +255,31 @@ where
                 .finish(),
         );
 
-        self.active = Some(registration.handle());
+        self.active = Some(ActivePropertyTransition::new(
+            registration.handle(),
+            from,
+            value,
+            runtime.clock().now(),
+            self.timing.total_duration(),
+        ));
 
-        PropertyTransitionRegistration::new(registration, replaced)
+        PropertyTransitionRegistration::new(registration, replaced_handle)
     }
 
     fn current_visual_value<C: AnimationClock>(
         &self,
         runtime: &AnimationRuntime<C>,
     ) -> Option<K::Inner> {
-        let active = self.active?;
-        let snapshot = runtime.last_properties(self.target, active)?;
+        let active = self.active.as_ref()?;
+        let snapshot = runtime.last_properties(self.target, active.handle())?;
         let entry = snapshot.find_property(&self.property.raw())?;
 
         K::unwrap_transition_value(entry.value())
     }
 
     fn invalidate_if_stale<C: AnimationClock>(&mut self, runtime: &AnimationRuntime<C>) {
-        if let Some(active) = self.active
-            && !runtime.contains(self.target, active)
+        if let Some(active) = &self.active
+            && !runtime.contains(self.target, active.handle())
         {
             self.active = None;
         }

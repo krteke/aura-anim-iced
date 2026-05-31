@@ -348,3 +348,62 @@ fn property_transition_interrupts_running_animation_from_explicit_visual_value()
         epsilon = 1e-5
     );
 }
+
+#[test]
+fn property_transition_tracks_progress_after_direction_change() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut transition = PropertyTransition::new(target, OPACITY).with_timing(Timing::new(100.0));
+
+    assert!(transition.transition_to(&mut runtime, 0.0).is_none());
+    let forward = transition
+        .transition_to(&mut runtime, 1.0)
+        .expect("forward transition starts");
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    let forward_tick = runtime.tick();
+
+    assert_approx_eq!(
+        f32,
+        opacity(forward_tick.properties_for(target).expect("target output")),
+        0.4,
+        epsilon = 1e-5
+    );
+
+    let reverse = transition
+        .retarget_to(&mut runtime, 0.0)
+        .expect("reverse retarget starts");
+    let active = transition
+        .active_transition()
+        .expect("active property transition");
+
+    assert_eq!(reverse.replaced(), Some(forward.handle()));
+    assert_eq!(active.handle(), reverse.handle());
+    assert_approx_eq!(f32, active.from(), 0.4, epsilon = 1e-5);
+    assert_approx_eq!(f32, active.to(), 0.0, epsilon = 1e-5);
+    assert_eq!(active.started_at(), Duration::from_millis(40.0));
+    assert_eq!(active.duration(), Some(Duration::from_millis(100.0)));
+
+    let start_progress = transition
+        .active_progress_at(Duration::from_millis(40.0))
+        .expect("reverse start progress");
+
+    assert_eq!(start_progress.progress(), Some(0.0));
+    assert_approx_eq!(f32, start_progress.from(), 0.4, epsilon = 1e-5);
+    assert_approx_eq!(f32, start_progress.to(), 0.0, epsilon = 1e-5);
+
+    runtime.clock_mut().set_now(Duration::from_millis(90.0));
+    let reverse_tick = runtime.tick();
+    let reverse_progress = transition
+        .active_progress_at(reverse_tick.timestamp())
+        .expect("reverse progress");
+
+    assert_eq!(reverse_progress.elapsed(), Duration::from_millis(50.0));
+    assert_eq!(reverse_progress.progress(), Some(0.5));
+    assert_approx_eq!(
+        f32,
+        opacity(reverse_tick.properties_for(target).expect("target output")),
+        0.2,
+        epsilon = 1e-5
+    );
+}

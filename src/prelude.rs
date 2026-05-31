@@ -18,7 +18,8 @@
 //! ```
 
 pub use crate::behavior::{
-    BehaviorRule, PropertyTransition, PropertyTransitionRegistration, TransitionValueKind,
+    ActivePropertyTransition, BehaviorRule, PropertyTransition, PropertyTransitionProgress,
+    PropertyTransitionRegistration, TransitionValueKind,
 };
 pub use crate::iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use crate::keyframes::{Keyframe, Keyframes, KeyframesBuilder};
