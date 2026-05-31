@@ -1,9 +1,10 @@
 //! Public API coverage for route-driven screen transition animation.
 
 use aura_anim_iced::{
-    ActiveRouteTransition, AnimationRuntime, AnimationTargetId, Duration, OPACITY,
-    PropertySnapshot, PropertyValue, RouteAnimator, RouteIncomingMotion, RouteScreenTargets,
-    RouteScreenTransition, RouteTransition, RouteTransitionSet, TRANSLATE, Timeline, Track,
+    ActiveRouteScreenTransition, ActiveRouteTransition, AnimationRuntime, AnimationTargetId,
+    Duration, OPACITY, PropertySnapshot, PropertyValue, RouteAnimator, RouteIncomingMotion,
+    RouteScreenTargets, RouteScreenTransition, RouteTransition, RouteTransitionSet, TRANSLATE,
+    Timeline, Track,
 };
 use float_cmp::assert_approx_eq;
 
@@ -344,6 +345,61 @@ fn route_screen_transition_tracks_and_replaces_repeated_navigation_actions() {
     assert!(animator.handle_completion(&runtime));
     assert!(animator.active_screen_transition().is_none());
     assert!(animator.active_transition().is_none());
+}
+
+#[test]
+fn route_transition_example_flow_supports_repeated_screen_switching() {
+    let mut runtime = AnimationRuntime::testing();
+    let route_target = AnimationTargetId::new();
+    let outgoing_target = AnimationTargetId::new();
+    let incoming_target = AnimationTargetId::new();
+    let mut animator = RouteAnimator::new(route_target, Route::Home);
+    let home_to_settings = RouteScreenTransition::with_incoming_motion(
+        Route::Home,
+        Route::Settings,
+        opacity_timeline(1.0, 0.0, 300.0),
+        RouteIncomingMotion::new(iced::Vector::new(50.0, 0.0), Duration::from_millis(300.0)),
+    );
+    let settings_to_details = RouteScreenTransition::with_incoming_motion(
+        Route::Settings,
+        Route::Details,
+        opacity_timeline(1.0, 0.0, 300.0),
+        RouteIncomingMotion::new(iced::Vector::new(50.0, 0.0), Duration::from_millis(300.0)),
+    );
+
+    let first = animator
+        .transition_screens_with(
+            &mut runtime,
+            &home_to_settings,
+            RouteScreenTargets::new(outgoing_target, incoming_target),
+        )
+        .expect("example first navigation starts");
+
+    runtime.clock_mut().set_now(Duration::from_millis(150.0));
+    let first_tick = runtime.tick();
+    let first_incoming = first_tick
+        .properties_for(incoming_target)
+        .expect("example incoming screen output");
+
+    assert_approx_eq!(f32, opacity(first_incoming), 0.5, epsilon = 1e-5);
+    assert_eq!(translate(first_incoming), iced::Vector::new(25.0, 0.0));
+
+    let second = animator
+        .transition_screens_with(
+            &mut runtime,
+            &settings_to_details,
+            RouteScreenTargets::new(outgoing_target, incoming_target),
+        )
+        .expect("example repeated navigation starts");
+
+    assert_eq!(animator.current(), Route::Details);
+    assert_eq!(
+        second
+            .replaced()
+            .map(ActiveRouteScreenTransition::incoming_handle),
+        Some(first.incoming().handle())
+    );
+    assert_eq!(runtime.active_count(), 3);
 }
 
 #[test]
