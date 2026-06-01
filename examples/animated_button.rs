@@ -1,5 +1,7 @@
 //! Animated button demo for hover, press, focus, color, shadow, and scale.
 
+mod shared;
+
 use std::time::Instant;
 
 use aura_anim_iced::{iced_ext, prelude::*, property};
@@ -8,6 +10,8 @@ use iced::{
     alignment::{Horizontal, Vertical},
     widget::{button, column, container, mouse_area, row, text},
 };
+
+use crate::shared::{color_track, merge_effects, scalar_track, shadow_track};
 
 fn main() -> iced::Result {
     iced::application(Demo::default, Demo::update, Demo::view)
@@ -240,46 +244,6 @@ fn button_timeline(from: &EffectSnapshot, to: &EffectSnapshot) -> Timeline {
     ])
 }
 
-fn scalar_track(
-    property: PropertySpec<property::Scalar>,
-    from: f32,
-    to: f32,
-    timing: Timing,
-) -> Track {
-    Track::new(
-        KeyframesBuilder::new()
-            .with_timing(timing)
-            .at(0.0, (property, from))
-            .at(1.0, (property, to))
-            .finish(),
-    )
-}
-
-fn color_track(
-    property: PropertySpec<property::Color>,
-    from: Color,
-    to: Color,
-    timing: Timing,
-) -> Track {
-    Track::new(
-        KeyframesBuilder::new()
-            .with_timing(timing)
-            .at(0.0, (property, from))
-            .at(1.0, (property, to))
-            .finish(),
-    )
-}
-
-fn shadow_track(from: Shadow, to: Shadow, timing: Timing) -> Track {
-    Track::new(
-        KeyframesBuilder::new()
-            .with_timing(timing)
-            .at(0.0, (property::SHADOW, from))
-            .at(1.0, (property::SHADOW, to))
-            .finish(),
-    )
-}
-
 fn target_effects(state: ButtonVisualState) -> EffectSnapshot {
     match state {
         ButtonVisualState::Rest => EffectSnapshot {
@@ -330,22 +294,6 @@ fn target_effects(state: ButtonVisualState) -> EffectSnapshot {
             }),
             ..EffectSnapshot::default()
         },
-    }
-}
-
-fn merge_effects(current: &EffectSnapshot, update: &EffectSnapshot) -> EffectSnapshot {
-    EffectSnapshot {
-        opacity: update.opacity.or(current.opacity),
-        width: update.width.or(current.width),
-        height: update.height.or(current.height),
-        padding: update.padding.or(current.padding),
-        translation: update.translation.or(current.translation),
-        scale: update.scale.or(current.scale),
-        radius: update.radius.or(current.radius),
-        background: update.background.or(current.background),
-        border_color: update.border_color.or(current.border_color),
-        text_color: update.text_color.or(current.text_color),
-        shadow: update.shadow.or(current.shadow),
     }
 }
 

@@ -62,7 +62,7 @@ pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> 
     let mut completed = Vec::new();
     let mut removed = Vec::new();
 
-    for entry in registry.entries_mut().iter_mut() {
+    for entry in registry.entries_mut() {
         let target = entry.target();
         let snapshot = match entry.state() {
             AnimationPlaybackState::Playing => {

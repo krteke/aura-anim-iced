@@ -27,6 +27,8 @@ pub(crate) fn merge_effects(current: &EffectSnapshot, update: &EffectSnapshot) -
         border_color: update.border_color.or(current.border_color),
         text_color: update.text_color.or(current.text_color),
         shadow: update.shadow.or(current.shadow),
+        rotate: update.rotate.or(current.rotate),
+        transform: update.transform.or(current.transform),
     }
 }
 

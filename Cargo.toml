@@ -42,6 +42,9 @@ uuid = { version = "1.23.1", features = ["v4"] }
 iced = { version = "0.14", features = ["tokio"] }
 serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }
+slotmap = "1.1.1"
+smallvec = "1.15.1"
+rustc-hash = "2.1.2"
 thiserror = "2"
 
 [dev-dependencies]

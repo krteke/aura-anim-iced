@@ -1,4 +1,5 @@
 use crate::{
+    TransformValue,
     property::{self, PropertySnapshot, PropertyValue},
     runtime::{AnimationTargetId, AnimationTick},
 };
@@ -34,6 +35,10 @@ pub struct EffectSnapshot {
     pub padding: Option<f32>,
     /// Element translation.
     pub translation: Option<iced::Vector>,
+    /// Element transform.
+    pub transform: Option<TransformValue>,
+    /// Element rotation.
+    pub rotate: Option<f32>,
     /// Element scale.
     pub scale: Option<f32>,
     /// Element radius.
@@ -67,6 +72,12 @@ impl EffectSnapshot {
                 }
                 PropertyValue::Scalar(value) if *entry.spec() == property::PADDING.raw() => {
                     effects.padding = Some(*value);
+                }
+                PropertyValue::Scalar(value) if *entry.spec() == property::ROTATE.raw() => {
+                    effects.rotate = Some(*value);
+                }
+                PropertyValue::Transform(value) if *entry.spec() == property::TRANSFORM.raw() => {
+                    effects.transform = Some(*value);
                 }
                 PropertyValue::Vector2(value) if *entry.spec() == property::TRANSLATE.raw() => {
                     effects.translation = Some(*value);

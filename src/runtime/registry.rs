@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 
 use crate::{
     Duration,
@@ -8,11 +9,12 @@ use crate::{
 use super::AnimationHandle;
 
 /// Internal storage for active runtime animation entries.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub(crate) struct AnimationRegistry {
     entries: Vec<ActiveAnimation>,
+    handle_to_index: FxHashMap<AnimationHandle, usize>,
+    target_map: FxHashMap<AnimationTargetId, SmallVec<[AnimationHandle; 4]>>,
     next_handle_id: u64,
-    target_map: HashMap<AnimationTargetId, Vec<AnimationHandle>>,
 }
 
 impl AnimationRegistry {
@@ -20,8 +22,9 @@ impl AnimationRegistry {
     pub(crate) fn new() -> Self {
         Self {
             entries: Vec::new(),
+            handle_to_index: FxHashMap::default(),
+            target_map: FxHashMap::default(),
             next_handle_id: AnimationHandle::FIRST_ID,
-            target_map: HashMap::new(),
         }
     }
 
@@ -57,14 +60,18 @@ impl AnimationRegistry {
     ) -> AnimationHandle {
         let handle = entry.handle();
         debug_assert_eq!(target, entry.target());
+
+        let index = self.entries.len();
         self.entries.push(entry);
+        self.handle_to_index.insert(handle, index);
         self.target_map.entry(target).or_default().push(handle);
+
         handle
     }
 
-    #[must_use]
     pub(crate) fn get_by_handle(&self, handle: AnimationHandle) -> Option<&ActiveAnimation> {
-        self.entries.iter().find(|entry| entry.handle() == handle)
+        let index = self.handle_to_index.get(&handle)?;
+        self.entries.get(*index)
     }
 
     #[must_use]
@@ -72,41 +79,52 @@ impl AnimationRegistry {
         &mut self,
         handle: AnimationHandle,
     ) -> Option<&mut ActiveAnimation> {
-        self.entries
-            .iter_mut()
-            .find(|entry| entry.handle() == handle)
+        let index = self.handle_to_index.get(&handle)?;
+        self.entries.get_mut(*index)
     }
 
     pub(crate) fn remove_by_handle(&mut self, handle: AnimationHandle) -> Option<ActiveAnimation> {
-        let index = self
-            .entries
-            .iter()
-            .position(|entry| entry.handle() == handle)?;
+        let index = self.handle_to_index.remove(&handle)?;
+        let removed = self.entries.swap_remove(index);
 
-        let removed = self.entries.remove(index);
+        if index < self.entries.len() {
+            let moved = self.entries[index].handle();
+            self.handle_to_index.insert(moved, index);
+        }
+
         self.remove_handle_from_target_map(removed.target(), handle);
 
         Some(removed)
     }
 
     pub(crate) fn cancel_target(&mut self, target: AnimationTargetId) {
-        self.entries.retain(|entry| entry.target() != target);
-        self.target_map.remove(&target);
+        let handles = self.target_map.remove(&target);
+        let Some(handles) = handles else {
+            return;
+        };
+
+        for handle in handles {
+            self.remove_by_handle(handle);
+        }
     }
 
     pub(crate) fn seek_target(&mut self, target: AnimationTargetId, pos: Duration, now: Duration) {
-        if let Some(handles) = self.target_map.get(&target).cloned() {
-            for handle in handles {
-                self.seek(target, handle, pos, now);
-            }
+        let Some(handles) = self.target_map.get(&target).cloned() else {
+            return;
+        };
+
+        for handle in handles {
+            self.seek(target, handle, pos, now);
         }
     }
 
     pub(crate) fn pause_target(&mut self, target: AnimationTargetId, now: Duration) {
-        if let Some(handles) = self.target_map.get(&target).cloned() {
-            for handle in handles {
-                self.pause(target, handle, now);
-            }
+        let Some(handles) = self.target_map.get(&target).cloned() else {
+            return;
+        };
+
+        for handle in handles {
+            self.pause(target, handle, now);
         }
     }
 
@@ -169,11 +187,13 @@ impl AnimationRegistry {
         target: AnimationTargetId,
         handle: AnimationHandle,
     ) {
-        if let Some(handles) = self.target_map.get_mut(&target) {
-            handles.retain(|candidate| *candidate != handle);
-            if handles.is_empty() {
-                self.target_map.remove(&target);
-            }
+        let Some(handles) = self.target_map.get_mut(&target) else {
+            return;
+        };
+
+        handles.retain(|candidate| *candidate != handle);
+        if handles.is_empty() {
+            self.target_map.remove(&target);
         }
     }
 }

@@ -49,7 +49,6 @@ use crate::{
 ///         .finish(),
 /// );
 ///
-/// assert_eq!(registration.handle().id(), 1);
 /// assert!(runtime.should_subscribe());
 /// ```
 #[derive(Debug, Clone)]

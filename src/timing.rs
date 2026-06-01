@@ -203,7 +203,6 @@ impl Timing {
             return NormalizedTiming::after_end(
                 iteration_count,
                 self.fill_mode,
-                // self.easing,
                 self.direction.end_progress(iteration_count),
             );
         }
@@ -216,7 +215,6 @@ impl Timing {
                 completed_iterations,
                 directed_iteration_progress,
                 f64::from(completed_iterations),
-                // self.easing,
             );
         }
 
@@ -230,7 +228,6 @@ impl Timing {
             completed_iterations,
             directed_iteration_progress,
             active_progress,
-            // self.easing,
         )
     }
 }

@@ -36,6 +36,10 @@
 - Added regression coverage for matching multiple state transition pairs to distinct timelines.
 - Added regression coverage for route screen transition progress from outgoing to incoming screens.
 
+### Performance Optimizations
+
+- Optimized `AnimationRegistry`.
+
 ## v0.1.1
 
 ### Performance Optimizations
