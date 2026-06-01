@@ -63,6 +63,7 @@ impl TargetedPropertySnapshot {
             entry.merge(snapshot);
         } else {
             self.order.push(target);
+            self.targets.insert(target, snapshot);
         }
     }
 
