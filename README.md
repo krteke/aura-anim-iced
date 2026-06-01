@@ -33,7 +33,7 @@ size, color, shadow, hold, sequence, parallel, and runtime cleanup behavior.
 
 ## Status
 
-v0.2.0-alpha
+v0.2.0
 
 ## Installation
 
