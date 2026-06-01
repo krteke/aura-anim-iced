@@ -32,7 +32,7 @@ fn public_runtime_api_keeps_ticks_target_scoped() {
 
     let tick = runtime.tick();
 
-    assert_eq!(tick.properties().targets().len(), 2);
+    assert_eq!(tick.properties().targets().count(), 2);
     assert_eq!(tick_effect_snapshot_for(&tick, panel).opacity, Some(0.5));
     assert_eq!(tick_effect_snapshot_for(&tick, panel).scale, None);
     assert_eq!(tick_effect_snapshot_for(&tick, button).opacity, Some(15.0));

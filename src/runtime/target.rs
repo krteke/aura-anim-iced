@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
 use uuid::Uuid;
 
 use crate::PropertySnapshot;
@@ -16,7 +18,8 @@ pub struct AnimationTargetId(Uuid);
 /// inside that target only. Composition never crosses target boundaries.
 #[derive(Debug, Clone, PartialEq)]
 pub struct TargetedPropertySnapshot {
-    targets: Vec<(AnimationTargetId, PropertySnapshot)>,
+    targets: FxHashMap<AnimationTargetId, PropertySnapshot>,
+    order: SmallVec<[AnimationTargetId; 16]>,
 }
 
 impl AnimationTargetId {
@@ -38,7 +41,8 @@ impl TargetedPropertySnapshot {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            targets: Vec::new(),
+            targets: FxHashMap::default(),
+            order: SmallVec::new(),
         }
     }
 
@@ -51,24 +55,20 @@ impl TargetedPropertySnapshot {
     /// Returns the snapshot for `target_id`.
     #[must_use]
     pub fn get(&self, target_id: AnimationTargetId) -> Option<&PropertySnapshot> {
-        self.targets
-            .iter()
-            .find(|(id, _)| *id == target_id)
-            .map(|(_, snapshot)| snapshot)
+        self.targets.get(&target_id)
     }
 
     pub(crate) fn merge(&mut self, target: AnimationTargetId, snapshot: PropertySnapshot) {
-        if let Some(index) = self.targets.iter().position(|(id, _)| *id == target) {
-            self.targets[index].1.merge(snapshot);
+        if let Some(entry) = self.targets.get_mut(&target) {
+            entry.merge(snapshot);
         } else {
-            self.targets.push((target, snapshot));
+            self.order.push(target);
         }
     }
 
     /// Returns all target snapshots in runtime merge order.
-    #[must_use]
-    pub fn targets(&self) -> &[(AnimationTargetId, PropertySnapshot)] {
-        &self.targets
+    pub fn targets(&self) -> impl Iterator<Item = (AnimationTargetId, &PropertySnapshot)> + '_ {
+        self.order.iter().map(|id| (*id, &self.targets[id]))
     }
 }
 

@@ -1,9 +1,13 @@
 use super::{AnimationHandle, AnimationPlaybackState};
-use crate::{property::PropertySnapshot, runtime::entry::ActiveAnimation, timing::Duration};
+use crate::{
+    AnimationTargetId, property::PropertySnapshot, runtime::entry::ActiveAnimation,
+    timing::Duration,
+};
 
 /// Output produced when an animation is registered with the runtime.
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnimationRegistration {
+    target: AnimationTargetId,
     handle: AnimationHandle,
     state: AnimationPlaybackState,
     properties: Option<PropertySnapshot>,
@@ -13,6 +17,7 @@ pub struct AnimationRegistration {
 impl AnimationRegistration {
     pub(super) fn from_entry(entry: &ActiveAnimation) -> Self {
         Self {
+            target: entry.target(),
             handle: entry.handle(),
             state: entry.state(),
             properties: entry.last_snapshot().cloned(),

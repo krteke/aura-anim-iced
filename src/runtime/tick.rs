@@ -116,7 +116,7 @@ pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> 
     tracing::trace!(
         target: "aura_anim_iced::runtime",
         timestamp_ms = now.as_millis(),
-        output_targets = properties.targets().len(),
+        output_targets = properties.targets().count(),
         completed = completed.len(),
         active = registry.active_count(),
         "runtime tick"
@@ -126,7 +126,7 @@ pub(super) fn tick_registry(registry: &mut AnimationRegistry, now: Duration) -> 
     tracing::debug!(
         target: "aura_anim_iced::inspector",
         timestamp_ms = now.as_millis(),
-        output_targets = properties.targets().len(),
+        output_targets = properties.targets().count(),
         completed = completed.len(),
         removed = removed.len(),
         active = registry.active_count(),

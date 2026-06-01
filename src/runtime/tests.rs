@@ -101,7 +101,7 @@ fn tick_keeps_property_composition_scoped_to_each_target() {
     let first_snapshot = tick.properties_for(first).expect("first target");
     let second_snapshot = tick.properties_for(second).expect("second target");
 
-    assert_eq!(tick.properties().targets().len(), 2);
+    assert_eq!(tick.properties().targets().count(), 2);
     assert_approx_eq!(f32, scalar(first_snapshot, OPACITY), 0.5, epsilon = 1e-5);
     assert_approx_eq!(f32, scalar(first_snapshot, SCALE), 1.5, epsilon = 1e-5);
     assert_approx_eq!(f32, scalar(second_snapshot, OPACITY), 15.0, epsilon = 1e-5);
