@@ -5,6 +5,40 @@ use crate::{
 };
 
 /// Tracks an application state and starts timelines for explicit state changes.
+///
+/// ```
+/// use aura_anim_iced::{
+///     AnimationRuntime, AnimationTargetId, Duration, OPACITY, StateAnimator,
+///     StateTransition, Timeline, Track,
+/// };
+///
+/// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// enum Dialog {
+///     Hidden,
+///     Visible,
+/// }
+///
+/// let mut runtime = AnimationRuntime::testing();
+/// let target = AnimationTargetId::new();
+/// let transition = StateTransition::new(
+///     Dialog::Hidden,
+///     Dialog::Visible,
+///     Timeline::track(
+///         Track::from(OPACITY, 0.0)
+///             .to(1.0)
+///             .duration(Duration::from_millis(200.0)),
+///     ),
+/// );
+/// let mut animator = StateAnimator::new(target, Dialog::Hidden);
+///
+/// animator.transition_with(&mut runtime, &transition).unwrap();
+/// let progress = animator
+///     .active_progress_at(Duration::from_millis(50.0))
+///     .expect("active state progress");
+///
+/// assert_eq!(animator.current(), Dialog::Visible);
+/// assert_eq!(progress.progress(), Some(0.25));
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct StateAnimator<S>
 where

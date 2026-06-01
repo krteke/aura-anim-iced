@@ -1,6 +1,38 @@
 use crate::{Duration, RouteIncomingMotion, RouteTransition, Timeline};
 
 /// Paired outgoing and incoming timelines for switching between two routes.
+///
+/// ```
+/// use aura_anim_iced::{
+///     Duration, OPACITY, RouteIncomingMotion, RouteScreenTransition, Timeline,
+///     Track,
+/// };
+///
+/// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// enum Route {
+///     Home,
+///     Details,
+/// }
+///
+/// let transition = RouteScreenTransition::with_incoming_motion(
+///     Route::Home,
+///     Route::Details,
+///     Timeline::track(
+///         Track::from(OPACITY, 1.0)
+///             .to(0.0)
+///             .duration(Duration::from_millis(90.0)),
+///     ),
+///     RouteIncomingMotion::new(
+///         iced::Vector::new(40.0, 0.0),
+///         Duration::from_millis(150.0),
+///     ),
+/// );
+///
+/// assert_eq!(transition.from(), Route::Home);
+/// assert_eq!(transition.to(), Route::Details);
+/// assert_eq!(transition.total_duration(), Some(Duration::from_millis(150.0)));
+/// assert_eq!(transition.outgoing_shorter(), Some(true));
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct RouteScreenTransition<R>
 where

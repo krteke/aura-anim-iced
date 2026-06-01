@@ -1,14 +1,14 @@
 # aura-anim-iced
 
-Iced-first animation orchestration for applications that need more than a single animated value.
+Iced-first animation orchestration for applications that need coordinated
+property changes, state transitions, and screen-to-screen route motion.
 
 This crate builds on Iced's public animation surface instead of replacing it.
 User-facing APIs use Iced types such as `iced::Color`, `iced::Vector`,
 `iced::Size`, `iced::Rectangle`, `iced::Shadow`, and
-`iced::animation::Easing`. Internal interpolation helpers exist only to sample
-multi-property keyframes, timelines, runtime snapshots, and diagnostics.
+`iced::animation::Easing`.
 
-The v0.1 foundation focuses on:
+The foundation layer covers:
 
 - typed visual properties and sampled property snapshots;
 - timing primitives that use Iced easing directly;
@@ -16,14 +16,24 @@ The v0.1 foundation focuses on:
 - a runtime that can gate Iced subscriptions while animations are active;
 - Iced integration helpers for applying snapshots in `view` code.
 
+The v0.2 behavior layer adds:
+
+- `PropertyTransition` and `BehaviorRule` for animating value changes from the
+  visual value currently on screen;
+- `StateAnimator`, `StateTransition`, and `StateTransitionSet` for mapping
+  application state changes to timelines;
+- retargeting and interruption helpers that replace active animations without
+  jumping back to stale target values;
+- `RouteAnimator` and route screen transitions for outgoing and incoming route
+  motion on separate targets.
+
 Use Iced's `Animation<T>` for direct single-value animation. Use
 `aura-anim-iced` when a UI state change needs coordinated opacity, transform,
 size, color, shadow, hold, sequence, parallel, and runtime cleanup behavior.
 
 ## Status
 
-`0.1.0-alpha.1` is an early foundation release. It focuses on typed property
-snapshots, keyframes, timelines, runtime ticking, and Iced integration helpers.
+v0.2.0-alpha
 
 ## Installation
 
@@ -45,12 +55,12 @@ The same configuration can be written directly in `Cargo.toml`:
 
 ```toml
 [dependencies]
-aura-anim-iced = "0.1.0-alpha.1"
+aura-anim-iced = "0.2.0"
 ```
 
 ```toml
 [dependencies]
-aura-anim-iced = { version = "0.1.0-alpha.1", features = ["inspector"] }
+aura-anim-iced = { version = "0.2.0", features = ["inspector"] }
 ```
 
 ## Minimal Runtime Example
@@ -258,3 +268,225 @@ fn subscription(runtime: &AnimationRuntime) -> iced::Subscription<Message> {
 For view code, convert tick output with `tick_effect_snapshot_for` when using
 the built-in effect fields, or read `AnimationTick::properties_for` directly
 when the application owns custom property specs.
+
+## Property Change Animation
+
+Use `PropertyTransition` when an application value should animate whenever its
+target changes. The first observed value seeds the stable baseline and does not
+start an animation. Later different values register keyframes from the current
+visual result to the new target.
+
+`BehaviorRule` stores reusable property and timing settings. Bind it to one or
+more targets to create independent transition trackers.
+
+```rust
+use aura_anim_iced::{
+    AnimationRuntime, AnimationTargetId, BehaviorRule, Easing, PropertyTransition,
+    Timing, WIDTH,
+};
+
+struct Panel {
+    runtime: AnimationRuntime,
+    target: AnimationTargetId,
+    width: PropertyTransition<aura_anim_iced::property::Scalar>,
+    rendered_width: f32,
+}
+
+impl Panel {
+    fn new() -> Self {
+        let mut runtime = AnimationRuntime::new();
+        let target = AnimationTargetId::new();
+        let rule = BehaviorRule::new(WIDTH)
+            .with_timing(Timing::new(180.0).with_easing(Easing::EaseOut));
+        let mut width = rule.bind(target);
+
+        width.transition_to(&mut runtime, 240.0);
+
+        Self {
+            runtime,
+            target,
+            width,
+            rendered_width: 240.0,
+        }
+    }
+
+    fn set_width(&mut self, next_width: f32) {
+        self.width.transition_from_visual(
+            &mut self.runtime,
+            self.rendered_width,
+            next_width,
+        );
+    }
+}
+```
+
+On each animation tick, merge the target snapshot into the value used by `view`
+and let the transition clear its active handle when the runtime finishes:
+
+```rust
+use aura_anim_iced::{PropertyValue, WIDTH, iced_ext};
+
+fn update_tick(panel: &mut Panel, tick: std::time::Instant) {
+    let output = iced_ext::update_tick(&mut panel.runtime, tick);
+
+    if let Some(snapshot) = output.properties_for(panel.target)
+        && let Some(entry) = snapshot.find_property(&WIDTH.raw())
+        && let PropertyValue::Scalar(width) = entry.value()
+    {
+        panel.rendered_width = *width;
+    }
+
+    panel.width.handle_completion(&panel.runtime);
+}
+```
+
+The `examples/behavior_width.rs` example shows the same flow in a runnable Iced
+application with controls for repeated value changes.
+
+## State-Driven Animation
+
+Use `StateAnimator` when the application has a small state machine and each
+state pair should launch a specific timeline. A `StateTransitionSet` stores the
+known pairs and can also provide a fallback timeline for unlisted changes.
+
+```rust
+use aura_anim_iced::{
+    AnimationRuntime, AnimationTargetId, Duration, OPACITY, StateAnimator,
+    StateTransition, StateTransitionSet, Timeline, Track,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PanelState {
+    Closed,
+    Open,
+    Disabled,
+}
+
+fn opacity_timeline(from: f32, to: f32, ms: f64) -> Timeline {
+    Timeline::track(Track::from(OPACITY, from).to(to).duration(Duration::from_millis(ms)))
+}
+
+let mut runtime = AnimationRuntime::new();
+let target = AnimationTargetId::new();
+let mut animator = StateAnimator::new(target, PanelState::Closed);
+let transitions = StateTransitionSet::from_transitions([
+    StateTransition::new(
+        PanelState::Closed,
+        PanelState::Open,
+        opacity_timeline(0.0, 1.0, 160.0),
+    ),
+    StateTransition::new(
+        PanelState::Open,
+        PanelState::Closed,
+        opacity_timeline(1.0, 0.0, 120.0),
+    ),
+])
+.with_fallback(opacity_timeline(0.4, 1.0, 100.0));
+
+let registration = animator.transition_to(&mut runtime, PanelState::Open, &transitions);
+assert!(registration.is_some());
+```
+
+`StateAnimator::current` is updated as soon as a transition starts, while
+`active_transition` and `active_progress_at` expose runtime metadata for loading
+indicators, navigation locks, or diagnostics. Call `handle_completion` after
+ticks when application code needs the cached active transition to match the
+runtime exactly.
+
+## Retargeting And Interruption
+
+Retargeting is for active animations that receive a new destination. The
+replacement starts from the active animation's last sampled visual value, not
+from the previous target.
+
+```rust
+let mut runtime = AnimationRuntime::new();
+let target = AnimationTargetId::new();
+let mut opacity = PropertyTransition::new(target, aura_anim_iced::OPACITY)
+    .with_timing(Timing::new(200.0));
+
+opacity.transition_to(&mut runtime, 0.0);
+opacity.transition_to(&mut runtime, 1.0);
+
+// After one or more ticks, continue from the rendered value to the new target.
+let retargeted = opacity.retarget_to(&mut runtime, 0.35);
+```
+
+Interruption is for cases where application code already knows the rendered
+value, such as drag cancellation or repeated user input. It can replace an
+active animation even when the destination has not changed.
+
+```rust
+let visual_opacity = 0.42;
+let interrupted = opacity.interrupt_from_visual(&mut runtime, visual_opacity, 1.0);
+```
+
+Both paths cancel the superseded runtime handle after registering the
+replacement. That prevents interrupted animations from later reporting
+completion or overriding the replacement output.
+
+## Route Transition Guide
+
+Use route transitions when changing screens should animate the leaving and
+entering views independently.
+
+1. Store a `RouteAnimator<Route>` in application state.
+2. Give the outgoing and incoming screen layers separate `AnimationTargetId`
+   values.
+3. Build a `RouteScreenTransition` from an outgoing timeline and an incoming
+   timeline or `RouteIncomingMotion`.
+4. Register it with `transition_screens_with`.
+5. On ticks, merge snapshots for both screen targets into the effects used by
+   `view`.
+6. When the route or incoming handle completes, clear temporary leaving-screen
+   state.
+
+```rust
+use aura_anim_iced::{
+    AnimationRuntime, AnimationTargetId, Duration, OPACITY, RouteAnimator,
+    RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition, Timeline, Track,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Route {
+    Home,
+    Reports,
+}
+
+fn outgoing() -> Timeline {
+    Timeline::track(Track::from(OPACITY, 1.0).to(0.0).duration(Duration::from_millis(180.0)))
+}
+
+let mut runtime = AnimationRuntime::new();
+let route_target = AnimationTargetId::new();
+let outgoing_target = AnimationTargetId::new();
+let incoming_target = AnimationTargetId::new();
+let mut animator = RouteAnimator::new(route_target, Route::Home);
+
+let transition = RouteScreenTransition::with_incoming_motion(
+    Route::Home,
+    Route::Reports,
+    outgoing(),
+    RouteIncomingMotion::new(
+        iced::Vector::new(48.0, 0.0),
+        Duration::from_millis(220.0),
+    ),
+);
+
+let registration = animator.transition_screens_with(
+    &mut runtime,
+    &transition,
+    RouteScreenTargets::new(outgoing_target, incoming_target),
+);
+
+assert!(registration.is_some());
+```
+
+`RouteIncomingMotion` builds an incoming timeline that fades from `0.0` to `1.0`
+and translates from the supplied offset to `iced::Vector::new(0.0, 0.0)`.
+Repeated navigation replaces the active route, outgoing, and incoming handles
+as a group, so stale screen animations are canceled together.
+
+The `examples/route_transition.rs` example shows a complete Iced flow with
+navigation buttons, overlaid screen cards, snapshot merging, and cleanup after
+the incoming screen reaches its final state.

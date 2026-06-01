@@ -9,6 +9,32 @@ use crate::{
 /// The first observed value becomes the stable target baseline and does not
 /// start an animation. Later different values register a two-keyframe animation
 /// from the previous visual result to the new target value.
+///
+/// ```
+/// use aura_anim_iced::{
+///     AnimationRuntime, AnimationTargetId, Duration, OPACITY, PropertyTransition,
+///     PropertyValue, Timing,
+/// };
+///
+/// let mut runtime = AnimationRuntime::testing();
+/// let target = AnimationTargetId::new();
+/// let mut opacity = PropertyTransition::new(target, OPACITY)
+///     .with_timing(Timing::new(100.0));
+///
+/// opacity.transition_to(&mut runtime, 0.0);
+/// let first = opacity.transition_to(&mut runtime, 1.0).unwrap();
+///
+/// runtime.clock_mut().set_now(Duration::from_millis(40.0));
+/// runtime.tick();
+///
+/// // Retargeting starts from the active animation's sampled visual value.
+/// let retargeted = opacity.retarget_to(&mut runtime, 0.25).unwrap();
+/// assert_eq!(retargeted.replaced(), Some(first.handle()));
+///
+/// let start = retargeted.registration().properties().unwrap();
+/// let entry = start.find_property(&OPACITY.raw()).unwrap();
+/// assert!(matches!(entry.value(), PropertyValue::Scalar(value) if (*value - 0.4).abs() < 0.001));
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct PropertyTransition<K: TransitionValueKind>
 where

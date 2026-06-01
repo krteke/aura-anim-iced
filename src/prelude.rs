@@ -1,4 +1,4 @@
-//! Common imports for the v0.1 public API.
+//! Common imports for the v0.2 public API.
 //!
 //! # Example
 //!

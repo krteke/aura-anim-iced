@@ -3,14 +3,13 @@
 //! `aura-anim-iced` models advanced animation as sampled Iced UI properties
 //! that can be applied from normal `update`, `subscription`, and `view` code.
 //! The public API is Iced-first: user-facing values use Iced types and Iced's
-//! animation primitives wherever they already exist. The crate keeps its own
-//! pure calculation modules only where they help orchestrate multi-property
-//! keyframes, timelines, snapshots, and diagnostics.
+//! animation primitives wherever they already exist.
 //!
-//! The v0.1 scope is the foundation layer: typed Iced UI properties, timing,
-//! property keyframes, timelines, a small runtime, and Iced integration helpers.
-//! Higher-level behaviors, gestures, layout transitions, theme transitions, and
-//! inspector tooling are planned as layers on top of this base.
+//! The foundation layer covers typed Iced UI properties, timing, property
+//! keyframes, timelines, a small runtime, and Iced integration helpers. The
+//! v0.2 behavior layer adds property-change transitions, state-driven
+//! transitions, retargeting, interruption, and route screen transitions on top
+//! of that base.
 //!
 //! Runtime integration follows a simple loop:
 //!
@@ -19,12 +18,15 @@
 //! 3. Subscribe to ticks only while the runtime is active.
 //! 4. Sample snapshots on each tick and apply them while building `view`.
 //!
-//! Planned v0.1 examples will live under `examples/`:
+//! Runnable examples live under `examples/`:
 //!
 //! - `animated_button.rs` for hover, press, focus, scale, color, and shadow
 //!   animation.
 //! - `keyframes_popup.rs` for opacity and scale keyframes.
 //! - `timeline_toast.rs` for enter, hold, exit, and cleanup sequencing.
+//! - `behavior_width.rs` for property-change animation from the current visual
+//!   value.
+//! - `route_transition.rs` for outgoing and incoming screen transition flow.
 
 pub(crate) mod animatable;
 pub mod behavior;

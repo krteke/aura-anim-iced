@@ -54,16 +54,16 @@
 
 ## Documentation
 
-- [ ] Write user-facing documentation for property change animation.
-- [ ] Write user-facing documentation for state-driven animation.
-- [ ] Write user-facing documentation for retargeting and interruption behavior.
-- [ ] Write a short route transition guide with a complete usage flow.
-- [ ] Update the project overview to show v0.2 behavior and state animation capabilities.
+- [x] Write user-facing documentation for property change animation.
+- [x] Write user-facing documentation for state-driven animation.
+- [x] Write user-facing documentation for retargeting and interruption behavior.
+- [x] Write a short route transition guide with a complete usage flow.
+- [x] Update the project overview to show v0.2 behavior and state animation capabilities.
 
 ## Release Preparation
 
-- [ ] Run the full test suite for the v0.2 behavior and state animation work.
-- [ ] Run all examples after adding the new behavior and route transition examples.
-- [ ] Run formatting and lint checks across the project.
-- [ ] Write release notes that summarize the v0.2 functionality.
-- [ ] Publish the first v0.2 alpha release after tests, examples, and documentation pass.
+- [x] Run the full test suite for the v0.2 behavior and state animation work.
+- [x] Run all examples after adding the new behavior and route transition examples.
+- [x] Run formatting and lint checks across the project.
+- [x] Write release notes that summarize the v0.2 functionality.
+- [x] Publish the first v0.2 alpha release after tests, examples, and documentation pass.

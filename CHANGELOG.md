@@ -1,39 +1,40 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 - 2026-06-01
 
 ### Added
 
-- Added `PropertyTransition` for automatically registering property animations when a tracked visual value changes.
-- Added `BehaviorRule` so value change animation settings can be reused across multiple targets.
-- Added smooth continuation for property transitions that receive a new target while a previous transition is still running.
-- Added an explicit visual-value transition path so property changes can start from the value currently rendered on screen.
-- Added completion handling for property transitions.
-- Added `StateAnimator` and `StateTransition` for registering timelines when application state changes.
-- Added `StateTransitionSet` so state changes can match and launch the correct transition timeline.
-- Added fallback timelines for state switches that do not have a custom transition.
-- Added active state transition progress tracking with elapsed time and normalized progress.
-- Added state transition active-cache refresh so completed or canceled runtime handles are cleared automatically before starting another state transition, with manual refresh available when exact active metadata is needed.
-- Added `PropertyTransition::retarget_to` for changing the destination of a running property animation from its current visual value.
-- Added `PropertyTransition::interrupt_from_visual` for replacing interrupted animations from the value currently rendered on screen.
-- Added `StateTransitionRegistration` so repeated state changes report the active transition they replaced.
-- Added `PropertyTransitionRegistration` so property transitions report the runtime handle they replaced.
-- Added active property transition progress tracking so direction changes report progress from the replacement animation.
-- Added replacement cleanup for interrupted property and state animations so superseded handles no longer complete after their replacement starts.
-- Added route transition primitives for reusable screen-to-screen timeline behavior.
-- Added route screen transitions that register outgoing and incoming screen animations on separate targets.
-- Added built-in incoming route screen motion that fades and translates the entering screen into place.
-- Added active route screen transition tracking so repeated navigation actions replace and cancel superseded screen animations.
-- Added a runnable route transition example that demonstrates repeated screen switching.
+- Added property-change animation with `PropertyTransition` and reusable `BehaviorRule` settings.
+- Added smooth continuation for property transitions so active animations can move from the current visual result to a new target.
+- Added explicit visual-value transition APIs for application-owned rendered values.
+- Added `PropertyTransition::retarget_to` and `PropertyTransition::interrupt_from_visual` for active animation replacement.
+- Added property transition registration, active metadata, progress tracking, completion handling, and replacement cleanup.
+- Added state-driven animation with `StateAnimator`, `StateTransition`, and `StateTransitionSet`.
+- Added exact state-pair matching, fallback timelines, active state progress, completion handling, stale-cache refresh, and replacement reporting.
+- Added route transition primitives built on the state transition system.
+- Added screen-to-screen route transitions with separate outgoing and incoming targets.
+- Added `RouteIncomingMotion` for built-in incoming opacity and translation motion.
+- Added active route screen transition tracking and grouped cleanup for repeated navigation actions.
+
+### Examples
+
 - Added a runnable width behavior example driven by `BehaviorRule` and `PropertyTransition`.
-- Added width behavior example controls for repeatedly triggering value changes from the current rendered width.
-- Added current and target width visualization to the width behavior example.
-- Added plain-language behavior text to the width behavior example.
-- Added focused regression coverage for automatic property transitions after tracked value changes.
-- Added focused regression coverage for property retargeting from the current visual result during active animation.
-- Added focused regression coverage for repeated state-change interruption and replacement cleanup.
-- Added focused regression coverage for matching multiple state transition pairs to distinct timelines.
-- Added focused regression coverage for route screen transition progress from outgoing to incoming screens.
+- Added width behavior controls, current/target width visualization, and plain-language behavior text.
+- Added a runnable route transition example that demonstrates repeated screen switching.
+
+### Documentation
+
+- Added README guides for property-change animation, state-driven animation, retargeting and interruption, and route transitions.
+- Updated the README and crate overview to describe the v0.2 behavior, state, and route animation capabilities.
+- Added rustdoc examples for the v0.2 behavior, state, and route animation modules.
+
+### Tests
+
+- Added regression coverage for automatic property transitions after tracked value changes.
+- Added regression coverage for property retargeting from the current visual result during active animation.
+- Added regression coverage for repeated state-change interruption and replacement cleanup.
+- Added regression coverage for matching multiple state transition pairs to distinct timelines.
+- Added regression coverage for route screen transition progress from outgoing to incoming screens.
 
 ## v0.1.1
 
