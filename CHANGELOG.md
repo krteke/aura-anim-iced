@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.1 - 2026-06-02
+
+### Performance Optimizations
+
+- Used `u64` instead of `uuid` for animation target IDs.
+- Routed runtime sampling through the zero-distribution path.
+- Changed the two-point animation in `PropertyTransition` to use a dedicated source.
+- Changed `StateTransitionSet` to index and Arc.
+
 ## v0.2.0 - 2026-06-01
 
 ### Added

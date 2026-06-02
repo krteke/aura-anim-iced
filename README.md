@@ -33,7 +33,7 @@ size, color, shadow, hold, sequence, parallel, and runtime cleanup behavior.
 
 ## Status
 
-v0.2.0
+v0.2.1
 
 ## Installation
 
@@ -55,12 +55,12 @@ The same configuration can be written directly in `Cargo.toml`:
 
 ```toml
 [dependencies]
-aura-anim-iced = "0.2.0"
+aura-anim-iced = "0.2.1"
 ```
 
 ```toml
 [dependencies]
-aura-anim-iced = { version = "0.2.0", features = ["inspector"] }
+aura-anim-iced = { version = "0.2.1", features = ["inspector"] }
 ```
 
 ## Minimal Runtime Example

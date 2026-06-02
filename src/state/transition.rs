@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::Timeline;
 
 /// Animation timeline for moving between two application states.
@@ -8,7 +10,7 @@ where
 {
     from: S,
     to: S,
-    timeline: Timeline,
+    timeline: Arc<Timeline>,
 }
 
 impl<S> StateTransition<S>
@@ -17,8 +19,12 @@ where
 {
     /// Creates a state transition backed by a timeline.
     #[must_use]
-    pub const fn new(from: S, to: S, timeline: Timeline) -> Self {
-        Self { from, to, timeline }
+    pub fn new(from: S, to: S, timeline: Timeline) -> Self {
+        Self {
+            from,
+            to,
+            timeline: Arc::new(timeline),
+        }
     }
 
     /// Returns the state this transition starts from.
@@ -35,7 +41,11 @@ where
 
     /// Returns the timeline registered when this transition starts.
     #[must_use]
-    pub const fn timeline(&self) -> &Timeline {
+    pub fn timeline(&self) -> &Timeline {
         &self.timeline
+    }
+
+    pub(crate) fn timeline_arc(&self) -> Arc<Timeline> {
+        Arc::clone(&self.timeline)
     }
 }

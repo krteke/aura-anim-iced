@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use crate::{
     ActiveRouteScreenTransition, ActiveRouteTransition, AnimationHandle, AnimationRuntime,
     AnimationTargetId, RouteScreenTargets, RouteScreenTransitionRegistration, RouteTransition,
@@ -9,7 +11,7 @@ use crate::{
 #[derive(Debug, Clone, PartialEq)]
 pub struct RouteAnimator<R>
 where
-    R: Copy + Eq,
+    R: Copy + Eq + Hash,
 {
     inner: StateAnimator<R>,
     active_screen: Option<ActiveRouteScreenTransition<R>>,
@@ -17,7 +19,7 @@ where
 
 impl<R> RouteAnimator<R>
 where
-    R: Copy + Eq,
+    R: Copy + Eq + Hash,
 {
     /// Creates a route animator for `target`.
     #[must_use]
@@ -198,7 +200,7 @@ fn cleanup_replaced_screen<C, R>(
     replaced: Option<ActiveRouteScreenTransition<R>>,
 ) where
     C: AnimationClock,
-    R: Copy + Eq,
+    R: Copy + Eq + Hash,
 {
     if let Some(active) = replaced {
         runtime.cancel(active.route_target(), active.route().handle());

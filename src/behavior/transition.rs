@@ -1,6 +1,6 @@
 use crate::{
     ActivePropertyTransition, AnimationHandle, AnimationRuntime, AnimationTargetId, BehaviorRule,
-    Duration, KeyframesBuilder, PropertyTransitionProgress, PropertyTransitionRegistration, Timing,
+    Duration, PropertyTransitionProgress, PropertyTransitionRegistration, Timing,
     behavior::TransitionValueKind, property::PropertySpec, runtime::AnimationClock,
 };
 
@@ -268,13 +268,12 @@ where
 
         self.current = Some(value);
 
-        let registration = runtime.register_keyframes(
+        let registration = runtime.register_property_transition(
             self.target,
-            KeyframesBuilder::new()
-                .with_timing(self.timing)
-                .at(0.0, (self.property, from))
-                .at(1.0, (self.property, value))
-                .finish(),
+            self.property,
+            self.timing,
+            from,
+            value,
         );
 
         self.active = Some(ActivePropertyTransition::new(

@@ -7,7 +7,7 @@ use aura_anim_iced::{
 };
 use float_cmp::assert_approx_eq;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum PanelState {
     Closed,
     Open,
@@ -541,4 +541,30 @@ fn state_transition_set_matches_multiple_state_pairs_to_distinct_timelines() {
         0.44,
         epsilon = 1e-5
     );
+}
+
+#[test]
+fn state_transition_set_keeps_first_duplicate_match() {
+    let transitions = StateTransitionSet::from_transitions([
+        StateTransition::new(
+            PanelState::Closed,
+            PanelState::Open,
+            opacity_timeline(0.0, 1.0, 100.0),
+        ),
+        StateTransition::new(
+            PanelState::Closed,
+            PanelState::Open,
+            opacity_timeline(0.0, 0.5, 100.0),
+        ),
+    ]);
+
+    let transition = transitions
+        .find(PanelState::Closed, PanelState::Open)
+        .expect("duplicate transition match");
+    let sample = transition
+        .timeline()
+        .sample_at(Duration::from_millis(50.0))
+        .expect("sample");
+
+    assert_approx_eq!(f32, opacity(&sample), 0.5, epsilon = 1e-5);
 }

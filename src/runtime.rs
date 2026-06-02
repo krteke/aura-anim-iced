@@ -22,10 +22,15 @@ pub use tick::AnimationTick;
 
 use crate::runtime::clock::TestClock;
 use crate::runtime::{
-    entry::ActiveAnimation, registry::AnimationRegistry, source::AnimationSource,
+    entry::ActiveAnimation,
+    registry::AnimationRegistry,
+    source::{AnimationSource, PropertyTransitionSource},
 };
 use crate::{
-    keyframes::Keyframes, property::PropertySnapshot, timeline::Timeline, timing::Duration,
+    keyframes::Keyframes,
+    property::{PropertySnapshot, PropertySpec, PropertyValueKind},
+    timeline::Timeline,
+    timing::{Duration, Timing},
 };
 
 /// Runtime state owned by an Iced application.
@@ -105,7 +110,7 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         target: AnimationTargetId,
         source: impl Into<AnimationSource>,
     ) -> AnimationRegistration {
-        let handle = self.registry.allocate_handle();
+        let handle = AnimationHandle::new();
         let now = self.clock.now();
         let source = source.into();
         let initial_snapshot = source.sample_at(Duration::ZERO);
@@ -145,6 +150,23 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         self.register_target(target, keyframes)
     }
 
+    pub(crate) fn register_property_transition<K>(
+        &mut self,
+        target: AnimationTargetId,
+        property: PropertySpec<K>,
+        timing: Timing,
+        from: K::Inner,
+        to: K::Inner,
+    ) -> AnimationRegistration
+    where
+        K: PropertyValueKind,
+    {
+        self.register_target(
+            target,
+            PropertyTransitionSource::new(property.raw(), K::wrap(from), K::wrap(to), timing),
+        )
+    }
+
     /// Registers a timeline and returns its initial runtime output.
     pub fn register_timeline(
         &mut self,
@@ -154,11 +176,26 @@ impl<C: AnimationClock> AnimationRuntime<C> {
         self.register_target(target, timeline)
     }
 
+    pub(crate) fn register_timeline_arc(
+        &mut self,
+        target: AnimationTargetId,
+        timeline: Arc<Timeline>,
+    ) -> AnimationRegistration {
+        self.register_target(target, timeline)
+    }
+
     /// Advances active animations and returns a view-ready aggregated snapshot.
     pub fn tick(&mut self) -> AnimationTick {
         let now = self.clock.now();
 
         tick::tick_registry(&mut self.registry, now)
+    }
+
+    /// Advances active animations into a reusable tick output.
+    pub fn tick_into(&mut self, output: &mut AnimationTick) {
+        let now = self.clock.now();
+
+        tick::tick_registry_into(&mut self.registry, now, output);
     }
 
     /// Cancels and removes all active animations registered for `target`.
@@ -268,3 +305,4 @@ impl<C> AnimationRuntime<C> {
         self.should_tick()
     }
 }
+use std::sync::Arc;

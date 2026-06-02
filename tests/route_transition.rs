@@ -8,7 +8,7 @@ use aura_anim_iced::{
 };
 use float_cmp::assert_approx_eq;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Route {
     Home,
     Settings,

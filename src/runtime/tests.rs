@@ -1,8 +1,8 @@
 use float_cmp::assert_approx_eq;
 
 use super::{
-    AnimationClock, AnimationPlaybackState, AnimationRuntime, AnimationTargetId, TestClock,
-    TickPolicy,
+    AnimationClock, AnimationPlaybackState, AnimationRuntime, AnimationTargetId, AnimationTick,
+    TestClock, TickPolicy,
 };
 use crate::{
     keyframes::{Keyframes, KeyframesBuilder},
@@ -66,7 +66,7 @@ fn registration_returns_handle_initial_snapshot_and_completion_for_zero_duration
             .finish(),
     );
 
-    assert_eq!(registration.handle().id(), 1);
+    assert!(registration.handle().id() > 0);
     assert_eq!(registration.state(), AnimationPlaybackState::Completed);
     assert_eq!(
         registration.completed_at(),
@@ -106,6 +106,49 @@ fn tick_keeps_property_composition_scoped_to_each_target() {
     assert_approx_eq!(f32, scalar(first_snapshot, SCALE), 1.5, epsilon = 1e-5);
     assert_approx_eq!(f32, scalar(second_snapshot, OPACITY), 15.0, epsilon = 1e-5);
     assert_eq!(second_snapshot.find_property(&SCALE.raw()), None);
+}
+
+#[test]
+fn tick_into_reuses_output_and_matches_tick_shape() {
+    let mut runtime = AnimationRuntime::testing();
+    let target = AnimationTargetId::new();
+    let mut output = AnimationTick::empty();
+
+    runtime.register_keyframes(target, keyframes(OPACITY, 0.0, 1.0));
+
+    runtime.clock_mut().set_now(Duration::from_millis(40.0));
+    runtime.tick_into(&mut output);
+
+    assert_eq!(output.timestamp(), Duration::from_millis(40.0));
+    assert_approx_eq!(
+        f32,
+        scalar(
+            output.properties_for(target).expect("target output"),
+            OPACITY
+        ),
+        0.4,
+        epsilon = 1e-5
+    );
+    assert!(output.completed().is_empty());
+
+    runtime.clock_mut().set_now(Duration::from_millis(100.0));
+    runtime.tick_into(&mut output);
+
+    assert_eq!(output.completed().len(), 1);
+    assert_approx_eq!(
+        f32,
+        scalar(
+            output.properties_for(target).expect("target output"),
+            OPACITY
+        ),
+        1.0,
+        epsilon = 1e-5
+    );
+
+    runtime.tick_into(&mut output);
+
+    assert!(output.is_empty());
+    assert!(output.completed().is_empty());
 }
 
 #[test]

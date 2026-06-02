@@ -1,6 +1,6 @@
 [package]
 name = "aura-anim-iced"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 rust-version = "1.88"
 authors = ["krteke"]
@@ -38,7 +38,6 @@ tracing = ["dep:tracing"]
 inspector = ["tracing"]
 
 [dependencies]
-uuid = { version = "1.23.1", features = ["v4"] }
 iced = { version = "0.14", features = ["tokio"] }
 serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }

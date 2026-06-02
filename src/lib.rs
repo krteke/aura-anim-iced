@@ -72,6 +72,8 @@ pub use timing::{
     TimingPhase, TimingSampleState,
 };
 
+use crate::animatable::Animatable;
+
 const EPSILON_F32: f32 = 1e-5;
 const EPSILON_F64: f64 = 1e-10;
 
@@ -81,4 +83,35 @@ pub(crate) fn nearly_equal_f64(a: f64, b: f64) -> bool {
 
 pub(crate) fn nearly_equal_f32(a: f32, b: f32) -> bool {
     (a - b).abs() < EPSILON_F32
+}
+
+fn interpolate_value(
+    from: PropertyValue,
+    to: PropertyValue,
+    progress: f32,
+) -> Option<PropertyValue> {
+    match (from, to) {
+        (PropertyValue::Scalar(from), PropertyValue::Scalar(to)) => {
+            Some(PropertyValue::Scalar(f32::interpolate(from, to, progress)))
+        }
+        (PropertyValue::Vector2(from), PropertyValue::Vector2(to)) => Some(PropertyValue::Vector2(
+            iced::Vector::interpolate(from, to, progress),
+        )),
+        (PropertyValue::Size(from), PropertyValue::Size(to)) => Some(PropertyValue::Size(
+            iced::Size::interpolate(from, to, progress),
+        )),
+        (PropertyValue::Rectangle(from), PropertyValue::Rectangle(to)) => Some(
+            PropertyValue::Rectangle(iced::Rectangle::interpolate(from, to, progress)),
+        ),
+        (PropertyValue::Transform(from), PropertyValue::Transform(to)) => Some(
+            PropertyValue::Transform(TransformValue::interpolate(from, to, progress)),
+        ),
+        (PropertyValue::Color(from), PropertyValue::Color(to)) => Some(PropertyValue::Color(
+            iced::Color::interpolate(from, to, progress),
+        )),
+        (PropertyValue::Shadow(from), PropertyValue::Shadow(to)) => Some(PropertyValue::Shadow(
+            iced::Shadow::interpolate(from, to, progress),
+        )),
+        _ => None,
+    }
 }

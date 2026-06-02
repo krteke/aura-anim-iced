@@ -37,7 +37,7 @@ enum Message {
     AnimationTick(Instant),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Route {
     Home,
     Reports,

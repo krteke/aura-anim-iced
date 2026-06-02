@@ -14,7 +14,6 @@ pub(crate) struct AnimationRegistry {
     entries: Vec<ActiveAnimation>,
     handle_to_index: FxHashMap<AnimationHandle, usize>,
     target_map: FxHashMap<AnimationTargetId, SmallVec<[AnimationHandle; 4]>>,
-    next_handle_id: u64,
 }
 
 impl AnimationRegistry {
@@ -24,7 +23,6 @@ impl AnimationRegistry {
             entries: Vec::new(),
             handle_to_index: FxHashMap::default(),
             target_map: FxHashMap::default(),
-            next_handle_id: AnimationHandle::FIRST_ID,
         }
     }
 
@@ -44,13 +42,6 @@ impl AnimationRegistry {
     #[must_use]
     pub(crate) fn entries_mut(&mut self) -> &mut [ActiveAnimation] {
         &mut self.entries
-    }
-
-    #[must_use]
-    pub(crate) fn allocate_handle(&mut self) -> AnimationHandle {
-        let handle = AnimationHandle::new(self.next_handle_id);
-        self.next_handle_id = self.next_handle_id.saturating_add(1);
-        handle
     }
 
     pub(crate) fn insert(

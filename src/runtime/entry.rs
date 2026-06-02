@@ -94,6 +94,18 @@ impl ActiveAnimation {
         self.last_snapshot = snapshot;
     }
 
+    pub(crate) fn clear_last_snapshot(&mut self) {
+        self.last_snapshot = None;
+    }
+
+    pub(crate) fn replace_last_snapshot(&mut self, snapshot: &PropertySnapshot) {
+        if let Some(existing) = &mut self.last_snapshot {
+            existing.replace_from(snapshot);
+        } else {
+            self.last_snapshot = Some(snapshot.clone());
+        }
+    }
+
     #[must_use]
     pub(crate) const fn is_active(&self) -> bool {
         matches!(

@@ -69,20 +69,36 @@ impl Track {
     /// Samples this track at local timeline `offset`.
     #[must_use]
     pub fn sample_at(&self, offset: impl Into<Duration>) -> Option<PropertySnapshot> {
+        let mut snapshot = PropertySnapshot::with_capacity(self.keyframes.track_count());
+
+        if self.sample_into(offset, &mut snapshot) {
+            Some(snapshot)
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn sample_into(
+        &self,
+        offset: impl Into<Duration>,
+        output: &mut PropertySnapshot,
+    ) -> bool {
         let timing = self
             .keyframes
             .timing()
             .normalize_elapsed(offset.into().as_millis());
 
         if !timing.has_sample() {
-            return None;
+            output.clear();
+            return false;
         }
 
         #[allow(
             clippy::cast_possible_truncation,
             reason = "Normalized keyframe offsets are stored as f32 throughout the keyframe module."
         )]
-        self.keyframes.sample_at(timing.iteration_progress as f32)
+        self.keyframes
+            .sample_into(timing.iteration_progress as f32, output)
     }
 
     /// Samples the final keyframe state for this track.

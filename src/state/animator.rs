@@ -4,6 +4,8 @@ use crate::{
     Timeline, runtime::AnimationClock,
 };
 
+use std::{hash::Hash, sync::Arc};
+
 /// Tracks an application state and starts timelines for explicit state changes.
 ///
 /// ```
@@ -12,7 +14,7 @@ use crate::{
 ///     StateTransition, Timeline, Track,
 /// };
 ///
-/// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 /// enum Dialog {
 ///     Hidden,
 ///     Visible,
@@ -42,7 +44,7 @@ use crate::{
 #[derive(Debug, Clone, PartialEq)]
 pub struct StateAnimator<S>
 where
-    S: Copy + Eq,
+    S: Copy + Eq + Hash,
 {
     target: AnimationTargetId,
     current: S,
@@ -51,7 +53,7 @@ where
 
 impl<S> StateAnimator<S>
 where
-    S: Copy + Eq,
+    S: Copy + Eq + Hash,
 {
     /// Creates a state animator for `target`.
     #[must_use]
@@ -144,7 +146,7 @@ where
             runtime,
             transition.from(),
             transition.to(),
-            transition.timeline().clone(),
+            transition.timeline_arc(),
         ))
     }
 
@@ -169,7 +171,7 @@ where
             return self.transition_with(runtime, transition);
         }
 
-        let fallback = transitions.fallback()?;
+        let fallback = transitions.fallback_arc()?;
 
         Some(self.register_timeline(runtime, self.current, to, fallback.clone()))
     }
@@ -179,7 +181,7 @@ where
         runtime: &mut AnimationRuntime<C>,
         from: S,
         to: S,
-        timeline: Timeline,
+        timeline: Arc<Timeline>,
     ) -> StateTransitionRegistration<S> {
         let replaced = self.active.take();
 
@@ -187,7 +189,7 @@ where
         let duration = timeline.total_duration();
         self.current = to;
 
-        let registration = runtime.register_timeline(self.target, timeline);
+        let registration = runtime.register_timeline_arc(self.target, timeline);
 
         self.active = Some(ActiveStateTransition::new(
             registration.handle(),

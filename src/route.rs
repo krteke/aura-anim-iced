@@ -12,7 +12,7 @@
 //!     Track,
 //! };
 //!
-//! #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+//! #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 //! enum Route {
 //!     Home,
 //!     Settings,

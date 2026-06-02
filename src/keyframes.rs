@@ -14,7 +14,10 @@ pub use frame::{Keyframe, normalize_offset};
 
 use crate::{
     PropertySnapshot, Timing,
-    keyframes::{sample::sample_frames, track::PropertyTrack},
+    keyframes::{
+        sample::{sample_frames, sample_frames_into},
+        track::PropertyTrack,
+    },
     nearly_equal_f32, property,
 };
 
@@ -78,6 +81,10 @@ impl Keyframes {
         sample_frames(&self.tracks, offset, self.timing.easing())
     }
 
+    pub(crate) fn sample_into(&self, offset: f32, output: &mut PropertySnapshot) -> bool {
+        sample_frames_into(&self.tracks, offset, self.timing.easing(), output)
+    }
+
     pub(crate) fn sample_completion(&self) -> Option<PropertySnapshot> {
         let iteration_count = self.timing.iterations().finite_count()?;
         let offset = self.timing.direction().end_progress(iteration_count);
@@ -87,6 +94,20 @@ impl Keyframes {
             reason = "Normalized keyframe offsets are stored as f32 throughout the keyframe module."
         )]
         self.sample_at(offset as f32)
+    }
+
+    pub(crate) fn sample_completion_into(&self, output: &mut PropertySnapshot) -> bool {
+        let Some(iteration_count) = self.timing.iterations().finite_count() else {
+            output.clear();
+            return false;
+        };
+        let offset = self.timing.direction().end_progress(iteration_count);
+
+        #[allow(
+            clippy::cast_possible_truncation,
+            reason = "Normalized keyframe offsets are stored as f32 throughout the keyframe module."
+        )]
+        self.sample_into(offset as f32, output)
     }
 }
 

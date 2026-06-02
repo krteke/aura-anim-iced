@@ -148,6 +148,15 @@ impl PropertySnapshot {
         self.entries.push(entry);
     }
 
+    pub(crate) fn clear(&mut self) {
+        self.entries.clear();
+    }
+
+    pub(crate) fn replace_from(&mut self, other: &Self) {
+        self.entries.clear();
+        self.entries.extend_from_slice(other.entries());
+    }
+
     pub(crate) fn with_capacity(capacity: usize) -> Self {
         Self {
             entries: Vec::with_capacity(capacity),
@@ -162,6 +171,16 @@ impl PropertySnapshot {
                 self.entries.push(snapshot);
             }
         });
+    }
+
+    pub(crate) fn merge_entries_unsorted(&mut self, entries: &[PropertyEntry]) {
+        for snapshot in entries {
+            if let Some(entry) = self.find_property_mut(snapshot.spec()) {
+                entry.value = *snapshot.value();
+            } else {
+                self.entries.push(*snapshot);
+            }
+        }
     }
 
     fn find_property_mut(&mut self, property: &RawPropertySpec) -> Option<&mut PropertyEntry> {
