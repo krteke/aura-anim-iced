@@ -89,9 +89,7 @@ fn typed_property_entries_wrap_the_expected_value_shape() {
 
 #[test]
 fn snapshot_from_typed_pairs_sorts_and_finds_properties() {
-    let mut snapshot = PropertySnapshot::from(vec![(SCALE, 2.0), (OPACITY, 0.5)]);
-
-    snapshot.sort_by_composition_key();
+    let snapshot = PropertySnapshot::from(vec![(SCALE, 2.0), (OPACITY, 0.5)]);
 
     let specs = snapshot
         .entries()

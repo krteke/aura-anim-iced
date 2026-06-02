@@ -74,12 +74,15 @@ pub struct PropertySnapshot {
 
 impl<K: PropertyValueKind> From<Vec<(PropertySpec<K>, K::Inner)>> for PropertySnapshot {
     fn from(value: Vec<(PropertySpec<K>, K::Inner)>) -> Self {
-        Self {
+        let mut s = Self {
             entries: value
                 .into_iter()
                 .map(|(spec, value)| PropertyEntry::new(spec, value))
                 .collect(),
-        }
+        };
+        s.sort_by_composition_key();
+
+        s
     }
 }
 
@@ -93,7 +96,10 @@ impl<K: PropertyValueKind> From<(PropertySpec<K>, K::Inner)> for PropertySnapsho
 
 impl From<Vec<PropertyEntry>> for PropertySnapshot {
     fn from(entries: Vec<PropertyEntry>) -> Self {
-        Self { entries }
+        let mut s = Self { entries };
+        s.sort_by_composition_key();
+
+        s
     }
 }
 

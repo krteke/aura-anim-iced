@@ -284,7 +284,6 @@ dependencies = [
  "iced",
  "rustc-hash 2.1.2",
  "serde",
- "slotmap",
  "smallvec",
  "thiserror 2.0.18",
  "tracing",
