@@ -30,6 +30,7 @@
 
 pub(crate) mod animatable;
 pub mod behavior;
+pub mod defaults;
 pub mod iced_ext;
 pub mod keyframes;
 pub mod prelude;
@@ -44,6 +45,7 @@ pub use behavior::{
     ActivePropertyTransition, BehaviorRule, PropertyTransition, PropertyTransitionProgress,
     PropertyTransitionRegistration, TransitionValueKind,
 };
+pub use defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults};
 pub use iced_ext::{
     AnimationCompletionCleanup, AnimationFlow, AnimationFlowRegistration, AnimationTargetOutput,
     EffectSnapshot, effect_snapshot, target_output_for, tick_effect_snapshot_for,

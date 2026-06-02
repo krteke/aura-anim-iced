@@ -21,6 +21,7 @@ pub use crate::behavior::{
     ActivePropertyTransition, BehaviorRule, PropertyTransition, PropertyTransitionProgress,
     PropertyTransitionRegistration, TransitionValueKind,
 };
+pub use crate::defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults};
 pub use crate::iced_ext::{
     AnimationCompletionCleanup, AnimationFlow, AnimationFlowRegistration, AnimationTargetOutput,
     EffectSnapshot, effect_snapshot, target_output_for, tick_effect_snapshot_for,

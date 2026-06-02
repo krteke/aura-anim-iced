@@ -10,6 +10,8 @@
 - Added `AnimationTargetOutput` for reusable target-scoped visual output reads
   from product view code.
 - Added shared completion cleanup through `AnimationCompletionCleanup` and `AnimationFlow::cleanup_completed`.
+- Added `DefaultMotions` for product-level duration, easing, fill mode,
+  color interpolation, and spring motion defaults.
 
 ## v0.2.1 - 2026-06-02
 
