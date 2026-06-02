@@ -8,7 +8,10 @@ use crate::{
     runtime::{AnimationClock, SystemClock},
 };
 
-use super::{AnimationTargetOutput, EffectSnapshot, subscription, tick_effect_snapshot_for};
+use super::{
+    AnimationCompletionCleanup, AnimationTargetOutput, EffectSnapshot, subscription,
+    tick_effect_snapshot_for,
+};
 
 /// Captures runtime registration output for the standard animation flow.
 ///
@@ -31,6 +34,7 @@ pub trait AnimationFlowRegistration {
 pub struct AnimationFlow<C = SystemClock> {
     runtime: AnimationRuntime<C>,
     output: AnimationTick,
+    needs_clear: bool,
 }
 
 impl AnimationFlow<SystemClock> {
@@ -54,6 +58,7 @@ impl<C> AnimationFlow<C> {
         Self {
             runtime,
             output: AnimationTick::empty(),
+            needs_clear: false,
         }
     }
 
@@ -78,10 +83,14 @@ impl<C> AnimationFlow<C> {
     /// application update branch.
     pub fn clear_output(&mut self) {
         self.output.clear();
+        self.needs_clear = false;
     }
 
     /// Captures registration-time output into the flow output.
     pub fn capture(&mut self, registration: &impl AnimationFlowRegistration) {
+        if self.needs_clear {
+            self.clear_output();
+        }
         registration.capture_into(&mut self.output);
     }
 
@@ -113,6 +122,35 @@ impl<C> AnimationFlow<C> {
     pub fn target(&self, target: AnimationTargetId) -> AnimationTargetOutput<'_> {
         AnimationTargetOutput::from_tick(&self.output, target)
     }
+
+    /// Clears stale active metadata owned by an animation helper.
+    ///
+    /// Call this after [`update_tick`](Self::update_tick) when the application
+    /// keeps behavior, state, route, widget, theme, or spring animation owners.
+    pub fn cleanup_completed(&self, owner: &mut impl AnimationCompletionCleanup<C>) -> bool
+    where
+        C: AnimationClock,
+    {
+        owner.cleanup_completed(&self.runtime)
+    }
+}
+
+pub struct TickGuard<'a, C: AnimationClock> {
+    flow: &'a mut AnimationFlow<C>,
+}
+
+impl<C: AnimationClock> TickGuard<'_, C> {
+    /// Clears stale active metadata owned by an animation helper.
+    pub fn cleanup(self, owners: &mut impl AnimationCompletionCleanup<C>) -> Self {
+        owners.cleanup_completed(&self.flow.runtime);
+
+        self
+    }
+
+    /// Returns a reference to the underlying [`AnimationFlow`].
+    pub fn flow(&self) -> &AnimationFlow<C> {
+        self.flow
+    }
 }
 
 impl<C> AnimationFlow<C>
@@ -122,13 +160,16 @@ where
     /// Advances the runtime and stores the sampled output.
     pub fn tick(&mut self) -> &AnimationTick {
         self.runtime.tick_into(&mut self.output);
+        self.needs_clear = true;
 
         &self.output
     }
 
     /// Routes an Iced tick message into the flow.
-    pub fn update_tick(&mut self, _tick: Instant) -> &AnimationTick {
-        self.tick()
+    pub fn update_tick(&mut self, _tick: Instant) -> TickGuard<'_, C> {
+        self.tick();
+
+        TickGuard { flow: self }
     }
 }
 

@@ -116,6 +116,7 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
         .clock_mut()
         .set_now(Duration::from_millis(50.0));
     let active = flow.update_tick(Instant::now());
+    let active = active.flow().output();
 
     assert_approx_eq!(
         f32,
@@ -169,7 +170,7 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
     flow.runtime_mut()
         .clock_mut()
         .set_now(Duration::from_millis(100.0));
-    let completed = flow.update_tick(Instant::now()).clone();
+    let completed = flow.update_tick(Instant::now()).flow().output().clone();
 
     assert!(!completed.completed().is_empty());
     assert_eq!(flow.runtime().active_count(), 0);
@@ -206,4 +207,12 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
             .expect("incoming translation"),
         iced::Vector::new(0.0, 0.0)
     );
+
+    assert!(flow.cleanup_completed(&mut width));
+    assert!(flow.cleanup_completed(&mut panel));
+    assert!(flow.cleanup_completed(&mut route));
+    assert_eq!(width.active_handle(), None);
+    assert_eq!(panel.active_handle(), None);
+    assert_eq!(route.active_handle(), None);
+    assert!(route.active_screen_transition().is_none());
 }

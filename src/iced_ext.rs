@@ -1,5 +1,6 @@
 //! Iced integration helpers.
 
+mod cleanup;
 mod effect;
 mod flow;
 mod output;
@@ -12,6 +13,7 @@ use crate::runtime::{AnimationClock, AnimationRuntime, AnimationTick};
 #[cfg(test)]
 mod tests;
 
+pub use cleanup::AnimationCompletionCleanup;
 pub use effect::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use flow::{AnimationFlow, AnimationFlowRegistration};
 pub use output::{AnimationTargetOutput, target_output_for};
