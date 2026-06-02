@@ -1,6 +1,9 @@
 //! Compile coverage for public feature combinations.
 
-use aura_anim_iced::{AnimationRuntime, TickPolicy, timing::Duration};
+use aura_anim_iced::{
+    runtime::{AnimationRuntime, TickPolicy},
+    timing::Duration,
+};
 
 #[test]
 fn default_feature_set_keeps_runtime_api_available() {

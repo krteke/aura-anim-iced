@@ -7,9 +7,11 @@
 //!
 //! ```
 //! use aura_anim_iced::{
-//!     AnimationRuntime, AnimationTargetId, Duration, OPACITY, RouteAnimator,
-//!     RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition, Timeline,
-//!     Track,
+//!     property::OPACITY,
+//!     route::{RouteAnimator, RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition},
+//!     runtime::{AnimationRuntime, AnimationTargetId},
+//!     timeline::{Timeline, Track},
+//!     timing::Duration,
 //! };
 //!
 //! #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -56,7 +58,7 @@ mod motion;
 mod screen;
 mod transition;
 
-use crate::{
+use crate::state::{
     ActiveStateTransition, StateTransition, StateTransitionRegistration, StateTransitionSet,
 };
 

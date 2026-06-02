@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::Timeline;
+use crate::timeline::Timeline;
 
 /// Animation timeline for moving between two application states.
 #[derive(Debug, Clone, PartialEq)]

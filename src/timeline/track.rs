@@ -1,7 +1,6 @@
 use crate::{
     keyframes::{Keyframes, KeyframesBuilder},
-    prelude::PropertyValueKind,
-    property::{PropertyEntry, PropertySnapshot, PropertySpec},
+    property::{PropertyEntry, PropertySnapshot, PropertySpec, PropertyValueKind},
     timing::{Duration, Easing, Timing},
 };
 

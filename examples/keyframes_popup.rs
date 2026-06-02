@@ -2,8 +2,13 @@
 
 mod shared;
 
-use aura_anim_iced::{AnimationHandle, AnimationRuntime, AnimationTargetId, EffectSnapshot};
-use aura_anim_iced::{Easing, Keyframes, KeyframesBuilder, Timing, iced_ext, property};
+use aura_anim_iced::{
+    iced_ext::{self, EffectSnapshot},
+    keyframes::{Keyframes, KeyframesBuilder},
+    property,
+    runtime::{AnimationHandle, AnimationRuntime, AnimationTargetId},
+    timing::{Easing, Timing},
+};
 use iced::{
     Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme,
     alignment::{Horizontal, Vertical},
@@ -61,7 +66,7 @@ impl Demo {
             }
             Message::AnimationTick(tick_instant) => {
                 let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
-                let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, self.popup_target);
+                let effects = iced_ext::tick_effect_snapshot_for(&tick, self.popup_target);
 
                 if !effects.is_empty() {
                     self.effects = shared::merge_effects(&self.effects, &effects);

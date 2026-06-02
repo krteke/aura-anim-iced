@@ -3,8 +3,11 @@
 mod shared;
 
 use aura_anim_iced::{
-    AnimationHandle, AnimationRuntime, AnimationTargetId, Easing, EffectSnapshot, Hold,
-    PropertyKey, PropertySpec, Timeline, Timing, iced_ext, property,
+    iced_ext::{self, EffectSnapshot},
+    property::{self, PropertyKey, PropertySpec},
+    runtime::{AnimationHandle, AnimationRuntime, AnimationTargetId},
+    timeline::{Hold, Timeline},
+    timing::{Duration, Easing, Timing},
 };
 use iced::{
     Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme,
@@ -68,7 +71,7 @@ impl Demo {
             Message::DismissToast => self.dismiss_toast(),
             Message::AnimationTick(tick_instant) => {
                 let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
-                let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, self.toast_target);
+                let effects = iced_ext::tick_effect_snapshot_for(&tick, self.toast_target);
 
                 if !effects.is_empty() {
                     self.effects = shared::merge_effects(&self.effects, &effects);
@@ -216,7 +219,7 @@ fn toast_card(label: String, effects: &EffectSnapshot) -> Element<'_, Message> {
 fn toast_lifecycle_timeline() -> Timeline {
     Timeline::sequence([
         toast_enter_timeline().root().clone().into(),
-        Hold::new(aura_anim_iced::Duration::from_millis(1_200.0)).into(),
+        Hold::new(Duration::from_millis(1_200.0)).into(),
         toast_exit_timeline(&visible_effects(), 0.0)
             .root()
             .clone()

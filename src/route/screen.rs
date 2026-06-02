@@ -1,6 +1,6 @@
 use crate::{
-    ActiveRouteTransition, AnimationHandle, AnimationRegistration, AnimationTargetId,
-    RouteTransitionRegistration,
+    route::{ActiveRouteTransition, RouteTransitionRegistration},
+    runtime::{AnimationHandle, AnimationRegistration, AnimationTargetId},
 };
 
 /// Active screen-to-screen route transition metadata tracked by a [`RouteAnimator`](crate::RouteAnimator).

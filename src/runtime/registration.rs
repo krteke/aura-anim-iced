@@ -1,6 +1,7 @@
 use super::{AnimationHandle, AnimationPlaybackState};
 use crate::{
-    AnimationTargetId, property::PropertySnapshot, runtime::entry::ActiveAnimation,
+    property::PropertySnapshot,
+    runtime::{entry::ActiveAnimation, target::AnimationTargetId},
     timing::Duration,
 };
 

@@ -4,7 +4,7 @@
 - [x] Add reusable runtime output handling so product view code can read current visual values with minimal repeated plumbing.
 - [x] Implement shared completion cleanup so finished animations leave no active work behind.
 - [x] Add product-level defaults for duration, easing, fill behavior, color interpolation, and spring motion.
-- [ ] Write a compact product quick start that shows value animation, state animation, widget motion, theme switching, and spring motion together.
+- [x] Write a compact product quick start that shows value animation, state animation, widget motion, theme switching, and spring motion together.
 
 ## Widget Motion
 

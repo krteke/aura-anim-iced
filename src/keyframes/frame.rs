@@ -1,7 +1,7 @@
 use crate::property::PropertySnapshot;
 
 #[cfg(test)]
-use crate::{prelude::RawPropertySpec, property::PropertyEntry};
+use crate::property::{PropertyEntry, RawPropertySpec};
 
 /// A property snapshot stored at a normalized keyframe offset.
 #[derive(Debug, Clone, PartialEq)]

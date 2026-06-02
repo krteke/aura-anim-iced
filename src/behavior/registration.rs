@@ -1,4 +1,4 @@
-use crate::{AnimationHandle, AnimationRegistration};
+use crate::runtime::{AnimationHandle, AnimationRegistration};
 
 /// Output produced when a property transition is registered.
 #[derive(Debug, Clone, PartialEq)]

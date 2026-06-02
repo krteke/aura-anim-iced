@@ -1,4 +1,7 @@
-use crate::{ActiveStateTransition, AnimationHandle, AnimationRegistration};
+use crate::{
+    runtime::{AnimationHandle, AnimationRegistration},
+    state::ActiveStateTransition,
+};
 
 /// Output produced when a state transition is registered.
 #[derive(Debug, Clone, PartialEq)]

@@ -2,7 +2,7 @@ use std::{hash::Hash, sync::Arc};
 
 use rustc_hash::FxHashMap;
 
-use crate::{StateTransition, Timeline};
+use crate::{state::StateTransition, timeline::Timeline};
 
 /// Reusable collection that matches state pairs to transition timelines.
 #[derive(Debug, Clone, PartialEq)]

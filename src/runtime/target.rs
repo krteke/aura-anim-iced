@@ -2,7 +2,7 @@ use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::PropertySnapshot;
+use crate::property::PropertySnapshot;
 
 static NEXT_TARGET_ID: AtomicU64 = AtomicU64::new(AnimationTargetId::FIRST_ID);
 

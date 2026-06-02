@@ -27,7 +27,10 @@ use crate::{keyframes::Keyframes, property::PropertySnapshot, timing::Duration};
 ///
 /// ```
 /// use aura_anim_iced::{
-///     Duration, Easing, Hold, KeyframesBuilder, Timeline, Timing, Track, property,
+///     keyframes::KeyframesBuilder,
+///     property,
+///     timeline::{Hold, Timeline, Track},
+///     timing::{Duration, Easing, Timing},
 /// };
 ///
 /// let enter = Track::new(

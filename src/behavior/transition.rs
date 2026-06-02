@@ -1,7 +1,11 @@
 use crate::{
-    ActivePropertyTransition, AnimationHandle, AnimationRuntime, AnimationTargetId, BehaviorRule,
-    Duration, PropertyTransitionProgress, PropertyTransitionRegistration, Timing,
-    behavior::TransitionValueKind, property::PropertySpec, runtime::AnimationClock,
+    behavior::{
+        ActivePropertyTransition, BehaviorRule, PropertyTransitionProgress,
+        PropertyTransitionRegistration, TransitionValueKind,
+    },
+    property::PropertySpec,
+    runtime::{AnimationClock, AnimationHandle, AnimationRuntime, AnimationTargetId},
+    timing::{Duration, Timing},
 };
 
 /// Tracks one visual property and starts a transition when its target value changes.
@@ -12,8 +16,10 @@ use crate::{
 ///
 /// ```
 /// use aura_anim_iced::{
-///     AnimationRuntime, AnimationTargetId, Duration, OPACITY, PropertyTransition,
-///     PropertyValue, Timing,
+///     behavior::PropertyTransition,
+///     property::{OPACITY, PropertyValue},
+///     runtime::{AnimationRuntime, AnimationTargetId},
+///     timing::{Duration, Timing},
 /// };
 ///
 /// let mut runtime = AnimationRuntime::testing();

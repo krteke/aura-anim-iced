@@ -1,9 +1,12 @@
 //! End-to-end integration coverage across keyframes, timelines, runtime ticks, and subscription gates.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, Easing, Hold, KeyframesBuilder, OPACITY,
-    Parallel, PropertySnapshot, PropertySpec, PropertyValue, SCALE, Sequence, Timeline, Timing,
-    Track, WIDTH, iced_ext,
+    iced_ext,
+    keyframes::KeyframesBuilder,
+    property::{OPACITY, PropertySnapshot, PropertySpec, PropertyValue, SCALE, WIDTH},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timeline::{Hold, Parallel, Sequence, Timeline, Track},
+    timing::{Duration, Easing, Timing},
 };
 use float_cmp::assert_approx_eq;
 

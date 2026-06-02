@@ -1,4 +1,8 @@
-use crate::{Duration, OPACITY, Parallel, TRANSLATE, Timeline, Track};
+use crate::{
+    property::{OPACITY, TRANSLATE},
+    timeline::{Parallel, Timeline, Track},
+    timing::Duration,
+};
 
 /// Built-in incoming screen motion made of opacity and translate tracks.
 #[derive(Debug, Clone, Copy, PartialEq)]

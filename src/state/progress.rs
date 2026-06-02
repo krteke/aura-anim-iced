@@ -1,4 +1,4 @@
-use crate::{AnimationHandle, Duration};
+use crate::{runtime::AnimationHandle, timing::Duration};
 
 /// Active state transition metadata tracked by a [`StateAnimator`](crate::StateAnimator).
 #[derive(Debug, Clone, Copy, PartialEq)]

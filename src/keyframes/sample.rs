@@ -1,6 +1,9 @@
 use crate::{
-    interpolate_value, keyframes::track::PropertyTrack, nearly_equal_f32, prelude::PropertyEntry,
-    property::PropertySnapshot, timing::Easing,
+    interpolate_value,
+    keyframes::track::PropertyTrack,
+    nearly_equal_f32,
+    property::{PropertyEntry, PropertySnapshot},
+    timing::Easing,
 };
 
 use super::normalize_offset;

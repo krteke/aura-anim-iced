@@ -1,9 +1,11 @@
 //! Integration coverage for target-scoped runtime behavior through the public API.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, Keyframes, KeyframesBuilder, OPACITY,
-    PropertySpec, PropertyValue, SCALE, Timing, WIDTH, prelude::PropertyEntry,
-    tick_effect_snapshot_for,
+    iced_ext::tick_effect_snapshot_for,
+    keyframes::{Keyframes, KeyframesBuilder},
+    property::{OPACITY, PropertyEntry, PropertySpec, PropertyValue, SCALE, WIDTH},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timing::{Duration, Timing},
 };
 use float_cmp::assert_approx_eq;
 

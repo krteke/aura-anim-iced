@@ -2,8 +2,8 @@ use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::{
-    Duration,
     runtime::{entry::ActiveAnimation, target::AnimationTargetId},
+    timing::Duration,
 };
 
 use super::AnimationHandle;

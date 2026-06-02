@@ -1,6 +1,10 @@
 //! Product-level animation defaults.
 
-use crate::{BehaviorRule, Duration, FillMode, PropertySpec, Timing, property::PropertyValueKind};
+use crate::{
+    behavior::BehaviorRule,
+    property::{PropertySpec, PropertyValueKind},
+    timing::{Duration, FillMode, Timing},
+};
 
 /// Color interpolation strategy used by product-level animation defaults.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

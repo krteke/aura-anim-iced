@@ -1,17 +1,24 @@
 #![allow(dead_code)]
 
-use aura_anim_iced::{AnimationRuntime, EffectSnapshot, PropertySpec, Track, iced_ext, property};
+use aura_anim_iced::{
+    iced_ext::{self, EffectSnapshot},
+    keyframes::KeyframesBuilder,
+    property::{self, PropertySpec, PropertyValue},
+    runtime::{AnimationRuntime, AnimationTargetId, AnimationTick},
+    timeline::Track,
+    timing::Timing,
+};
 use iced::{Color, Shadow, Vector};
 use std::time::Instant;
 
 pub(crate) fn tick_effects(
     runtime: &mut AnimationRuntime,
     tick_instant: Instant,
-    target: aura_anim_iced::AnimationTargetId,
+    target: AnimationTargetId,
 ) -> EffectSnapshot {
     let tick = iced_ext::update_tick(runtime, tick_instant);
 
-    aura_anim_iced::tick_effect_snapshot_for(&tick, target)
+    iced_ext::tick_effect_snapshot_for(&tick, target)
 }
 
 pub(crate) fn merge_effects(current: &EffectSnapshot, update: &EffectSnapshot) -> EffectSnapshot {
@@ -36,10 +43,10 @@ pub(crate) fn scalar_track(
     spec: PropertySpec<property::Scalar>,
     from: f32,
     to: f32,
-    timing: aura_anim_iced::Timing,
+    timing: Timing,
 ) -> Track {
     Track::new(
-        aura_anim_iced::KeyframesBuilder::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (spec, from))
             .at(1.0, (spec, to))
@@ -51,10 +58,10 @@ pub(crate) fn color_track(
     spec: PropertySpec<property::Color>,
     from: Color,
     to: Color,
-    timing: aura_anim_iced::Timing,
+    timing: Timing,
 ) -> Track {
     Track::new(
-        aura_anim_iced::KeyframesBuilder::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (spec, from))
             .at(1.0, (spec, to))
@@ -62,9 +69,9 @@ pub(crate) fn color_track(
     )
 }
 
-pub(crate) fn shadow_track(from: Shadow, to: Shadow, timing: aura_anim_iced::Timing) -> Track {
+pub(crate) fn shadow_track(from: Shadow, to: Shadow, timing: Timing) -> Track {
     Track::new(
-        aura_anim_iced::KeyframesBuilder::new()
+        KeyframesBuilder::new()
             .with_timing(timing)
             .at(0.0, (property::SHADOW, from))
             .at(1.0, (property::SHADOW, to))
@@ -73,8 +80,8 @@ pub(crate) fn shadow_track(from: Shadow, to: Shadow, timing: aura_anim_iced::Tim
 }
 
 pub(crate) fn tick_scalar(
-    tick: &aura_anim_iced::AnimationTick,
-    target: aura_anim_iced::AnimationTargetId,
+    tick: &AnimationTick,
+    target: AnimationTargetId,
     spec: PropertySpec<property::Scalar>,
 ) -> Option<f32> {
     let entry = tick
@@ -82,7 +89,7 @@ pub(crate) fn tick_scalar(
         .and_then(|snapshot| snapshot.find_property(&spec.raw()))?;
 
     match entry.value() {
-        aura_anim_iced::PropertyValue::Scalar(value) => Some(*value),
+        PropertyValue::Scalar(value) => Some(*value),
         _ => None,
     }
 }

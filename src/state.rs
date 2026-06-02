@@ -6,8 +6,11 @@
 //!
 //! ```
 //! use aura_anim_iced::{
-//!     AnimationRuntime, AnimationTargetId, Duration, OPACITY, PropertyValue,
-//!     StateAnimator, StateTransition, StateTransitionSet, Timeline, Track,
+//!     property::{OPACITY, PropertyValue},
+//!     runtime::{AnimationRuntime, AnimationTargetId},
+//!     state::{StateAnimator, StateTransition, StateTransitionSet},
+//!     timeline::{Timeline, Track},
+//!     timing::Duration,
 //! };
 //!
 //! #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

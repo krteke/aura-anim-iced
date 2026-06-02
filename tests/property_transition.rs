@@ -1,8 +1,10 @@
 //! Public API coverage for property-driven value change animation.
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, BehaviorRule, Duration, OPACITY, PropertySnapshot,
-    PropertySpec, PropertyTransition, PropertyValue, Timing, WIDTH,
+    behavior::{BehaviorRule, PropertyTransition},
+    property::{OPACITY, PropertySnapshot, PropertySpec, PropertyValue, WIDTH},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timing::{Duration, Timing},
 };
 use float_cmp::assert_approx_eq;
 

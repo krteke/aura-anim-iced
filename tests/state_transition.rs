@@ -1,9 +1,11 @@
 //! Public API coverage for state-driven animation.
 
 use aura_anim_iced::{
-    ActiveStateTransition, AnimationRuntime, AnimationTargetId, Duration, OPACITY,
-    PropertySnapshot, PropertyValue, StateAnimator, StateTransition, StateTransitionSet, Timeline,
-    Track,
+    property::{OPACITY, PropertySnapshot, PropertyValue},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    state::{ActiveStateTransition, StateAnimator, StateTransition, StateTransitionSet},
+    timeline::{Timeline, Track},
+    timing::Duration,
 };
 use float_cmp::assert_approx_eq;
 

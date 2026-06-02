@@ -72,7 +72,12 @@ and convert tick output into view effects for one target.
 ```rust
 use std::time::Instant;
 
-use aura_anim_iced::{iced_ext, prelude::*};
+use aura_anim_iced::{
+    iced_ext::{self, EffectSnapshot, tick_effect_snapshot_for},
+    keyframes::KeyframesBuilder,
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timing::Timing,
+};
 
 struct App {
     animations: AnimationRuntime,
@@ -115,6 +120,169 @@ fn subscription(app: &App) -> iced::Subscription<Message> {
 In `view`, apply the sampled `EffectSnapshot` fields to the widget style,
 layout, or wrapper code owned by the application.
 
+## Product Quick Start
+
+Use `AnimationFlow` when product code should route value animation, state
+animation, widget motion, theme switching, and future spring motion through the
+same update, subscription, and view-output path.
+
+```rust
+use std::time::Instant;
+
+use aura_anim_iced::{
+    behavior::{BehaviorRule, PropertyTransition},
+    defaults::DefaultMotions,
+    iced_ext::{AnimationFlow, EffectSnapshot},
+    keyframes::KeyframesBuilder,
+    property::{self, BACKGROUND, OPACITY, TEXT_COLOR, WIDTH},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    state::{StateAnimator, StateTransition, StateTransitionSet},
+    timeline::{Timeline, Track},
+    timing::Duration,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum PanelState {
+    Hidden,
+    Visible,
+}
+
+struct ProductUi {
+    flow: AnimationFlow<aura_anim_iced::runtime::TestClock>,
+    defaults: DefaultMotions,
+    panel_target: AnimationTargetId,
+    card_target: AnimationTargetId,
+    theme_target: AnimationTargetId,
+    width: PropertyTransition<aura_anim_iced::property::Scalar>,
+    panel: StateAnimator<PanelState>,
+    panel_transitions: StateTransitionSet<PanelState>,
+    rendered_width: f32,
+    dark_theme: bool,
+}
+
+#[derive(Debug, Clone)]
+enum Message {
+    ResizePanel(f32),
+    ShowPanel,
+    ToggleTheme,
+    AnimationTick(Instant),
+}
+
+impl ProductUi {
+    fn new() -> Self {
+        let defaults = DefaultMotions::default();
+        let panel_target = AnimationTargetId::new();
+        let card_target = AnimationTargetId::new();
+        let theme_target = AnimationTargetId::new();
+        let width = defaults.behavior(WIDTH).bind(card_target);
+        let panel = StateAnimator::new(panel_target, PanelState::Hidden);
+        let panel_transitions = StateTransitionSet::from_transitions([
+            StateTransition::new(
+                PanelState::Hidden,
+                PanelState::Visible,
+                Timeline::track(
+                    Track::from(OPACITY, 0.0)
+                        .to(1.0)
+                        .duration(defaults.duration()),
+                ),
+            ),
+        ]);
+
+        Self {
+            flow: AnimationFlow::with_runtime(AnimationRuntime::testing()),
+            defaults,
+            panel_target,
+            card_target,
+            theme_target,
+            width,
+            panel,
+            panel_transitions,
+            rendered_width: 240.0,
+            dark_theme: false,
+        }
+    }
+
+    fn update(&mut self, message: Message) {
+        match message {
+            Message::ResizePanel(next_width) => {
+                if let Some(registration) = self.width.transition_from_visual(
+                    self.flow.runtime_mut(),
+                    self.rendered_width,
+                    next_width,
+                ) {
+                    self.flow.capture(&registration);
+                }
+            }
+            Message::ShowPanel => {
+                if let Some(registration) = self.panel.transition_to(
+                    self.flow.runtime_mut(),
+                    PanelState::Visible,
+                    &self.panel_transitions,
+                ) {
+                    self.flow.capture(&registration);
+                }
+            }
+            Message::ToggleTheme => {
+                self.dark_theme = !self.dark_theme;
+                let background = if self.dark_theme {
+                    iced::Color::from_rgb(0.08, 0.10, 0.14)
+                } else {
+                    iced::Color::WHITE
+                };
+                let text = if self.dark_theme {
+                    iced::Color::WHITE
+                } else {
+                    iced::Color::BLACK
+                };
+                let registration = self.flow.runtime_mut().register_keyframes(
+                    self.theme_target,
+                    KeyframesBuilder::new()
+                        .with_timing(self.defaults.timing())
+                        .at(0.0, (BACKGROUND, iced::Color::TRANSPARENT))
+                        .at(1.0, (BACKGROUND, background))
+                        .at(1.0, (TEXT_COLOR, text))
+                        .finish(),
+                );
+                self.flow.capture(&registration);
+            }
+            Message::AnimationTick(tick) => {
+                self.flow.update_tick(tick);
+                if let Some(width) = self.flow.target(self.card_target).get(WIDTH) {
+                    self.rendered_width = width;
+                }
+                self.flow.cleanup_completed(&mut self.width);
+                self.flow.cleanup_completed(&mut self.panel);
+            }
+        }
+    }
+
+    fn subscription(&self) -> iced::Subscription<Message> {
+        self.flow.subscription(Message::AnimationTick)
+    }
+
+    fn card_effects(&self) -> EffectSnapshot {
+        self.flow.target(self.card_target).effects()
+    }
+
+    fn panel_effects(&self) -> EffectSnapshot {
+        self.flow.target(self.panel_target).effects()
+    }
+
+    fn theme_effects(&self) -> EffectSnapshot {
+        self.flow.target(self.theme_target).effects()
+    }
+
+    fn spring_defaults(&self) -> aura_anim_iced::defaults::SpringMotionDefaults {
+        self.defaults.spring()
+    }
+}
+```
+
+Widget motion is represented by ordinary target-scoped opacity, size, color,
+and transform properties. Theme switching uses the same runtime path with color
+properties. `DefaultMotions::spring()` stores the spring feel that future spring
+animation sources should use.
+
 ## Animatable Values
 
 Public animation inputs use Iced value types wherever possible. The v0.1 value
@@ -124,7 +292,7 @@ kept internal so application code works with typed properties and sampled
 snapshots instead of implementing animation traits.
 
 ```rust
-use aura_anim_iced::{KeyframesBuilder, Timing, property};
+use aura_anim_iced::{keyframes::KeyframesBuilder, property, timing::Timing};
 use iced::Color;
 
 let fade_and_color = KeyframesBuilder::new()
@@ -144,7 +312,9 @@ Applications can also define custom specs when an example or widget needs an
 extra sampled value, such as a toast offset.
 
 ```rust
-use aura_anim_iced::{PropertyKey, PropertySpec, property};
+use aura_anim_iced::{
+    property::{self, PropertyKey, PropertySpec},
+};
 
 const TOAST_Y: PropertySpec<property::Scalar> =
     PropertySpec::new(PropertyKey::new("app", "toast-y"), 21);
@@ -163,7 +333,7 @@ direction, iterations, and playback rate stay attached to the sampled property
 data.
 
 ```rust
-use aura_anim_iced::{Easing, KeyframesBuilder, Timing, property};
+use aura_anim_iced::{keyframes::KeyframesBuilder, property, timing::{Easing, Timing}};
 
 let popup_open = KeyframesBuilder::new()
     .with_timing(Timing::new(280.0).with_easing(Easing::EaseOut))
@@ -186,7 +356,10 @@ changes, and holds when a state should remain visible before the next step.
 
 ```rust
 use aura_anim_iced::{
-    Duration, Easing, Hold, KeyframesBuilder, Timeline, Timing, Track, property,
+    keyframes::KeyframesBuilder,
+    property,
+    timeline::{Hold, Timeline, Track},
+    timing::{Duration, Easing, Timing},
 };
 
 let enter = Track::new(
@@ -223,7 +396,10 @@ route tick output back into application state.
 
 ```rust
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, KeyframesBuilder, Timing, property,
+    keyframes::KeyframesBuilder,
+    property,
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timing::Timing,
 };
 
 let mut runtime = AnimationRuntime::new();
@@ -253,7 +429,7 @@ message. The runtime tick interval comes from `TickPolicy`.
 ```rust
 use std::time::Instant;
 
-use aura_anim_iced::{AnimationRuntime, iced_ext};
+use aura_anim_iced::{iced_ext, runtime::AnimationRuntime};
 
 #[derive(Debug, Clone)]
 enum Message {
@@ -281,8 +457,10 @@ more targets to create independent transition trackers.
 
 ```rust
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, BehaviorRule, Easing, PropertyTransition,
-    Timing, WIDTH,
+    behavior::{BehaviorRule, PropertyTransition},
+    property::WIDTH,
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timing::{Easing, Timing},
 };
 
 struct Panel {
@@ -324,7 +502,7 @@ On each animation tick, merge the target snapshot into the value used by `view`
 and let the transition clear its active handle when the runtime finishes:
 
 ```rust
-use aura_anim_iced::{PropertyValue, WIDTH, iced_ext};
+use aura_anim_iced::{iced_ext, property::{PropertyValue, WIDTH}};
 
 fn update_tick(panel: &mut Panel, tick: std::time::Instant) {
     let output = iced_ext::update_tick(&mut panel.runtime, tick);
@@ -351,8 +529,11 @@ known pairs and can also provide a fallback timeline for unlisted changes.
 
 ```rust
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, OPACITY, StateAnimator,
-    StateTransition, StateTransitionSet, Timeline, Track,
+    property::OPACITY,
+    runtime::{AnimationRuntime, AnimationTargetId},
+    state::{StateAnimator, StateTransition, StateTransitionSet},
+    timeline::{Timeline, Track},
+    timing::Duration,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -402,7 +583,7 @@ from the previous target.
 ```rust
 let mut runtime = AnimationRuntime::new();
 let target = AnimationTargetId::new();
-let mut opacity = PropertyTransition::new(target, aura_anim_iced::OPACITY)
+let mut opacity = PropertyTransition::new(target, aura_anim_iced::property::OPACITY)
     .with_timing(Timing::new(200.0));
 
 opacity.transition_to(&mut runtime, 0.0);
@@ -443,8 +624,11 @@ entering views independently.
 
 ```rust
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, Duration, OPACITY, RouteAnimator,
-    RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition, Timeline, Track,
+    property::OPACITY,
+    route::{RouteAnimator, RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timeline::{Timeline, Track},
+    timing::Duration,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

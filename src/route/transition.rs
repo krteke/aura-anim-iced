@@ -1,11 +1,17 @@
-use crate::{Duration, RouteIncomingMotion, RouteTransition, Timeline};
+use crate::{
+    route::{RouteIncomingMotion, RouteTransition},
+    timeline::Timeline,
+    timing::Duration,
+};
 
 /// Paired outgoing and incoming timelines for switching between two routes.
 ///
 /// ```
 /// use aura_anim_iced::{
-///     Duration, OPACITY, RouteIncomingMotion, RouteScreenTransition, Timeline,
-///     Track,
+///     property::OPACITY,
+///     route::{RouteIncomingMotion, RouteScreenTransition},
+///     timeline::{Timeline, Track},
+///     timing::Duration,
 /// };
 ///
 /// #[derive(Debug, Clone, Copy, PartialEq, Eq)]

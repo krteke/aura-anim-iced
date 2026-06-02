@@ -3,8 +3,11 @@
 mod shared;
 
 use aura_anim_iced::{
-    AnimationRuntime, AnimationTargetId, BehaviorRule, Easing, EffectSnapshot, PropertyTransition,
-    Timing, WIDTH, iced_ext,
+    behavior::{BehaviorRule, PropertyTransition},
+    iced_ext::{self, EffectSnapshot},
+    property::WIDTH,
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timing::{Easing, Timing},
 };
 use iced::{
     Background, Border, Color, Element, Length, Subscription, Task, Theme,
@@ -71,7 +74,7 @@ impl Demo {
             Message::SetWidth(width) => self.set_width(width),
             Message::AnimationTick(tick_instant) => {
                 let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
-                let effects = aura_anim_iced::tick_effect_snapshot_for(&tick, self.width_target);
+                let effects = iced_ext::tick_effect_snapshot_for(&tick, self.width_target);
 
                 if !effects.is_empty() {
                     self.effects = shared::merge_effects(&self.effects, &effects);

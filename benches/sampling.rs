@@ -1,9 +1,9 @@
 //! Criterion benchmarks for keyframe and timeline sampling paths.
 
 use aura_anim_iced::{
-    AnimationRuntime, BACKGROUND, BORDER_COLOR, Easing, HEIGHT, Keyframes, OPACITY, PropertyKey,
-    PropertySnapshot, PropertySpec, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, Timeline, Timing, Track,
-    WIDTH, keyframes::KeyframesBuilder, property, runtime::AnimationClock,
+    prelude::*,
+    property::{self, PropertyKey},
+    runtime::AnimationClock,
 };
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
@@ -84,11 +84,11 @@ const SCALAR_PROPERTY_NAMES: [&str; 64] = [
 
 #[derive(Debug, Clone, Copy)]
 struct BenchClock {
-    now: aura_anim_iced::Duration,
+    now: Duration,
 }
 
 impl AnimationClock for BenchClock {
-    fn now(&self) -> aura_anim_iced::Duration {
+    fn now(&self) -> Duration {
         self.now
     }
 }
@@ -264,7 +264,7 @@ fn sample_timeline_many(timeline: &Timeline, samples: u64) {
             clippy::cast_precision_loss,
             reason = "Benchmark sample positions are bounded to 0..1000 before conversion."
         )]
-        let offset = aura_anim_iced::Duration::from_millis((index % 1_000) as f64);
+        let offset = Duration::from_millis((index % 1_000) as f64);
         black_box(timeline.sample_at(black_box(offset)));
     }
 }
@@ -309,11 +309,11 @@ fn runtime_with_keyframes(
     property_collision: bool,
 ) -> AnimationRuntime<BenchClock> {
     let mut runtime = AnimationRuntime::with_clock(BenchClock {
-        now: aura_anim_iced::Duration::from_millis(500.0),
+        now: Duration::from_millis(500.0),
     });
 
     for _target_index in 0..targets {
-        let target = aura_anim_iced::AnimationTargetId::new();
+        let target = AnimationTargetId::new();
 
         for animation_index in 0..animations_per_target {
             let property_index = if property_collision {

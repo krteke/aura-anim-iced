@@ -1,4 +1,4 @@
-use crate::{PropertyValue, prelude::RawPropertySpec};
+use crate::property::{PropertyValue, RawPropertySpec};
 
 #[derive(Debug, Clone, PartialEq)]
 pub(super) struct PropertyTrack {

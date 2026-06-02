@@ -3,10 +3,15 @@
 use std::time::Instant;
 
 use aura_anim_iced::{
-    AnimationFlow, AnimationRuntime, AnimationTargetId, BehaviorRule, Duration, KeyframesBuilder,
-    OPACITY, PropertySnapshot, PropertySpec, PropertyValue, RouteAnimator, RouteIncomingMotion,
-    RouteScreenTargets, RouteScreenTransition, StateAnimator, StateTransition, StateTransitionSet,
-    Timeline, Track, WIDTH,
+    behavior::BehaviorRule,
+    iced_ext::AnimationFlow,
+    keyframes::KeyframesBuilder,
+    property::{OPACITY, PropertySnapshot, PropertySpec, PropertyValue, WIDTH},
+    route::{RouteAnimator, RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition},
+    runtime::{AnimationRuntime, AnimationTargetId},
+    state::{StateAnimator, StateTransition, StateTransitionSet},
+    timeline::{Timeline, Track},
+    timing::{Duration, Timing},
 };
 use float_cmp::assert_approx_eq;
 
@@ -60,7 +65,7 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
     let value = flow.runtime_mut().register_keyframes(
         value_target,
         KeyframesBuilder::new()
-            .with_timing(aura_anim_iced::Timing::new(100.0))
+            .with_timing(Timing::new(100.0))
             .opacity(0.0, 0.0)
             .opacity(1.0, 1.0)
             .finish(),
@@ -68,7 +73,7 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
     flow.capture(&value);
 
     let mut width = BehaviorRule::new(WIDTH)
-        .with_timing(aura_anim_iced::Timing::new(100.0))
+        .with_timing(Timing::new(100.0))
         .bind(behavior_target);
     assert!(width.transition_to(flow.runtime_mut(), 100.0).is_none());
     let behavior = width

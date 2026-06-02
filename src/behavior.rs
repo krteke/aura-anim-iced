@@ -8,8 +8,10 @@
 //!
 //! ```
 //! use aura_anim_iced::{
-//!     AnimationRuntime, AnimationTargetId, BehaviorRule, Duration, PropertyValue,
-//!     Timing, WIDTH,
+//!     behavior::BehaviorRule,
+//!     property::{PropertyValue, WIDTH},
+//!     runtime::{AnimationRuntime, AnimationTargetId},
+//!     timing::{Duration, Timing},
 //! };
 //!
 //! let mut runtime = AnimationRuntime::testing();

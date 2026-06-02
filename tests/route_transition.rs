@@ -1,10 +1,14 @@
 //! Public API coverage for route-driven screen transition animation.
 
 use aura_anim_iced::{
-    ActiveRouteScreenTransition, ActiveRouteTransition, AnimationRuntime, AnimationTargetId,
-    Duration, OPACITY, PropertySnapshot, PropertyValue, RouteAnimator, RouteIncomingMotion,
-    RouteScreenTargets, RouteScreenTransition, RouteTransition, RouteTransitionSet, TRANSLATE,
-    Timeline, Track,
+    property::{OPACITY, PropertySnapshot, PropertyValue, TRANSLATE},
+    route::{
+        ActiveRouteScreenTransition, ActiveRouteTransition, RouteAnimator, RouteIncomingMotion,
+        RouteScreenTargets, RouteScreenTransition, RouteTransition, RouteTransitionSet,
+    },
+    runtime::{AnimationRuntime, AnimationTargetId},
+    timeline::{Timeline, Track},
+    timing::Duration,
 };
 use float_cmp::assert_approx_eq;
 

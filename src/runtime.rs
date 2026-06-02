@@ -39,7 +39,10 @@ use crate::{
 ///
 /// ```
 /// use aura_anim_iced::{
-///     AnimationRuntime, AnimationTargetId, KeyframesBuilder, Timing, property,
+///     keyframes::KeyframesBuilder,
+///     property,
+///     runtime::{AnimationRuntime, AnimationTargetId},
+///     timing::Timing,
 /// };
 ///
 /// let mut runtime = AnimationRuntime::new();

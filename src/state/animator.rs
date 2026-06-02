@@ -1,7 +1,11 @@
 use crate::{
-    ActiveStateTransition, AnimationHandle, AnimationRuntime, AnimationTargetId, Duration,
-    StateTransition, StateTransitionProgress, StateTransitionRegistration, StateTransitionSet,
-    Timeline, runtime::AnimationClock,
+    runtime::{AnimationClock, AnimationHandle, AnimationRuntime, AnimationTargetId},
+    state::{
+        ActiveStateTransition, StateTransition, StateTransitionProgress,
+        StateTransitionRegistration, StateTransitionSet,
+    },
+    timeline::Timeline,
+    timing::Duration,
 };
 
 use std::{hash::Hash, sync::Arc};
@@ -10,8 +14,11 @@ use std::{hash::Hash, sync::Arc};
 ///
 /// ```
 /// use aura_anim_iced::{
-///     AnimationRuntime, AnimationTargetId, Duration, OPACITY, StateAnimator,
-///     StateTransition, Timeline, Track,
+///     property::OPACITY,
+///     runtime::{AnimationRuntime, AnimationTargetId},
+///     state::{StateAnimator, StateTransition},
+///     timeline::{Timeline, Track},
+///     timing::Duration,
 /// };
 ///
 /// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

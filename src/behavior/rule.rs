@@ -1,7 +1,8 @@
 use crate::{
-    AnimationTargetId, PropertyTransition, Timing,
-    behavior::TransitionValueKind,
+    behavior::{PropertyTransition, TransitionValueKind},
     property::{PropertySpec, PropertyValueKind},
+    runtime::AnimationTargetId,
+    timing::Timing,
 };
 
 /// Reusable animation behavior for value changes on one property.

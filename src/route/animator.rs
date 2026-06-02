@@ -1,10 +1,13 @@
 use std::hash::Hash;
 
 use crate::{
-    ActiveRouteScreenTransition, ActiveRouteTransition, AnimationHandle, AnimationRuntime,
-    AnimationTargetId, RouteScreenTargets, RouteScreenTransitionRegistration, RouteTransition,
-    RouteTransitionRegistration, RouteTransitionSet, StateAnimator,
-    route::transition::RouteScreenTransition, runtime::AnimationClock,
+    route::{
+        ActiveRouteScreenTransition, ActiveRouteTransition, RouteScreenTargets,
+        RouteScreenTransitionRegistration, RouteTransition, RouteTransitionRegistration,
+        RouteTransitionSet, transition::RouteScreenTransition,
+    },
+    runtime::{AnimationClock, AnimationHandle, AnimationRuntime, AnimationTargetId},
+    state::StateAnimator,
 };
 
 /// Tracks the current application route and starts timelines for route changes.

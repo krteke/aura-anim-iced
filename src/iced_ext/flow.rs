@@ -3,9 +3,13 @@ use std::time::Instant;
 use iced::Subscription;
 
 use crate::{
-    AnimationRegistration, AnimationRuntime, AnimationTargetId, AnimationTick,
-    PropertyTransitionRegistration, RouteScreenTransitionRegistration, StateTransitionRegistration,
-    runtime::{AnimationClock, SystemClock},
+    behavior::PropertyTransitionRegistration,
+    route::RouteScreenTransitionRegistration,
+    runtime::{
+        AnimationClock, AnimationRegistration, AnimationRuntime, AnimationTargetId, AnimationTick,
+        SystemClock,
+    },
+    state::StateTransitionRegistration,
 };
 
 use super::{

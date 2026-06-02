@@ -1,6 +1,7 @@
 use crate::{
-    AnimationTargetId, AnimationTick, EffectSnapshot, PropertySnapshot, PropertySpec,
-    PropertyValueRead,
+    iced_ext::EffectSnapshot,
+    property::{PropertySnapshot, PropertySpec, PropertyValueRead},
+    runtime::{AnimationTargetId, AnimationTick},
 };
 
 /// View-facing animation output for one target.

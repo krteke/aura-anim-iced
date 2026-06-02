@@ -13,12 +13,13 @@ use std::collections::HashMap;
 pub use frame::{Keyframe, normalize_offset};
 
 use crate::{
-    PropertySnapshot, Timing,
     keyframes::{
         sample::{sample_frames, sample_frames_into},
         track::PropertyTrack,
     },
     nearly_equal_f32, property,
+    property::PropertySnapshot,
+    timing::Timing,
 };
 
 /// A collection of property snapshots keyed by normalized offsets.
@@ -29,7 +30,7 @@ use crate::{
 /// # Example
 ///
 /// ```
-/// use aura_anim_iced::{Easing, KeyframesBuilder, Timing, property};
+/// use aura_anim_iced::{keyframes::KeyframesBuilder, property, timing::{Easing, Timing}};
 ///
 /// let keyframes = KeyframesBuilder::new()
 ///     .with_timing(Timing::new(180.0).with_easing(Easing::EaseOut))

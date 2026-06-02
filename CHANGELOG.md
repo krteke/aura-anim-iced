@@ -12,6 +12,10 @@
 - Added shared completion cleanup through `AnimationCompletionCleanup` and `AnimationFlow::cleanup_completed`.
 - Added `DefaultMotions` for product-level duration, easing, fill mode,
   color interpolation, and spring motion defaults.
+- Added a compact product quick start covering value animation, state
+  animation, widget motion, theme switching, and spring motion defaults.
+- Changed the crate root to expose public modules without root-level
+  re-exports, and reduced the prelude to common product animation imports.
 
 ## v0.2.1 - 2026-06-02
 

@@ -1,8 +1,10 @@
 use std::hash::Hash;
 
 use crate::{
-    AnimationRuntime, PropertyTransition, RouteAnimator, StateAnimator, TransitionValueKind,
-    runtime::AnimationClock,
+    behavior::{PropertyTransition, TransitionValueKind},
+    route::RouteAnimator,
+    runtime::{AnimationClock, AnimationRuntime},
+    state::StateAnimator,
 };
 
 /// Clears animation-owner metadata after runtime completion cleanup.

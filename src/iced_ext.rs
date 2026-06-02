@@ -31,7 +31,7 @@ pub fn should_subscribe<C>(runtime: &AnimationRuntime<C>) -> bool {
 /// ```
 /// use std::time::Instant;
 ///
-/// use aura_anim_iced::{AnimationRuntime, iced_ext};
+/// use aura_anim_iced::{iced_ext, runtime::AnimationRuntime};
 ///
 /// #[derive(Debug, Clone)]
 /// enum Message {

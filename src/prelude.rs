@@ -1,4 +1,4 @@
-//! Common imports for the v0.2 public API.
+//! Common imports for product animation code.
 //!
 //! # Example
 //!
@@ -17,40 +17,22 @@
 //! assert_ne!(target, AnimationTargetId::new());
 //! ```
 
-pub use crate::behavior::{
-    ActivePropertyTransition, BehaviorRule, PropertyTransition, PropertyTransitionProgress,
-    PropertyTransitionRegistration, TransitionValueKind,
-};
+pub use crate::behavior::{BehaviorRule, PropertyTransition};
 pub use crate::defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults};
 pub use crate::iced_ext::{
-    AnimationCompletionCleanup, AnimationFlow, AnimationFlowRegistration, AnimationTargetOutput,
-    EffectSnapshot, effect_snapshot, target_output_for, tick_effect_snapshot_for,
+    AnimationCompletionCleanup, AnimationFlow, AnimationTargetOutput, EffectSnapshot,
+    target_output_for, tick_effect_snapshot_for,
 };
-pub use crate::keyframes::{Keyframe, Keyframes, KeyframesBuilder};
+pub use crate::keyframes::{Keyframes, KeyframesBuilder};
 pub use crate::property::{
-    BACKGROUND, BORDER_COLOR, Color as ColorProperty, HEIGHT, OPACITY, PADDING, PropertyEntry,
-    PropertyKey, PropertySnapshot, PropertySpec, PropertyValue, PropertyValueKind,
-    PropertyValueRead, RADIUS, RawPropertySpec, Rectangle as RectangleProperty, SCALE, SHADOW,
-    Scalar as ScalarProperty, Shadow as ShadowProperty, Size as SizeProperty, TEXT_COLOR,
-    TRANSLATE, TransformValue, Vector2 as Vector2Property, WIDTH,
+    BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertySnapshot, PropertySpec,
+    PropertyValue, RADIUS, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, TransformValue, WIDTH,
 };
 pub use crate::route::{
-    ActiveRouteScreenTransition, ActiveRouteTransition, RouteAnimator, RouteIncomingMotion,
-    RouteScreenTargets, RouteScreenTransition, RouteScreenTransitionRegistration, RouteTransition,
-    RouteTransitionRegistration, RouteTransitionSet,
+    RouteAnimator, RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition, RouteTransition,
+    RouteTransitionSet,
 };
-pub use crate::runtime::{
-    AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
-    AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
-};
-pub use crate::state::{
-    ActiveStateTransition, StateAnimator, StateTransition, StateTransitionProgress,
-    StateTransitionRegistration, StateTransitionSet,
-};
-pub use crate::timeline::{
-    Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
-};
-pub use crate::timing::{
-    Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
-    TimingPhase, TimingSampleState,
-};
+pub use crate::runtime::{AnimationRuntime, AnimationTargetId, AnimationTick, TickPolicy};
+pub use crate::state::{StateAnimator, StateTransition, StateTransitionSet};
+pub use crate::timeline::{Hold, Parallel, Sequence, Timeline, TimelineStep, Track};
+pub use crate::timing::{Delay, Direction, Duration, Easing, FillMode, Timing};

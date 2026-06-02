@@ -1,4 +1,4 @@
-use crate::{AnimationHandle, Duration, behavior::TransitionValueKind};
+use crate::{behavior::TransitionValueKind, runtime::AnimationHandle, timing::Duration};
 
 /// Active property transition metadata tracked by a [`PropertyTransition`](crate::PropertyTransition).
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -1,8 +1,9 @@
 //! Product-level default configuration coverage.
 
 use aura_anim_iced::{
-    ColorInterpolationMode, DefaultMotions, Duration, Easing, FillMode, OPACITY,
-    SpringMotionDefaults, TimingSampleState,
+    defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults},
+    property::OPACITY,
+    timing::{Duration, Easing, FillMode, TimingSampleState},
 };
 use float_cmp::assert_approx_eq;
 

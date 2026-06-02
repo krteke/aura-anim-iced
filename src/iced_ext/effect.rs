@@ -10,7 +10,7 @@ use crate::{
 ///
 /// ```
 /// use aura_anim_iced::{
-///     EffectSnapshot,
+///     iced_ext::EffectSnapshot,
 ///     property::{self, PropertySnapshot},
 /// };
 ///

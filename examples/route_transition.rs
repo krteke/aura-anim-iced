@@ -3,9 +3,12 @@
 mod shared;
 
 use aura_anim_iced::{
-    AnimationHandle, AnimationRuntime, AnimationTargetId, Duration, Easing, EffectSnapshot,
-    RouteAnimator, RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition, Timeline,
-    Timing, Track, iced_ext, property,
+    iced_ext::{self, EffectSnapshot},
+    property,
+    route::{RouteAnimator, RouteIncomingMotion, RouteScreenTargets, RouteScreenTransition},
+    runtime::{AnimationHandle, AnimationRuntime, AnimationTargetId},
+    timeline::{Timeline, Track},
+    timing::{Duration, Easing, Timing},
 };
 use iced::{
     Background, Border, Color, Element, Length, Shadow, Subscription, Task, Theme,
@@ -83,10 +86,8 @@ impl Demo {
             Message::Navigate(route) => self.navigate(route),
             Message::AnimationTick(tick_instant) => {
                 let tick = iced_ext::update_tick(&mut self.runtime, tick_instant);
-                let outgoing =
-                    aura_anim_iced::tick_effect_snapshot_for(&tick, self.outgoing_target);
-                let incoming =
-                    aura_anim_iced::tick_effect_snapshot_for(&tick, self.incoming_target);
+                let outgoing = iced_ext::tick_effect_snapshot_for(&tick, self.outgoing_target);
+                let incoming = iced_ext::tick_effect_snapshot_for(&tick, self.incoming_target);
 
                 if !outgoing.is_empty() {
                     self.outgoing_effects =

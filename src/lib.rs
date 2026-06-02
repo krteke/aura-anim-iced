@@ -41,43 +41,8 @@ pub mod state;
 pub mod timeline;
 pub mod timing;
 
-pub use behavior::{
-    ActivePropertyTransition, BehaviorRule, PropertyTransition, PropertyTransitionProgress,
-    PropertyTransitionRegistration, TransitionValueKind,
-};
-pub use defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults};
-pub use iced_ext::{
-    AnimationCompletionCleanup, AnimationFlow, AnimationFlowRegistration, AnimationTargetOutput,
-    EffectSnapshot, effect_snapshot, target_output_for, tick_effect_snapshot_for,
-};
-pub use keyframes::{Keyframe, Keyframes, KeyframesBuilder};
-pub use property::{
-    BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyKey, PropertySnapshot,
-    PropertySpec, PropertyValue, PropertyValueRead, RADIUS, SCALE, SHADOW, TEXT_COLOR, TRANSLATE,
-    TransformValue, WIDTH,
-};
-pub use route::{
-    ActiveRouteScreenTransition, ActiveRouteTransition, RouteAnimator, RouteIncomingMotion,
-    RouteScreenTargets, RouteScreenTransition, RouteScreenTransitionRegistration, RouteTransition,
-    RouteTransitionRegistration, RouteTransitionSet,
-};
-pub use runtime::{
-    AnimationHandle, AnimationPlaybackState, AnimationRegistration, AnimationRuntime,
-    AnimationTargetId, AnimationTick, TargetedPropertySnapshot, TickPolicy,
-};
-pub use state::{
-    ActiveStateTransition, StateAnimator, StateTransition, StateTransitionProgress,
-    StateTransitionRegistration, StateTransitionSet,
-};
-pub use timeline::{
-    Hold, Parallel, PropertyTrackBuilder, Sequence, Timeline, TimelineMarker, TimelineStep, Track,
-};
-pub use timing::{
-    Delay, Direction, Duration, Easing, FillMode, IterationCount, NormalizedTiming, Timing,
-    TimingPhase, TimingSampleState,
-};
-
 use crate::animatable::Animatable;
+use crate::property::{PropertyValue, TransformValue};
 
 const EPSILON_F32: f32 = 1e-5;
 const EPSILON_F64: f64 = 1e-10;
