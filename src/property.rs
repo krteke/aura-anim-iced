@@ -6,7 +6,10 @@ mod spec;
 mod tests;
 mod value;
 
-pub use kind::{Color, PropertyValueKind, Rectangle, Scalar, Shadow, Size, Transform, Vector2};
+pub use kind::{
+    Color, PropertyValueKind, PropertyValueRead, Rectangle, Scalar, Shadow, Size, Transform,
+    Vector2,
+};
 pub use spec::{PropertySpec, RawPropertySpec};
 pub use value::{PropertyValue, TransformValue};
 

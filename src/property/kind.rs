@@ -20,6 +20,12 @@ macro_rules! impl_property_value_kinds {
             fn wrap(value: Self::Inner) -> $value_enum;
         }
 
+        /// Reads typed values back from erased runtime output.
+        pub trait PropertyValueRead: PropertyValueKind {
+            /// Returns the typed value when `value` matches this property kind.
+            fn read(value: &$value_enum) -> Option<Self::Inner>;
+        }
+
         $(
             #[doc = concat!("Marker type for [`PropertyValue::", stringify!($variant), "`] properties.")]
             #[derive(Debug, Clone, Copy, PartialEq)]
@@ -30,6 +36,16 @@ macro_rules! impl_property_value_kinds {
 
                 fn wrap(value: Self::Inner) -> $value_enum {
                     $value_enum::$variant(value)
+                }
+            }
+
+            impl PropertyValueRead for $kind {
+                fn read(value: &$value_enum) -> Option<Self::Inner> {
+                    let $value_enum::$variant(value) = value else {
+                        return None;
+                    };
+
+                    Some(*value)
                 }
             }
         )*

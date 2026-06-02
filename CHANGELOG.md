@@ -7,6 +7,8 @@
 - Added `AnimationFlow` as a standard Iced integration path that owns a runtime,
   reuses tick output, captures registration-time visual values, routes tick
   updates, and exposes subscription gating from one product-facing API.
+- Added `AnimationTargetOutput` for reusable target-scoped visual output reads
+  from product view code.
 
 ## v0.2.1 - 2026-06-02
 

@@ -45,14 +45,14 @@ pub use behavior::{
     PropertyTransitionRegistration, TransitionValueKind,
 };
 pub use iced_ext::{
-    AnimationFlow, AnimationFlowRegistration, EffectSnapshot, effect_snapshot,
-    tick_effect_snapshot_for,
+    AnimationFlow, AnimationFlowRegistration, AnimationTargetOutput, EffectSnapshot,
+    effect_snapshot, target_output_for, tick_effect_snapshot_for,
 };
 pub use keyframes::{Keyframe, Keyframes, KeyframesBuilder};
 pub use property::{
     BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyKey, PropertySnapshot,
-    PropertySpec, PropertyValue, RADIUS, SCALE, SHADOW, TEXT_COLOR, TRANSLATE, TransformValue,
-    WIDTH,
+    PropertySpec, PropertyValue, PropertyValueRead, RADIUS, SCALE, SHADOW, TEXT_COLOR, TRANSLATE,
+    TransformValue, WIDTH,
 };
 pub use route::{
     ActiveRouteScreenTransition, ActiveRouteTransition, RouteAnimator, RouteIncomingMotion,

@@ -8,7 +8,7 @@ use crate::{
     runtime::{AnimationClock, SystemClock},
 };
 
-use super::{EffectSnapshot, subscription, tick_effect_snapshot_for};
+use super::{AnimationTargetOutput, EffectSnapshot, subscription, tick_effect_snapshot_for};
 
 /// Captures runtime registration output for the standard animation flow.
 ///
@@ -106,6 +106,12 @@ impl<C> AnimationFlow<C> {
     #[must_use]
     pub fn effects_for(&self, target: AnimationTargetId) -> EffectSnapshot {
         tick_effect_snapshot_for(&self.output, target)
+    }
+
+    /// Returns view-facing output for a target from the latest flow output.
+    #[must_use]
+    pub fn target(&self, target: AnimationTargetId) -> AnimationTargetOutput<'_> {
+        AnimationTargetOutput::from_tick(&self.output, target)
     }
 }
 

@@ -150,8 +150,21 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
         0.5,
         epsilon = 1e-5
     );
-    assert!(flow.effects_for(incoming_target).opacity.is_some());
-    assert!(flow.effects_for(incoming_target).translation.is_some());
+    assert_approx_eq!(
+        f32,
+        flow.target(incoming_target)
+            .get(OPACITY)
+            .expect("incoming opacity"),
+        0.5,
+        epsilon = 1e-5
+    );
+    assert_eq!(
+        flow.target(incoming_target)
+            .effects()
+            .translation
+            .expect("incoming translation"),
+        iced::Vector::new(10.0, 0.0)
+    );
 
     flow.runtime_mut()
         .clock_mut()
@@ -163,8 +176,8 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
     assert!(!flow.should_subscribe());
     assert_approx_eq!(
         f32,
-        flow.effects_for(value_target)
-            .opacity
+        flow.target(value_target)
+            .get(OPACITY)
             .expect("completion opacity"),
         1.0,
         epsilon = 1e-5
@@ -180,7 +193,7 @@ fn flow_routes_value_behavior_state_and_route_through_one_update_path() {
         200.0,
         epsilon = 1e-5
     );
-    let incoming_completion = flow.effects_for(incoming_target);
+    let incoming_completion = flow.target(incoming_target).effects();
     assert_approx_eq!(
         f32,
         incoming_completion.opacity.expect("incoming opacity"),

@@ -2,6 +2,7 @@
 
 mod effect;
 mod flow;
+mod output;
 
 use iced::Subscription;
 use std::time::{Duration as StdDuration, Instant};
@@ -13,6 +14,7 @@ mod tests;
 
 pub use effect::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
 pub use flow::{AnimationFlow, AnimationFlowRegistration};
+pub use output::{AnimationTargetOutput, target_output_for};
 
 /// Returns whether the runtime should keep an Iced tick subscription active.
 #[must_use]
