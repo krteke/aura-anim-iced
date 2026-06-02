@@ -31,6 +31,12 @@ impl AnimationRegistration {
         self.handle
     }
 
+    /// Returns the target this animation was registered for.
+    #[must_use]
+    pub const fn target(&self) -> AnimationTargetId {
+        self.target
+    }
+
     /// Returns the initial playback state.
     #[must_use]
     pub const fn state(&self) -> AnimationPlaybackState {

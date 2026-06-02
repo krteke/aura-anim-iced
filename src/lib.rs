@@ -44,7 +44,10 @@ pub use behavior::{
     ActivePropertyTransition, BehaviorRule, PropertyTransition, PropertyTransitionProgress,
     PropertyTransitionRegistration, TransitionValueKind,
 };
-pub use iced_ext::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
+pub use iced_ext::{
+    AnimationFlow, AnimationFlowRegistration, EffectSnapshot, effect_snapshot,
+    tick_effect_snapshot_for,
+};
 pub use keyframes::{Keyframe, Keyframes, KeyframesBuilder};
 pub use property::{
     BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyKey, PropertySnapshot,

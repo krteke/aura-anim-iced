@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added `AnimationFlow` as a standard Iced integration path that owns a runtime,
+  reuses tick output, captures registration-time visual values, routes tick
+  updates, and exposes subscription gating from one product-facing API.
+
 ## v0.2.1 - 2026-06-02
 
 ### Performance Optimizations

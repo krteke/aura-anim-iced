@@ -1,4 +1,4 @@
-use super::{AnimationHandle, AnimationPlaybackState};
+use super::{AnimationHandle, AnimationPlaybackState, AnimationRegistration};
 use crate::runtime::{
     registry::AnimationRegistry,
     target::{AnimationTargetId, TargetedPropertySnapshot},
@@ -64,6 +64,26 @@ impl AnimationTick {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.properties.is_empty()
+    }
+
+    pub(crate) fn clear(&mut self) {
+        self.timestamp = Duration::ZERO;
+        self.properties.clear();
+        self.completed.clear();
+        self.removed.clear();
+        self.scratch.clear();
+    }
+
+    pub(crate) fn capture_registration(&mut self, registration: &AnimationRegistration) {
+        if let Some(completed_at) = registration.completed_at() {
+            self.timestamp = completed_at;
+            self.completed.push(registration.handle());
+        }
+
+        if let Some(properties) = registration.properties() {
+            self.properties
+                .merge_entries(registration.target(), properties.entries());
+        }
     }
 }
 

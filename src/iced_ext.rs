@@ -1,6 +1,7 @@
 //! Iced integration helpers.
 
 mod effect;
+mod flow;
 
 use iced::Subscription;
 use std::time::{Duration as StdDuration, Instant};
@@ -11,6 +12,7 @@ use crate::runtime::{AnimationClock, AnimationRuntime, AnimationTick};
 mod tests;
 
 pub use effect::{EffectSnapshot, effect_snapshot, tick_effect_snapshot_for};
+pub use flow::{AnimationFlow, AnimationFlowRegistration};
 
 /// Returns whether the runtime should keep an Iced tick subscription active.
 #[must_use]
