@@ -1,6 +1,8 @@
 //! Animation color interpolation support lives in [`crate::color`].
 
 #[cfg(feature = "palette")]
+use crate::color::srgba_to_oklaba;
+#[cfg(feature = "palette")]
 use palette::Oklaba;
 
 use crate::{
@@ -10,8 +12,6 @@ use crate::{
 
 impl Animatable for AnimColor {
     fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
-        use crate::color::srgba_to_oklaba;
-
         interpolate_with_progress(from, to, progress, |from, to, progress| match (from, to) {
             (Self::Srgba(from), Self::Srgba(to)) => {
                 Self::Srgba(interpolate_srgba(from, to, progress))

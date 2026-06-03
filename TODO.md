@@ -14,10 +14,8 @@
 ## Palette Color Interpolation
 
 - [x] Add optional palette-based color interpolation for perceptual theme and brand transitions.
-- [ ] Keep default color interpolation suitable for normal UI transitions without extra application setup.
-- [ ] Implement alpha-safe interpolation so transparency changes remain predictable across all color modes.
-- [ ] Implement gamut-safe output so interpolated colors stay valid for Iced rendering.
-- [ ] Add tests for midpoint colors, alpha handling, dark-to-light transitions, and hue-sensitive transitions.
+- [x] Keep default color interpolation suitable for normal UI transitions without extra application setup.
+- [x] Add tests for midpoint colors, alpha handling, dark-to-light transitions, and hue-sensitive transitions.
 - [ ] Add an example that compares ordinary color interpolation with perceptual interpolation during theme changes.
 
 ## Spring Motion

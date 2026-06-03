@@ -22,6 +22,8 @@
 - Added `AnimColor` as the animation color value model, with always-available
   sRGB-alpha interpolation and optional `palette`-backed Oklab-alpha sampling
   for perceptual theme and brand color transitions.
+- Added color interpolation regression coverage for sRGB midpoint and alpha
+  sampling, dark-to-light transitions, and palette hue-sensitive transitions.
 - Changed the crate root to expose public modules without root-level
   re-exports, and reduced the prelude to common product animation imports.
 

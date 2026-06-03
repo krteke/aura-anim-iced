@@ -248,6 +248,26 @@ fn anim_color_srgba_interpolation_samples_midpoint() {
 }
 
 #[test]
+fn anim_color_srgba_interpolation_samples_alpha_midpoint() {
+    let from = AnimColor::srgba(0.2, 0.4, 0.6, 0.0);
+    let to = AnimColor::srgba(0.8, 0.6, 0.4, 1.0);
+
+    let sampled = AnimColor::interpolate(from, to, 0.5).into_iced();
+
+    assert_color_close(sampled, Color::from_rgba(0.5, 0.5, 0.5, 0.5));
+}
+
+#[test]
+fn anim_color_srgba_interpolation_samples_dark_to_light_midpoint() {
+    let from = AnimColor::srgba(0.02, 0.04, 0.06, 1.0);
+    let to = AnimColor::srgba(0.92, 0.96, 1.0, 1.0);
+
+    let sampled = AnimColor::interpolate(from, to, 0.5).into_iced();
+
+    assert_color_close(sampled, Color::from_rgba(0.47, 0.5, 0.53, 1.0));
+}
+
+#[test]
 fn anim_color_interpolation_clamps_progress() {
     let from = AnimColor::from(Color::from_rgba(0.1, 0.2, 0.3, 0.4));
     let to = AnimColor::from(Color::from_rgba(0.6, 0.7, 0.8, 0.9));
@@ -301,4 +321,38 @@ fn anim_color_oklaba_interpolation_preserves_endpoints_and_clamps_output() {
     assert!((0.0..=1.0).contains(&sampled.g));
     assert!((0.0..=1.0).contains(&sampled.b));
     assert_approx_eq!(f32, sampled.a, 0.5, epsilon = 1e-5);
+}
+
+#[cfg(feature = "palette")]
+#[test]
+fn anim_color_oklaba_interpolation_handles_hue_sensitive_transition() {
+    let from = Color::from_rgba(1.0, 0.05, 0.0, 0.35);
+    let to = Color::from_rgba(0.0, 0.15, 1.0, 0.85);
+    let srgb = AnimColor::interpolate(from.into(), to.into(), 0.5).into_iced();
+    let oklab = AnimColor::interpolate(
+        AnimColor::oklaba_from_iced(from),
+        AnimColor::oklaba_from_iced(to),
+        0.5,
+    )
+    .into_iced();
+
+    assert_color_close(srgb, Color::from_rgba(0.5, 0.1, 0.5, 0.6));
+    assert_approx_eq!(f32, oklab.a, 0.6, epsilon = 1e-5);
+    assert!((oklab.r - srgb.r).abs() > 0.05);
+    assert!((oklab.g - srgb.g).abs() > 0.05);
+    assert!((oklab.b - srgb.b).abs() > 0.05);
+}
+
+#[cfg(feature = "palette")]
+#[test]
+fn anim_color_oklaba_interpolation_samples_dark_to_light_transition() {
+    let from = AnimColor::oklaba_from_iced(Color::from_rgba(0.01, 0.02, 0.04, 0.1));
+    let to = AnimColor::oklaba_from_iced(Color::from_rgba(0.96, 0.98, 1.0, 0.9));
+
+    let sampled = AnimColor::interpolate(from, to, 0.5).into_iced();
+
+    assert_approx_eq!(f32, sampled.a, 0.5, epsilon = 1e-5);
+    assert!(sampled.r > 0.25 && sampled.r < 0.85);
+    assert!(sampled.g > 0.25 && sampled.g < 0.85);
+    assert!(sampled.b > 0.25 && sampled.b < 0.85);
 }
