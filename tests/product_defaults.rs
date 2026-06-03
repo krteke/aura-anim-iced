@@ -38,16 +38,6 @@ fn product_motion_defaults_can_be_overridden_for_application_style() {
     assert_eq!(timing.fill_mode(), FillMode::Both);
 }
 
-#[cfg(feature = "palette")]
-#[test]
-fn palette_feature_enables_color_interpolation_defaults() {
-    use aura_anim_iced::defaults::ColorInterpolationMode;
-
-    let defaults = DefaultMotions::default().with_color_interpolation(ColorInterpolationMode::Srgb);
-
-    assert_eq!(defaults.color_interpolation(), ColorInterpolationMode::Srgb);
-}
-
 #[cfg(feature = "spring")]
 #[test]
 fn spring_feature_enables_spring_motion_defaults() {

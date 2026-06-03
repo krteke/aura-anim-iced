@@ -212,11 +212,17 @@ fn popup_open_keyframes(from: &EffectSnapshot) -> Keyframes {
         .at(1.0, (property::RADIUS, 18.0))
         .at(
             1.0,
-            (property::BACKGROUND, Color::from_rgb(0.09, 0.12, 0.16)),
+            (
+                property::BACKGROUND,
+                aura_anim_iced::color::AnimColor::from(Color::from_rgb(0.09, 0.12, 0.16)),
+            ),
         )
         .at(
             1.0,
-            (property::BORDER_COLOR, Color::from_rgb(0.35, 0.54, 0.74)),
+            (
+                property::BORDER_COLOR,
+                aura_anim_iced::color::AnimColor::from(Color::from_rgb(0.35, 0.54, 0.74)),
+            ),
         )
         .at(
             1.0,

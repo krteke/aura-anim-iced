@@ -19,7 +19,8 @@
 
 pub use crate::behavior::{BehaviorRule, PropertyTransition};
 #[cfg(feature = "palette")]
-pub use crate::defaults::ColorInterpolationMode;
+pub use crate::color::Oklaba;
+pub use crate::color::{AnimColor, Srgba};
 pub use crate::defaults::DefaultMotions;
 #[cfg(feature = "spring")]
 pub use crate::defaults::SpringMotionDefaults;

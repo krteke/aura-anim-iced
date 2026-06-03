@@ -4,7 +4,7 @@ Iced-first animation orchestration for applications that need coordinated
 property changes, state transitions, and screen-to-screen route motion.
 
 This crate builds on Iced's public animation surface instead of replacing it.
-User-facing APIs use Iced types such as `iced::Color`, `iced::Vector`,
+User-facing APIs use Iced types such as `iced::Vector`,
 `iced::Size`, `iced::Rectangle`, `iced::Shadow`, and
 `iced::animation::Easing`.
 
@@ -144,6 +144,7 @@ use std::time::Instant;
 
 use aura_anim_iced::{
     behavior::{BehaviorRule, PropertyTransition},
+    color::AnimColor,
     defaults::DefaultMotions,
     iced_ext::{AnimationFlow, EffectSnapshot},
     keyframes::KeyframesBuilder,
@@ -251,9 +252,9 @@ impl ProductUi {
                     self.theme_target,
                     KeyframesBuilder::new()
                         .with_timing(self.defaults.timing())
-                        .at(0.0, (BACKGROUND, iced::Color::TRANSPARENT))
-                        .at(1.0, (BACKGROUND, background))
-                        .at(1.0, (TEXT_COLOR, text))
+                        .at(0.0, (BACKGROUND, AnimColor::from(iced::Color::TRANSPARENT)))
+                        .at(1.0, (BACKGROUND, AnimColor::from(background)))
+                        .at(1.0, (TEXT_COLOR, AnimColor::from(text)))
                         .finish(),
                 );
                 self.flow.capture(&registration);
@@ -301,22 +302,22 @@ stores the spring feel that future spring animation sources should use when the
 
 ## Animatable Values
 
-Public animation inputs use Iced value types wherever possible. The v0.1 value
-model covers scalar values, `iced::Vector`, `iced::Size`, `iced::Rectangle`,
-`iced::Color`, `iced::Shadow`, and transform-friendly values. Interpolation is
-kept internal so application code works with typed properties and sampled
-snapshots instead of implementing animation traits.
+Public animation inputs use Iced value types wherever possible. The value model
+covers scalar values, `iced::Vector`, `iced::Size`, `iced::Rectangle`,
+`iced::Shadow`, transform-friendly values, and `AnimColor`. Color animation uses
+`AnimColor` so the sampled value carries its color-space semantics instead of
+passing interpolation mode through the runtime.
 
 ```rust
-use aura_anim_iced::{keyframes::KeyframesBuilder, property, timing::Timing};
+use aura_anim_iced::{color::AnimColor, keyframes::KeyframesBuilder, property, timing::Timing};
 use iced::Color;
 
 let fade_and_color = KeyframesBuilder::new()
     .with_timing(Timing::new(160.0))
     .at(0.0, (property::OPACITY, 0.0))
     .at(1.0, (property::OPACITY, 1.0))
-    .at(0.0, (property::BACKGROUND, Color::from_rgb(0.12, 0.14, 0.18)))
-    .at(1.0, (property::BACKGROUND, Color::from_rgb(0.20, 0.36, 0.52)))
+    .at(0.0, (property::BACKGROUND, AnimColor::from(Color::from_rgb(0.12, 0.14, 0.18))))
+    .at(1.0, (property::BACKGROUND, AnimColor::from(Color::from_rgb(0.20, 0.36, 0.52))))
     .finish();
 ```
 
@@ -363,6 +364,34 @@ let popup_open = KeyframesBuilder::new()
 
 Duplicate offsets are merged. If the same property appears multiple times at
 the same offset, the later value wins.
+
+## Palette Color Interpolation
+
+Enable the `palette` feature when color-heavy theme or brand motion should carry
+colors in perceptual Oklab space instead of sRGB. The perceptual color-space
+conversion is provided by the `palette` crate.
+
+```rust
+use aura_anim_iced::{
+    color::AnimColor,
+    keyframes::KeyframesBuilder,
+    property,
+};
+
+let theme_shift = KeyframesBuilder::new()
+    .at(0.0, (
+        property::BACKGROUND,
+        AnimColor::oklaba_from_srgba(0.95, 0.12, 0.08, 1.0),
+    ))
+    .at(1.0, (
+        property::BACKGROUND,
+        AnimColor::oklaba_from_srgba(0.05, 0.28, 0.96, 1.0),
+    ))
+    .finish();
+```
+
+Without the `palette` feature, `AnimColor::Srgba` remains available and color
+properties interpolate in sRGB component space.
 
 ## Timeline Orchestration
 

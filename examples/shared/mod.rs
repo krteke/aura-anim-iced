@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use aura_anim_iced::{
+    color::AnimColor,
     iced_ext::{self, EffectSnapshot},
     keyframes::KeyframesBuilder,
     property::{self, PropertySpec, PropertyValue},
@@ -63,8 +64,8 @@ pub(crate) fn color_track(
     Track::new(
         KeyframesBuilder::new()
             .with_timing(timing)
-            .at(0.0, (spec, from))
-            .at(1.0, (spec, to))
+            .at(0.0, (spec, AnimColor::from(from)))
+            .at(1.0, (spec, AnimColor::from(to)))
             .finish(),
     )
 }

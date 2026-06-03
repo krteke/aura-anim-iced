@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use super::{EffectSnapshot, effect_snapshot, should_subscribe, subscription, update_tick};
 use crate::{
+    color::AnimColor,
     keyframes::KeyframesBuilder,
     property::{
         BACKGROUND, BORDER_COLOR, HEIGHT, OPACITY, PADDING, PropertyEntry, PropertySnapshot,
@@ -75,9 +76,9 @@ fn effect_snapshot_extracts_all_supported_builtin_effects() {
         PropertyEntry::new(PADDING, 16.0),
         PropertyEntry::new(SCALE, 1.2),
         PropertyEntry::new(RADIUS, 8.0),
-        PropertyEntry::new(BACKGROUND, background),
-        PropertyEntry::new(BORDER_COLOR, border),
-        PropertyEntry::new(TEXT_COLOR, text),
+        PropertyEntry::new(BACKGROUND, AnimColor::from(background)),
+        PropertyEntry::new(BORDER_COLOR, AnimColor::from(border)),
+        PropertyEntry::new(TEXT_COLOR, AnimColor::from(text)),
         PropertyEntry::new(SHADOW, shadow),
     ]);
 
@@ -98,9 +99,9 @@ fn effect_snapshot_extracts_all_supported_builtin_effects() {
 
 #[test]
 fn effect_snapshot_ignores_wrong_value_shapes_and_unknown_properties() {
-    let wrong = PropertySnapshot::from(vec![PropertyEntry::new(
-        BACKGROUND,
-        iced::Color::from_rgb(0.1, 0.2, 0.3),
+    let wrong = PropertySnapshot::from(vec![PropertyEntry::new_unchecked(
+        BACKGROUND.raw(),
+        crate::property::PropertyValue::Scalar(0.5),
     )]);
     let mut wrong_shape = PropertySnapshot::from(vec![PropertyEntry::new(OPACITY, 0.5)]);
     wrong_shape.merge(wrong);

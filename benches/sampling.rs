@@ -422,17 +422,32 @@ fn color_keyframes_builder() -> KeyframesBuilder {
         .at(
             0.0,
             PropertySnapshot::from(vec![
-                property::PropertyEntry::new(BACKGROUND, iced::Color::from_rgb(0.08, 0.12, 0.16)),
-                property::PropertyEntry::new(BORDER_COLOR, iced::Color::from_rgb(0.24, 0.34, 0.46)),
-                property::PropertyEntry::new(TEXT_COLOR, iced::Color::from_rgb(0.86, 0.90, 0.94)),
+                property::PropertyEntry::new(
+                    BACKGROUND,
+                    iced::Color::from_rgb(0.08, 0.12, 0.16).into(),
+                ),
+                property::PropertyEntry::new(
+                    BORDER_COLOR,
+                    iced::Color::from_rgb(0.24, 0.34, 0.46).into(),
+                ),
+                property::PropertyEntry::new(
+                    TEXT_COLOR,
+                    iced::Color::from_rgb(0.86, 0.90, 0.94).into(),
+                ),
             ]),
         )
         .at(
             1.0,
             PropertySnapshot::from(vec![
-                property::PropertyEntry::new(BACKGROUND, iced::Color::from_rgb(0.18, 0.30, 0.42)),
-                property::PropertyEntry::new(BORDER_COLOR, iced::Color::from_rgb(0.54, 0.72, 0.90)),
-                property::PropertyEntry::new(TEXT_COLOR, iced::Color::WHITE),
+                property::PropertyEntry::new(
+                    BACKGROUND,
+                    iced::Color::from_rgb(0.18, 0.30, 0.42).into(),
+                ),
+                property::PropertyEntry::new(
+                    BORDER_COLOR,
+                    iced::Color::from_rgb(0.54, 0.72, 0.90).into(),
+                ),
+                property::PropertyEntry::new(TEXT_COLOR, iced::Color::WHITE.into()),
             ]),
         )
 }

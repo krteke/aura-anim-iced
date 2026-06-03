@@ -32,7 +32,7 @@ harness = false
 
 [features]
 default = []
-palette = []
+palette = ["dep:palette"]
 spring = []
 widgets = []
 theme = []
@@ -43,6 +43,7 @@ inspector = ["tracing"]
 
 [dependencies]
 iced = { version = "0.14", features = ["tokio"] }
+palette = { version = "0.7.6", optional = true, default-features = false, features = ["std"] }
 serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }
 smallvec = "1.15.1"

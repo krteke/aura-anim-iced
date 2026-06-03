@@ -5,7 +5,10 @@ use super::{
     PropertySnapshot, PropertySpec, PropertyValue, RADIUS, SCALE, SHADOW, TEXT_COLOR,
     TransformValue, WIDTH,
 };
-use crate::property::{Size, Vector2};
+use crate::{
+    color::AnimColor,
+    property::{Size, Vector2},
+};
 
 const OFFSET: PropertySpec<Vector2> = PropertySpec::new(PropertyKey::new("test", "offset"), 20);
 const BOX_SIZE: PropertySpec<Size> = PropertySpec::new(PropertyKey::new("test", "size"), 30);
@@ -126,7 +129,7 @@ fn mixed_snapshot_preserves_non_scalar_iced_values() {
         blur_radius: 8.0,
     };
     let snapshot = PropertySnapshot::from(vec![
-        PropertyEntry::new(BACKGROUND, color),
+        PropertyEntry::new(BACKGROUND, AnimColor::from(color)),
         PropertyEntry::new(SHADOW, shadow),
     ]);
 
@@ -134,7 +137,7 @@ fn mixed_snapshot_preserves_non_scalar_iced_values() {
         snapshot
             .find_property(&BACKGROUND.raw())
             .map(PropertyEntry::value),
-        Some(&PropertyValue::Color(color))
+        Some(&PropertyValue::Color(AnimColor::from(color)))
     );
     assert_eq!(
         snapshot

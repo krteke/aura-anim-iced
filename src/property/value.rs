@@ -1,4 +1,4 @@
-use crate::animatable::Animatable;
+use crate::{animatable::Animatable, color::AnimColor};
 
 /// A typed value carried by an animation property.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -13,8 +13,8 @@ pub enum PropertyValue {
     Rectangle(iced::Rectangle),
     /// A transform value used by transform-friendly properties.
     Transform(TransformValue),
-    /// An Iced color value.
-    Color(iced::Color),
+    /// An animation color value.
+    Color(AnimColor),
     /// An Iced shadow value.
     Shadow(iced::Shadow),
 }

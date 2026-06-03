@@ -30,6 +30,7 @@
 
 pub(crate) mod animatable;
 pub mod behavior;
+pub mod color;
 pub mod defaults;
 pub mod iced_ext;
 pub mod keyframes;
@@ -77,7 +78,7 @@ fn interpolate_value(
             PropertyValue::Transform(TransformValue::interpolate(from, to, progress)),
         ),
         (PropertyValue::Color(from), PropertyValue::Color(to)) => Some(PropertyValue::Color(
-            iced::Color::interpolate(from, to, progress),
+            crate::color::AnimColor::interpolate(from, to, progress),
         )),
         (PropertyValue::Shadow(from), PropertyValue::Shadow(to)) => Some(PropertyValue::Shadow(
             iced::Shadow::interpolate(from, to, progress),

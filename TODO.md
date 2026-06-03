@@ -13,7 +13,7 @@
 
 ## Palette Color Interpolation
 
-- [ ] Add optional palette-based color interpolation for perceptual theme and brand transitions.
+- [x] Add optional palette-based color interpolation for perceptual theme and brand transitions.
 - [ ] Keep default color interpolation suitable for normal UI transitions without extra application setup.
 - [ ] Implement alpha-safe interpolation so transparency changes remain predictable across all color modes.
 - [ ] Implement gamut-safe output so interpolated colors stay valid for Iced rendering.

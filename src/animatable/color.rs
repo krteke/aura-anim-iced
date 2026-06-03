@@ -1,30 +1,51 @@
-//! Iced color interpolation support.
+//! Animation color interpolation support lives in [`crate::color`].
 
-use iced::Color;
+#[cfg(feature = "palette")]
+use palette::Oklaba;
 
-use super::{Animatable, InterpolationProgress, interpolate_with_progress};
-use crate::animatable::lerp_f32_raw;
+use crate::{
+    animatable::{Animatable, InterpolationProgress, interpolate_with_progress, lerp_f32_raw},
+    color::{AnimColor, Srgba},
+};
 
-impl Animatable for Color {
+impl Animatable for AnimColor {
     fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
-        interpolate_with_progress(from, to, progress, |from, to, progress| {
-            let progress = progress.value();
+        use crate::color::srgba_to_oklaba;
 
-            Self {
-                r: lerp_f32_raw(from.r, to.r, progress),
-                g: lerp_f32_raw(from.g, to.g, progress),
-                b: lerp_f32_raw(from.b, to.b, progress),
-                a: lerp_f32_raw(from.a, to.a, progress),
+        interpolate_with_progress(from, to, progress, |from, to, progress| match (from, to) {
+            (Self::Srgba(from), Self::Srgba(to)) => {
+                Self::Srgba(interpolate_srgba(from, to, progress))
+            }
+            #[cfg(feature = "palette")]
+            (Self::Oklaba(from), Self::Oklaba(to)) => {
+                Self::Oklaba(interpolate_oklaba(from, to, progress))
+            }
+            #[cfg(feature = "palette")]
+            (Self::Srgba(from), Self::Oklaba(to)) => {
+                Self::Oklaba(interpolate_oklaba(srgba_to_oklaba(from), to, progress))
+            }
+            #[cfg(feature = "palette")]
+            (Self::Oklaba(from), Self::Srgba(to)) => {
+                Self::Oklaba(interpolate_oklaba(from, srgba_to_oklaba(to), progress))
             }
         })
     }
 }
 
-pub(super) fn lerp_color_raw(from: Color, to: Color, progress: f32) -> Color {
-    Color {
-        r: lerp_f32_raw(from.r, to.r, progress),
-        g: lerp_f32_raw(from.g, to.g, progress),
-        b: lerp_f32_raw(from.b, to.b, progress),
-        a: lerp_f32_raw(from.a, to.a, progress),
-    }
+fn interpolate_srgba(from: Srgba, to: Srgba, progress: InterpolationProgress) -> Srgba {
+    let progress = progress.value();
+
+    Srgba::new(
+        lerp_f32_raw(from.red, to.red, progress),
+        lerp_f32_raw(from.green, to.green, progress),
+        lerp_f32_raw(from.blue, to.blue, progress),
+        lerp_f32_raw(from.alpha, to.alpha, progress),
+    )
+}
+
+#[cfg(feature = "palette")]
+fn interpolate_oklaba(from: Oklaba, to: Oklaba, progress: InterpolationProgress) -> Oklaba {
+    use palette::Mix;
+
+    from.mix(to, progress.value())
 }

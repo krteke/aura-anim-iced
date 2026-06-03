@@ -2,6 +2,7 @@ use float_cmp::assert_approx_eq;
 
 use super::{Keyframe, KeyframesBuilder, segment::KeyframeSegment};
 use crate::{
+    color::AnimColor,
     property::{
         BACKGROUND, OPACITY, PropertyEntry, PropertyKey, PropertySnapshot, PropertySpec,
         PropertyValue, SCALE, Size, Vector2, WIDTH,
@@ -85,7 +86,7 @@ fn helper_builders_insert_common_typed_properties() {
         keyframes.frames[0]
             .find_property(&BACKGROUND.raw())
             .map(PropertyEntry::value),
-        Some(&PropertyValue::Color(color))
+        Some(&PropertyValue::Color(AnimColor::from(color)))
     );
     assert_eq!(keyframes.timing().delay(), Delay::from_millis(20.0));
 }
@@ -131,7 +132,7 @@ fn sample_at_interpolates_scalar_color_vector_and_size_values() {
                 PropertyEntry::new(WIDTH, 100.0),
                 PropertyEntry::new(OFFSET, iced::Vector::new(0.0, 10.0)),
                 PropertyEntry::new(BOX_SIZE, iced::Size::new(20.0, 40.0)),
-                PropertyEntry::new(BACKGROUND, from_color),
+                PropertyEntry::new(BACKGROUND, AnimColor::from(from_color)),
             ]),
         )
         .at(
@@ -141,7 +142,7 @@ fn sample_at_interpolates_scalar_color_vector_and_size_values() {
                 PropertyEntry::new(WIDTH, 200.0),
                 PropertyEntry::new(OFFSET, iced::Vector::new(10.0, 30.0)),
                 PropertyEntry::new(BOX_SIZE, iced::Size::new(40.0, 80.0)),
-                PropertyEntry::new(BACKGROUND, to_color),
+                PropertyEntry::new(BACKGROUND, AnimColor::from(to_color)),
             ]),
         )
         .finish();
@@ -168,8 +169,34 @@ fn sample_at_interpolates_scalar_color_vector_and_size_values() {
     else {
         panic!("expected color");
     };
+    let color = color.into_iced();
     assert_approx_eq!(f32, color.r, 0.5, epsilon = 1e-5);
     assert_approx_eq!(f32, color.g, 0.4, epsilon = 1e-5);
+}
+
+#[cfg(feature = "palette")]
+#[test]
+fn sample_at_uses_anim_color_space_for_palette_interpolation() {
+    let from_color = iced::Color::from_rgba(0.95, 0.12, 0.08, 0.2);
+    let to_color = iced::Color::from_rgba(0.05, 0.28, 0.96, 0.8);
+    let keyframes = KeyframesBuilder::new()
+        .at(0.0, (BACKGROUND, AnimColor::oklaba_from_iced(from_color)))
+        .at(1.0, (BACKGROUND, AnimColor::oklaba_from_iced(to_color)))
+        .finish();
+
+    let sampled = keyframes.sample_at(0.5).expect("sample");
+    let Some(PropertyValue::Color(color)) = sampled
+        .find_property(&BACKGROUND.raw())
+        .map(PropertyEntry::value)
+    else {
+        panic!("expected color");
+    };
+
+    let color = color.into_iced();
+    assert_approx_eq!(f32, color.a, 0.5, epsilon = 1e-5);
+    assert!((color.r - 0.5).abs() > 0.02);
+    assert!((color.g - 0.2).abs() > 0.02);
+    assert!((color.b - 0.52).abs() > 0.02);
 }
 
 #[test]
@@ -181,7 +208,10 @@ fn mismatched_value_shapes_drop_that_property_instead_of_panicking() {
         )
         .at(
             1.0,
-            PropertySnapshot::from(vec![PropertyEntry::new(SCALE_AS_COLOR, iced::Color::WHITE)]),
+            PropertySnapshot::from(vec![PropertyEntry::new(
+                SCALE_AS_COLOR,
+                AnimColor::from(iced::Color::WHITE),
+            )]),
         )
         .finish();
 

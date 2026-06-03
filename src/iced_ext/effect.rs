@@ -89,13 +89,13 @@ impl EffectSnapshot {
                     effects.radius = Some(*value);
                 }
                 PropertyValue::Color(value) if *entry.spec() == property::BACKGROUND.raw() => {
-                    effects.background = Some(*value);
+                    effects.background = Some((*value).into());
                 }
                 PropertyValue::Color(value) if *entry.spec() == property::BORDER_COLOR.raw() => {
-                    effects.border_color = Some(*value);
+                    effects.border_color = Some((*value).into());
                 }
                 PropertyValue::Color(value) if *entry.spec() == property::TEXT_COLOR.raw() => {
-                    effects.text_color = Some(*value);
+                    effects.text_color = Some((*value).into());
                 }
                 PropertyValue::Shadow(value) if *entry.spec() == property::SHADOW.raw() => {
                     effects.shadow = Some(*value);

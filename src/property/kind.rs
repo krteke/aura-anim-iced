@@ -1,4 +1,4 @@
-use crate::{PropertyValue, TransformValue};
+use crate::{PropertyValue, TransformValue, color::AnimColor};
 
 macro_rules! impl_property_value_kinds {
     (
@@ -59,7 +59,7 @@ impl_property_value_kinds!(
         Size => Size(iced::Size),
         Rectangle => Rectangle(iced::Rectangle),
         Transform => Transform(TransformValue),
-        Color => Color(iced::Color),
+        Color => Color(AnimColor),
         Shadow => Shadow(iced::Shadow),
     }
 );

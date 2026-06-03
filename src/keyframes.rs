@@ -170,20 +170,20 @@ impl KeyframesBuilder {
 
     /// Inserts a background color keyframe.
     #[must_use]
-    pub fn background_color(self, offset: f32, value: iced::Color) -> Self {
-        self.at(offset, (property::BACKGROUND, value))
+    pub fn background_color(self, offset: f32, value: impl Into<crate::color::AnimColor>) -> Self {
+        self.at(offset, (property::BACKGROUND, value.into()))
     }
 
     /// Inserts a border color keyframe.
     #[must_use]
-    pub fn border_color(self, offset: f32, value: iced::Color) -> Self {
-        self.at(offset, (property::BORDER_COLOR, value))
+    pub fn border_color(self, offset: f32, value: impl Into<crate::color::AnimColor>) -> Self {
+        self.at(offset, (property::BORDER_COLOR, value.into()))
     }
 
     /// Inserts a text color keyframe.
     #[must_use]
-    pub fn text_color(self, offset: f32, value: iced::Color) -> Self {
-        self.at(offset, (property::TEXT_COLOR, value))
+    pub fn text_color(self, offset: f32, value: impl Into<crate::color::AnimColor>) -> Self {
+        self.at(offset, (property::TEXT_COLOR, value.into()))
     }
 
     /// Inserts a shadow keyframe.

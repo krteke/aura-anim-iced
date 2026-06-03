@@ -3,6 +3,7 @@ use iced::{Color, Shadow, Vector};
 use iced::{Point, Rectangle, Size};
 
 use super::{Animatable, InterpolationProgress};
+use crate::color::{AnimColor, Srgba};
 
 #[test]
 fn f32_interpolation_clamps_progress() {
@@ -236,39 +237,68 @@ fn geometry_interpolation_clamps_progress() {
 }
 
 #[test]
-fn color_interpolation_samples_rgba_midpoint() {
-    let from = Color {
-        r: 0.0,
-        g: 0.25,
-        b: 0.5,
-        a: 0.75,
-    };
-    let to = Color {
-        r: 1.0,
-        g: 0.75,
-        b: 0.25,
-        a: 0.25,
-    };
-
-    let sampled = Color::interpolate(from, to, 0.5);
+fn anim_color_srgba_interpolation_samples_midpoint() {
+    let from = AnimColor::Srgba(Srgba::new(0.0, 0.25, 0.5, 0.75));
+    let to = AnimColor::Srgba(Srgba::new(1.0, 0.75, 0.25, 0.25));
 
     assert_eq!(
-        sampled,
-        Color {
-            r: 0.5,
-            g: 0.5,
-            b: 0.375,
-            a: 0.5,
-        }
+        AnimColor::interpolate(from, to, 0.5),
+        AnimColor::Srgba(Srgba::new(0.5, 0.5, 0.375, 0.5))
     );
 }
 
 #[test]
-fn color_interpolation_clamps_progress() {
-    let from = Color::from_rgba(0.1, 0.2, 0.3, 0.4);
-    let to = Color::from_rgba(0.6, 0.7, 0.8, 0.9);
+fn anim_color_interpolation_clamps_progress() {
+    let from = AnimColor::from(Color::from_rgba(0.1, 0.2, 0.3, 0.4));
+    let to = AnimColor::from(Color::from_rgba(0.6, 0.7, 0.8, 0.9));
 
-    assert_eq!(Color::interpolate(from, to, -1.0), from);
-    assert_eq!(Color::interpolate(from, to, f32::NAN), from);
-    assert_eq!(Color::interpolate(from, to, 2.0), to);
+    assert_eq!(AnimColor::interpolate(from, to, -1.0), from);
+    assert_eq!(AnimColor::interpolate(from, to, f32::NAN), from);
+    assert_eq!(AnimColor::interpolate(from, to, 2.0), to);
+}
+
+#[test]
+fn iced_color_converts_to_and_from_anim_color() {
+    let iced = Color::from_rgba(0.1, 0.2, 0.3, 0.4);
+    let anim = AnimColor::from(iced);
+
+    assert_eq!(anim, AnimColor::Srgba(Srgba::new(0.1, 0.2, 0.3, 0.4)));
+    assert_eq!(Color::from(anim), iced);
+}
+
+#[cfg(feature = "palette")]
+#[test]
+fn anim_color_oklaba_interpolation_samples_perceptual_midpoint() {
+    let from = Color::from_rgba(0.95, 0.12, 0.08, 0.2);
+    let to = Color::from_rgba(0.05, 0.28, 0.96, 0.8);
+    let from_oklaba = AnimColor::oklaba_from_iced(from);
+    let to_oklaba = AnimColor::oklaba_from_iced(to);
+
+    let srgb = AnimColor::interpolate(from.into(), to.into(), 0.5).into_iced();
+    let oklab = AnimColor::interpolate(from_oklaba, to_oklaba, 0.5).into_iced();
+
+    assert_color_close(srgb, Color::from_rgba(0.5, 0.2, 0.52, 0.5));
+    assert_approx_eq!(f32, oklab.a, 0.5, epsilon = 1e-5);
+    assert!((oklab.r - srgb.r).abs() > 0.02);
+    assert!((oklab.g - srgb.g).abs() > 0.02);
+    assert!((oklab.b - srgb.b).abs() > 0.02);
+}
+
+#[cfg(feature = "palette")]
+#[test]
+fn anim_color_oklaba_interpolation_preserves_endpoints_and_clamps_output() {
+    let from = Color::from_rgba(1.0, 0.0, 0.0, 0.25);
+    let to = Color::from_rgba(0.0, 0.0, 1.0, 0.75);
+    let from = AnimColor::oklaba_from_iced(from);
+    let to = AnimColor::oklaba_from_iced(to);
+
+    assert_eq!(AnimColor::interpolate(from, to, -1.0), from);
+    assert_eq!(AnimColor::interpolate(from, to, f32::NAN), from);
+    assert_eq!(AnimColor::interpolate(from, to, 2.0), to);
+
+    let sampled = AnimColor::interpolate(from, to, 0.5).into_iced();
+    assert!((0.0..=1.0).contains(&sampled.r));
+    assert!((0.0..=1.0).contains(&sampled.g));
+    assert!((0.0..=1.0).contains(&sampled.b));
+    assert_approx_eq!(f32, sampled.a, 0.5, epsilon = 1e-5);
 }
