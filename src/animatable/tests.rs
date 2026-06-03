@@ -289,10 +289,12 @@ fn iced_color_converts_to_and_from_anim_color() {
 #[cfg(feature = "palette")]
 #[test]
 fn anim_color_oklaba_interpolation_samples_perceptual_midpoint() {
+    use crate::color::tag;
+
     let from = Color::from_rgba(0.95, 0.12, 0.08, 0.2);
     let to = Color::from_rgba(0.05, 0.28, 0.96, 0.8);
-    let from_oklaba = AnimColor::oklaba_from_iced(from);
-    let to_oklaba = AnimColor::oklaba_from_iced(to);
+    let from_oklaba = AnimColor::from_color::<tag::Oklaba>(from);
+    let to_oklaba = AnimColor::from_color::<tag::Oklaba>(to);
 
     let srgb = AnimColor::interpolate(from.into(), to.into(), 0.5).into_iced();
     let oklab = AnimColor::interpolate(from_oklaba, to_oklaba, 0.5).into_iced();
@@ -307,10 +309,12 @@ fn anim_color_oklaba_interpolation_samples_perceptual_midpoint() {
 #[cfg(feature = "palette")]
 #[test]
 fn anim_color_oklaba_interpolation_preserves_endpoints_and_clamps_output() {
+    use crate::color::tag;
+
     let from = Color::from_rgba(1.0, 0.0, 0.0, 0.25);
     let to = Color::from_rgba(0.0, 0.0, 1.0, 0.75);
-    let from = AnimColor::oklaba_from_iced(from);
-    let to = AnimColor::oklaba_from_iced(to);
+    let from = AnimColor::from_color::<tag::Oklaba>(from);
+    let to = AnimColor::from_color::<tag::Oklaba>(to);
 
     assert_eq!(AnimColor::interpolate(from, to, -1.0), from);
     assert_eq!(AnimColor::interpolate(from, to, f32::NAN), from);
@@ -326,12 +330,14 @@ fn anim_color_oklaba_interpolation_preserves_endpoints_and_clamps_output() {
 #[cfg(feature = "palette")]
 #[test]
 fn anim_color_oklaba_interpolation_handles_hue_sensitive_transition() {
+    use crate::color::tag;
+
     let from = Color::from_rgba(1.0, 0.05, 0.0, 0.35);
     let to = Color::from_rgba(0.0, 0.15, 1.0, 0.85);
     let srgb = AnimColor::interpolate(from.into(), to.into(), 0.5).into_iced();
     let oklab = AnimColor::interpolate(
-        AnimColor::oklaba_from_iced(from),
-        AnimColor::oklaba_from_iced(to),
+        AnimColor::from_color::<tag::Oklaba>(from),
+        AnimColor::from_color::<tag::Oklaba>(to),
         0.5,
     )
     .into_iced();
@@ -346,8 +352,10 @@ fn anim_color_oklaba_interpolation_handles_hue_sensitive_transition() {
 #[cfg(feature = "palette")]
 #[test]
 fn anim_color_oklaba_interpolation_samples_dark_to_light_transition() {
-    let from = AnimColor::oklaba_from_iced(Color::from_rgba(0.01, 0.02, 0.04, 0.1));
-    let to = AnimColor::oklaba_from_iced(Color::from_rgba(0.96, 0.98, 1.0, 0.9));
+    use crate::color::tag;
+
+    let from = AnimColor::from_color::<tag::Oklaba>(Color::from_rgba(0.01, 0.02, 0.04, 0.1));
+    let to = AnimColor::from_color::<tag::Oklaba>(Color::from_rgba(0.96, 0.98, 1.0, 0.9));
 
     let sampled = AnimColor::interpolate(from, to, 0.5).into_iced();
 

@@ -177,11 +177,19 @@ fn sample_at_interpolates_scalar_color_vector_and_size_values() {
 #[cfg(feature = "palette")]
 #[test]
 fn sample_at_uses_anim_color_space_for_palette_interpolation() {
+    use crate::color::tag;
+
     let from_color = iced::Color::from_rgba(0.95, 0.12, 0.08, 0.2);
     let to_color = iced::Color::from_rgba(0.05, 0.28, 0.96, 0.8);
     let keyframes = KeyframesBuilder::new()
-        .at(0.0, (BACKGROUND, AnimColor::oklaba_from_iced(from_color)))
-        .at(1.0, (BACKGROUND, AnimColor::oklaba_from_iced(to_color)))
+        .at(
+            0.0,
+            (BACKGROUND, AnimColor::from_color::<tag::Oklaba>(from_color)),
+        )
+        .at(
+            1.0,
+            (BACKGROUND, AnimColor::from_color::<tag::Oklaba>(to_color)),
+        )
         .finish();
 
     let sampled = keyframes.sample_at(0.5).expect("sample");

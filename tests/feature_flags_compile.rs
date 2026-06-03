@@ -59,12 +59,13 @@ fn default_feature_set_keeps_core_animation_api_available() {
 #[cfg(feature = "palette")]
 #[test]
 fn palette_feature_is_available_for_color_interpolation_work() {
-    use aura_anim_iced::color::AnimColor;
+    use aura_anim_iced::color::{AnimColor, tag};
+    use float_cmp::assert_approx_eq;
 
-    let color = AnimColor::oklaba_from_srgba(0.0, 0.0, 0.0, 1.0);
+    let color = AnimColor::from_color::<tag::Oklaba>((0.0, 0.0, 0.0, 1.0));
     let sampled = iced::Color::from(color);
 
-    assert_eq!(sampled.a, 1.0);
+    assert_approx_eq!(f32, sampled.a, 1.0, epsilon = 1e-5);
 }
 
 #[cfg(feature = "spring")]

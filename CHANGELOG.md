@@ -24,8 +24,11 @@
   for perceptual theme and brand color transitions.
 - Added color interpolation regression coverage for sRGB midpoint and alpha
   sampling, dark-to-light transitions, and palette hue-sensitive transitions.
-- Changed the crate root to expose public modules without root-level
-  re-exports, and reduced the prelude to common product animation imports.
+
+### Changed
+
+- Changed the crate root to expose public modules without root-level re-exports, and reduced the prelude to common product animation imports.
+- Use generic dispatch instead of writing a bunch of functions like `oklaba_from_srgba`.
 
 ## v0.2.1 - 2026-06-02
 

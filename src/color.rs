@@ -38,6 +38,80 @@ impl From<palette::Srgba> for Srgba {
     }
 }
 
+impl From<(f32, f32, f32, f32)> for Srgba {
+    fn from(value: (f32, f32, f32, f32)) -> Self {
+        Self::new(value.0, value.1, value.2, value.3)
+    }
+}
+
+impl From<Color> for Srgba {
+    fn from(value: Color) -> Self {
+        Self::new(value.r, value.g, value.b, value.a)
+    }
+}
+
+impl From<u32> for Srgba {
+    fn from(value: u32) -> Self {
+        let bytes = value.to_be_bytes();
+
+        let r = f32::from(bytes[0]) / 255.0;
+        let g = f32::from(bytes[1]) / 255.0;
+        let b = f32::from(bytes[2]) / 255.0;
+        let a = f32::from(bytes[3]) / 255.0;
+
+        Srgba::new(r, g, b, a)
+    }
+}
+
+impl From<Srgba> for Color {
+    fn from(value: Srgba) -> Self {
+        Self {
+            r: value.red,
+            g: value.green,
+            b: value.blue,
+            a: value.alpha,
+        }
+    }
+}
+
+/// Tags for the color space of an [`AnimColor`].
+pub mod tag {
+    /// The sRGB color space.
+    pub enum Srgba {}
+
+    /// The Oklab color space.
+    #[cfg(feature = "palette")]
+    pub enum Oklaba {}
+}
+
+mod sealed {
+    pub trait Sealed {}
+}
+
+/// A trait for a color space used by [`AnimColor`].
+pub trait ColorSpace: sealed::Sealed {
+    /// Wraps an [`Srgba`] value in this color space.
+    fn wrap(srgba: Srgba) -> AnimColor;
+}
+
+impl sealed::Sealed for tag::Srgba {}
+
+#[cfg(feature = "palette")]
+impl sealed::Sealed for tag::Oklaba {}
+
+impl ColorSpace for tag::Srgba {
+    fn wrap(s: Srgba) -> AnimColor {
+        AnimColor::Srgba(s)
+    }
+}
+
+#[cfg(feature = "palette")]
+impl ColorSpace for tag::Oklaba {
+    fn wrap(s: Srgba) -> AnimColor {
+        AnimColor::Oklaba(srgba_to_oklaba(s))
+    }
+}
+
 /// Color value used by animation properties.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AnimColor {
@@ -55,18 +129,17 @@ impl AnimColor {
         Self::Srgba(Srgba::new(red, green, blue, alpha))
     }
 
-    /// Creates an Oklab animation color from sRGB components.
-    #[cfg(feature = "palette")]
+    /// Creates an animation color from a color value in the given color space.
     #[must_use]
-    pub fn oklaba_from_srgba(red: f32, green: f32, blue: f32, alpha: f32) -> Self {
-        Self::Oklaba(srgba_to_oklaba(Srgba::new(red, green, blue, alpha)))
+    pub fn from_color<C: ColorSpace>(src: impl Into<Srgba>) -> Self {
+        C::wrap(src.into())
     }
 
-    /// Creates an Oklab animation color from an Iced color.
+    /// Creates an Oklab animation color from a hex color value.
     #[cfg(feature = "palette")]
     #[must_use]
-    pub fn oklaba_from_iced(color: Color) -> Self {
-        Self::Oklaba(srgba_to_oklaba(color.into()))
+    pub fn from_hex<C: ColorSpace>(hex: u32) -> Self {
+        C::wrap(hex.into())
     }
 
     /// Converts this animation color into an Iced color for rendering.
@@ -76,23 +149,6 @@ impl AnimColor {
             Self::Srgba(color) => color.into(),
             #[cfg(feature = "palette")]
             Self::Oklaba(color) => palette_oklaba_to_iced(color),
-        }
-    }
-}
-
-impl From<Color> for Srgba {
-    fn from(value: Color) -> Self {
-        Self::new(value.r, value.g, value.b, value.a)
-    }
-}
-
-impl From<Srgba> for Color {
-    fn from(value: Srgba) -> Self {
-        Self {
-            r: value.red,
-            g: value.green,
-            b: value.blue,
-            a: value.alpha,
         }
     }
 }
