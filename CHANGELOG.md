@@ -24,6 +24,9 @@
   for perceptual theme and brand color transitions.
 - Added color interpolation regression coverage for sRGB midpoint and alpha
   sampling, dark-to-light transitions, and palette hue-sensitive transitions.
+- Added a palette-gated theme comparison example showing ordinary sRGB-alpha
+  interpolation beside perceptual Oklab-alpha interpolation.
+
 
 ### Changed
 

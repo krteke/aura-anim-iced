@@ -8,6 +8,7 @@ cargo run --example behavior_width
 cargo run --example keyframes_popup
 cargo run --example route_transition
 cargo run --example timeline_toast
+cargo run --features palette --example theme_palette_compare
 ```
 
 ## animated_button
@@ -32,6 +33,12 @@ runtime reports completion.
 Shows overlaid horizontal route switching with separate outgoing and incoming
 targets. The incoming screen fades in from the right while the outgoing screen
 fades out to the left during repeated navigation actions.
+
+## theme_palette_compare
+
+Shows the same theme change animated with ordinary sRGB-alpha interpolation and
+with palette-backed Oklab-alpha interpolation so color-heavy theme transitions
+can be compared side by side.
 
 ## timeline_toast
 

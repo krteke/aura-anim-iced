@@ -16,7 +16,7 @@
 - [x] Add optional palette-based color interpolation for perceptual theme and brand transitions.
 - [x] Keep default color interpolation suitable for normal UI transitions without extra application setup.
 - [x] Add tests for midpoint colors, alpha handling, dark-to-light transitions, and hue-sensitive transitions.
-- [ ] Add an example that compares ordinary color interpolation with perceptual interpolation during theme changes.
+- [x] Add an example that compares ordinary color interpolation with perceptual interpolation during theme changes.
 
 ## Spring Motion
 
