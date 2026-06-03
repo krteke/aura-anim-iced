@@ -14,6 +14,11 @@
   color interpolation, and spring motion defaults.
 - Added a compact product quick start covering value animation, state
   animation, widget motion, theme switching, and spring motion defaults.
+- Added feature flags for palette, spring, widgets, theme, layout, serde,
+  tracing, and inspector work while keeping the core animation API available
+  without default features.
+- Added feature-gated product defaults, widget-oriented example declarations,
+  documentation snippets, and tests for optional product extension layers.
 - Changed the crate root to expose public modules without root-level
   re-exports, and reduced the prelude to common product animation imports.
 

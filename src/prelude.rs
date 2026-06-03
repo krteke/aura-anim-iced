@@ -18,7 +18,11 @@
 //! ```
 
 pub use crate::behavior::{BehaviorRule, PropertyTransition};
-pub use crate::defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults};
+#[cfg(feature = "palette")]
+pub use crate::defaults::ColorInterpolationMode;
+pub use crate::defaults::DefaultMotions;
+#[cfg(feature = "spring")]
+pub use crate::defaults::SpringMotionDefaults;
 pub use crate::iced_ext::{
     AnimationCompletionCleanup, AnimationFlow, AnimationTargetOutput, EffectSnapshot,
     target_output_for, tick_effect_snapshot_for,

@@ -1,10 +1,11 @@
 //! Product-level default configuration coverage.
 
 use aura_anim_iced::{
-    defaults::{ColorInterpolationMode, DefaultMotions, SpringMotionDefaults},
+    defaults::DefaultMotions,
     property::OPACITY,
     timing::{Duration, Easing, FillMode, TimingSampleState},
 };
+#[cfg(feature = "spring")]
 use float_cmp::assert_approx_eq;
 
 #[test]
@@ -15,7 +16,6 @@ fn product_motion_defaults_produce_view_ready_timing() {
     assert_eq!(defaults.duration(), Duration::from_millis(180.0));
     assert_eq!(defaults.easing(), Easing::EaseOut);
     assert_eq!(defaults.fill_mode(), FillMode::Forwards);
-    assert_eq!(defaults.color_interpolation(), ColorInterpolationMode::Srgb);
     assert_eq!(timing.duration(), Duration::from_millis(180.0));
     assert_eq!(timing.easing(), Easing::EaseOut);
     assert_eq!(timing.fill_mode(), FillMode::Forwards);
@@ -27,18 +27,35 @@ fn product_motion_defaults_produce_view_ready_timing() {
 
 #[test]
 fn product_motion_defaults_can_be_overridden_for_application_style() {
-    let spring = SpringMotionDefaults::new(Duration::from_millis(360.0), 0.7, 0.002);
     let defaults = DefaultMotions::default()
         .with_duration(Duration::from_millis(240.0))
         .with_easing(Easing::EaseInOut)
-        .with_fill_mode(FillMode::Both)
-        .with_color_interpolation(ColorInterpolationMode::Srgb)
-        .with_spring(spring);
+        .with_fill_mode(FillMode::Both);
     let timing = defaults.timing();
 
     assert_eq!(timing.duration(), Duration::from_millis(240.0));
     assert_eq!(timing.easing(), Easing::EaseInOut);
     assert_eq!(timing.fill_mode(), FillMode::Both);
+}
+
+#[cfg(feature = "palette")]
+#[test]
+fn palette_feature_enables_color_interpolation_defaults() {
+    use aura_anim_iced::defaults::ColorInterpolationMode;
+
+    let defaults = DefaultMotions::default().with_color_interpolation(ColorInterpolationMode::Srgb);
+
+    assert_eq!(defaults.color_interpolation(), ColorInterpolationMode::Srgb);
+}
+
+#[cfg(feature = "spring")]
+#[test]
+fn spring_feature_enables_spring_motion_defaults() {
+    use aura_anim_iced::defaults::SpringMotionDefaults;
+
+    let spring = SpringMotionDefaults::new(Duration::from_millis(360.0), 0.7, 0.002);
+    let defaults = DefaultMotions::default().with_spring(spring);
+
     assert_eq!(defaults.spring(), spring);
     assert_eq!(defaults.spring().response(), Duration::from_millis(360.0));
     assert_approx_eq!(f32, defaults.spring().damping_ratio(), 0.7, epsilon = 1e-5);

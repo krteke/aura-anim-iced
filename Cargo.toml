@@ -32,8 +32,12 @@ harness = false
 
 [features]
 default = []
-# testing = []
-# serde = ["dep:serde"]
+palette = []
+spring = []
+widgets = []
+theme = []
+layout = []
+serde = ["dep:serde"]
 tracing = ["dep:tracing"]
 inspector = ["tracing"]
 

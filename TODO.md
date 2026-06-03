@@ -6,21 +6,10 @@
 - [x] Add product-level defaults for duration, easing, fill behavior, color interpolation, and spring motion.
 - [x] Write a compact product quick start that shows value animation, state animation, widget motion, theme switching, and spring motion together.
 
-## Widget Motion
+## Feature Flags
 
-- [ ] Implement reusable enter and exit motion for UI elements that appear and disappear.
-- [ ] Implement lifecycle handling that keeps disappearing UI visible until its exit motion finishes.
-- [ ] Implement common fade, slide, scale, collapse, and panel movement patterns for ordinary Iced composition.
-- [ ] Implement visual output binding for opacity, movement, size, radius, color, border, and shadow changes.
-- [ ] Add realistic examples for popup, toast, command palette, side panel, and route-adjacent motion.
-
-## Theme Motion
-
-- [ ] Implement animated theme switching for color, spacing, radius, border, and shadow values.
-- [ ] Implement token transition behavior that blends previous and next visual theme values during the same transition window.
-- [ ] Implement independent timing for color values and metric values used by theme changes.
-- [ ] Add a theme transition example that switches between light, dark, and branded appearances.
-- [ ] Write product documentation that shows how an application stores animated theme state and applies sampled theme values while rendering.
+- [x] Define feature flags for palette, spring, widgets, theme, layout, inspector, serde, and tracing while keeping runtime, timing, properties, keyframes, timelines, behavior, state, route, and Iced integration available as the core API.
+- [x] Gate non-core modules, examples, documentation snippets, and tests behind their matching feature flags.
 
 ## Palette Color Interpolation
 
@@ -40,6 +29,22 @@
 - [ ] Implement velocity handoff for released interactions.
 - [ ] Implement settle detection so completed spring animations clean up through the shared runtime path.
 - [ ] Add examples for a spring toggle, tab indicator, and released panel movement.
+
+## Widget Motion
+
+- [ ] Implement reusable enter and exit motion for UI elements that appear and disappear.
+- [ ] Implement lifecycle handling that keeps disappearing UI visible until its exit motion finishes.
+- [ ] Implement common fade, slide, scale, collapse, and panel movement patterns for ordinary Iced composition.
+- [ ] Implement visual output binding for opacity, movement, size, radius, color, border, and shadow changes.
+- [ ] Add realistic examples for popup, toast, command palette, side panel, and route-adjacent motion.
+
+## Theme Motion
+
+- [ ] Implement animated theme switching for color, spacing, radius, border, and shadow values.
+- [ ] Implement token transition behavior that blends previous and next visual theme values during the same transition window.
+- [ ] Implement independent timing for color values and metric values used by theme changes.
+- [ ] Add a theme transition example that switches between light, dark, and branded appearances.
+- [ ] Write product documentation that shows how an application stores animated theme state and applies sampled theme values while rendering.
 
 ##  Reliability
 

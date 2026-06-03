@@ -7,6 +7,7 @@ use crate::{
 };
 
 /// Color interpolation strategy used by product-level animation defaults.
+#[cfg(feature = "palette")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ColorInterpolationMode {
     /// Interpolate color components directly in the current Iced color space.
@@ -20,6 +21,7 @@ pub enum ColorInterpolationMode {
 /// product motion. They are kept separate from runtime sampling so applications
 /// can establish consistent motion settings before spring animation sources are
 /// added.
+#[cfg(feature = "spring")]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SpringMotionDefaults {
     response: Duration,
@@ -27,6 +29,7 @@ pub struct SpringMotionDefaults {
     settle_epsilon: f32,
 }
 
+#[cfg(feature = "spring")]
 impl SpringMotionDefaults {
     /// Creates spring motion defaults.
     #[must_use]
@@ -57,6 +60,7 @@ impl SpringMotionDefaults {
     }
 }
 
+#[cfg(feature = "spring")]
 impl Default for SpringMotionDefaults {
     fn default() -> Self {
         Self::new(Duration::from_millis(280.0), 0.82, 0.001)
@@ -69,26 +73,28 @@ pub struct DefaultMotions {
     duration: Duration,
     easing: iced::animation::Easing,
     fill_mode: FillMode,
+    #[cfg(feature = "palette")]
     color_interpolation: ColorInterpolationMode,
+    #[cfg(feature = "spring")]
     spring: SpringMotionDefaults,
 }
 
 impl DefaultMotions {
-    /// Creates product defaults from all supported settings.
+    /// Creates product defaults from core timing settings.
     #[must_use]
     pub const fn new(
         duration: Duration,
         easing: iced::animation::Easing,
         fill_mode: FillMode,
-        color_interpolation: ColorInterpolationMode,
-        spring: SpringMotionDefaults,
     ) -> Self {
         Self {
             duration,
             easing,
             fill_mode,
-            color_interpolation,
-            spring,
+            #[cfg(feature = "palette")]
+            color_interpolation: ColorInterpolationMode::Srgb,
+            #[cfg(feature = "spring")]
+            spring: SpringMotionDefaults::new(Duration::ZERO, 0.0, 0.0),
         }
     }
 
@@ -111,12 +117,14 @@ impl DefaultMotions {
     }
 
     /// Returns the default color interpolation mode.
+    #[cfg(feature = "palette")]
     #[must_use]
     pub const fn color_interpolation(self) -> ColorInterpolationMode {
         self.color_interpolation
     }
 
     /// Returns the default spring motion settings.
+    #[cfg(feature = "spring")]
     #[must_use]
     pub const fn spring(self) -> SpringMotionDefaults {
         self.spring
@@ -144,6 +152,7 @@ impl DefaultMotions {
     }
 
     /// Replaces the default color interpolation mode.
+    #[cfg(feature = "palette")]
     #[must_use]
     pub const fn with_color_interpolation(
         mut self,
@@ -154,6 +163,7 @@ impl DefaultMotions {
     }
 
     /// Replaces the default spring motion settings.
+    #[cfg(feature = "spring")]
     #[must_use]
     pub const fn with_spring(mut self, spring: SpringMotionDefaults) -> Self {
         self.spring = spring;
@@ -180,12 +190,34 @@ impl DefaultMotions {
 
 impl Default for DefaultMotions {
     fn default() -> Self {
-        Self::new(
-            Duration::from_millis(180.0),
-            iced::animation::Easing::EaseOut,
-            FillMode::Forwards,
-            ColorInterpolationMode::default(),
-            SpringMotionDefaults::default(),
-        )
+        #[cfg(not(any(feature = "palette", feature = "spring")))]
+        {
+            Self::new(
+                Duration::from_millis(180.0),
+                iced::animation::Easing::EaseOut,
+                FillMode::Forwards,
+            )
+        }
+
+        #[cfg(any(feature = "palette", feature = "spring"))]
+        {
+            let mut defaults = Self::new(
+                Duration::from_millis(180.0),
+                iced::animation::Easing::EaseOut,
+                FillMode::Forwards,
+            );
+
+            #[cfg(feature = "palette")]
+            {
+                defaults.color_interpolation = ColorInterpolationMode::default();
+            }
+
+            #[cfg(feature = "spring")]
+            {
+                defaults.spring = SpringMotionDefaults::default();
+            }
+
+            defaults
+        }
     }
 }

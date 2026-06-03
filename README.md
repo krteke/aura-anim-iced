@@ -51,6 +51,14 @@ cargo add aura-anim-iced --features tracing
 cargo add aura-anim-iced --features inspector
 ```
 
+Enable product extension features only when the application needs that layer:
+
+```sh
+cargo add aura-anim-iced --features palette
+cargo add aura-anim-iced --features spring
+cargo add aura-anim-iced --features widgets
+```
+
 The same configuration can be written directly in `Cargo.toml`:
 
 ```toml
@@ -61,6 +69,11 @@ aura-anim-iced = "0.2.1"
 ```toml
 [dependencies]
 aura-anim-iced = { version = "0.2.1", features = ["inspector"] }
+```
+
+```toml
+[dependencies]
+aura-anim-iced = { version = "0.2.1", features = ["palette", "spring", "widgets"] }
 ```
 
 ## Minimal Runtime Example
@@ -272,6 +285,7 @@ impl ProductUi {
         self.flow.target(self.theme_target).effects()
     }
 
+    #[cfg(feature = "spring")]
     fn spring_defaults(&self) -> aura_anim_iced::defaults::SpringMotionDefaults {
         self.defaults.spring()
     }
@@ -280,8 +294,10 @@ impl ProductUi {
 
 Widget motion is represented by ordinary target-scoped opacity, size, color,
 and transform properties. Theme switching uses the same runtime path with color
-properties. `DefaultMotions::spring()` stores the spring feel that future spring
-animation sources should use.
+properties. Dedicated widget, theme, palette, layout, inspector, and spring
+helpers are compiled behind their matching feature flags. `DefaultMotions::spring()`
+stores the spring feel that future spring animation sources should use when the
+`spring` feature is enabled.
 
 ## Animatable Values
 
