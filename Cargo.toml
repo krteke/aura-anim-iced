@@ -22,6 +22,9 @@ include = [
     "Cargo.toml",
 ]
 
+[workspace]
+members = ["crates/*"]
+
 [lib]
 name = "aura_anim_iced"
 path = "src/lib.rs"
@@ -43,7 +46,9 @@ inspector = ["tracing"]
 
 [dependencies]
 iced = { version = "0.14", features = ["tokio"] }
-palette = { version = "0.7.6", optional = true, default-features = false, features = ["std"] }
+palette = { version = "0.7.6", optional = true, default-features = false, features = [
+    "std",
+] }
 serde = { version = "1", optional = true, features = ["derive"] }
 tracing = { version = "0.1", optional = true }
 smallvec = "1.15.1"

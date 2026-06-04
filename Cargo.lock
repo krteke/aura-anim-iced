@@ -284,6 +284,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
+name = "aura-anim"
+version = "0.1.0"
+
+[[package]]
+name = "aura-anim-core"
+version = "0.1.0"
+
+[[package]]
 name = "aura-anim-iced"
 version = "0.2.1"
 dependencies = [
@@ -299,6 +307,10 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
 ]
+
+[[package]]
+name = "aura-iced"
+version = "0.1.0"
 
 [[package]]
 name = "autocfg"
