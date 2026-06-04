@@ -71,7 +71,17 @@ fn palette_feature_is_available_for_color_interpolation_work() {
 #[cfg(feature = "spring")]
 #[test]
 fn spring_feature_is_available_for_spring_sampling_work() {
-    assert!(cfg!(feature = "spring"));
+    use aura_anim_iced::spring::{ScalarSpring, SpringConfig};
+
+    let spring = ScalarSpring::new(
+        0.0,
+        1.0,
+        SpringConfig::new(Duration::from_millis(280.0), 0.82),
+    );
+    let sample = spring.sample_at(Duration::from_millis(140.0));
+
+    assert!(sample.value().is_finite());
+    assert!(sample.velocity().is_finite());
 }
 
 #[cfg(feature = "widgets")]

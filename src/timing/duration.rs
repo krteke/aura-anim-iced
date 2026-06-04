@@ -31,6 +31,12 @@ impl Duration {
         self.0.as_secs_f64() * 1000.0
     }
 
+    /// Returns this duration in seconds.
+    #[must_use]
+    pub const fn as_secs(self) -> f64 {
+        self.0.as_secs_f64()
+    }
+
     pub(crate) fn checked_mul(self, rhs: u32) -> Option<Self> {
         self.0.checked_mul(rhs).map(Self)
     }

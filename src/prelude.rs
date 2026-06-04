@@ -38,6 +38,8 @@ pub use crate::route::{
     RouteTransitionSet,
 };
 pub use crate::runtime::{AnimationRuntime, AnimationTargetId, AnimationTick, TickPolicy};
+#[cfg(feature = "spring")]
+pub use crate::spring::{ScalarSpring, ScalarSpringSample, SpringConfig};
 pub use crate::state::{StateAnimator, StateTransition, StateTransitionSet};
 pub use crate::timeline::{Hold, Parallel, Sequence, Timeline, TimelineStep, Track};
 pub use crate::timing::{Delay, Direction, Duration, Easing, FillMode, Timing};

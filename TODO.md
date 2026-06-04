@@ -20,7 +20,7 @@
 
 ## Spring Motion
 
-- [ ] Implement stable spring sampling for scalar UI motion used in toggles, indicators, sliders, and panels.
+- [x] Implement stable spring sampling for scalar UI motion used in toggles, indicators, sliders, and panels.
 - [ ] Implement two-dimensional spring sampling for movement-based UI interactions.
 - [ ] Add common spring presets for fast, smooth, bouncy, and gentle product motion.
 - [ ] Implement target replacement that continues from the current position and velocity.

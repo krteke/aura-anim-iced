@@ -35,7 +35,7 @@ impl DefaultMotions {
             easing,
             fill_mode,
             #[cfg(feature = "spring")]
-            spring: SpringMotionDefaults::new(Duration::ZERO, 0.0, 0.0),
+            spring: SpringMotionDefaults::new(Duration::ZERO, 0.0),
         }
     }
 
@@ -62,6 +62,20 @@ impl DefaultMotions {
     #[must_use]
     pub const fn spring(self) -> SpringMotionDefaults {
         self.spring
+    }
+
+    /// Builds spring sampling configuration from product defaults.
+    #[cfg(feature = "spring")]
+    #[must_use]
+    pub fn spring_config(self) -> crate::spring::SpringConfig {
+        self.spring.config()
+    }
+
+    /// Builds a scalar spring using product spring defaults.
+    #[cfg(feature = "spring")]
+    #[must_use]
+    pub fn scalar_spring(self, from: f32, to: f32) -> crate::spring::ScalarSpring {
+        self.spring.scalar(from, to)
     }
 
     /// Replaces the default duration.

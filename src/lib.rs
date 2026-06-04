@@ -38,6 +38,8 @@ pub mod prelude;
 pub mod property;
 pub mod route;
 pub mod runtime;
+#[cfg(feature = "spring")]
+pub mod spring;
 pub mod state;
 pub mod timeline;
 pub mod timing;

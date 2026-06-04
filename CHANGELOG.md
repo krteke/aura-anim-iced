@@ -26,7 +26,7 @@
   sampling, dark-to-light transitions, and palette hue-sensitive transitions.
 - Added a palette-gated theme comparison example showing ordinary sRGB-alpha
   interpolation beside perceptual Oklab-alpha interpolation.
-
+- Added feature-gated stable scalar spring sampling for product UI motion.
 
 ### Changed
 
