@@ -1,78 +1,81 @@
-[package]
-name = "aura-anim-iced"
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+# [package]
+# name = "aura-anim-iced"
+# include = [
+#     "src/**/*.rs",
+#     "examples/**/*.rs",
+#     "benches/**/*.rs",
+#     "tests/**/*.rs",
+#     "README.md",
+#     "CHANGELOG.md",
+#     "LICENSE",
+#     "Cargo.toml",
+# ]
+
+
+[workspace.package]
 version = "0.2.1"
 edition = "2024"
 rust-version = "1.88"
 authors = ["krteke"]
-description = "Iced-first animation primitives."
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/krteke/aura-anim-iced"
+description = "Iced-first animation primitives."
 documentation = "https://docs.rs/aura-anim-iced"
 keywords = ["iced", "animation", "ui", "motion"]
 categories = ["gui", "graphics"]
-include = [
-    "src/**/*.rs",
-    "examples/**/*.rs",
-    "benches/**/*.rs",
-    "tests/**/*.rs",
-    "README.md",
-    "CHANGELOG.md",
-    "LICENSE",
-    "Cargo.toml",
-]
 
-[workspace]
-members = ["crates/*"]
 
-[lib]
-name = "aura_anim_iced"
-path = "src/lib.rs"
+# [lib]
+# name = "aura_anim_iced"
+# path = "crates/aura-anim/src/lib.rs"
 
-[[bench]]
-name = "sampling"
-harness = false
+# [[bench]]
+# name = "sampling"
+# harness = false
 
-[features]
-default = []
-palette = ["dep:palette"]
-spring = []
-widgets = []
-theme = []
-layout = []
-serde = ["dep:serde"]
-tracing = ["dep:tracing"]
-inspector = ["tracing"]
+# [features]
+# default = []
+# palette = ["dep:palette"]
+# spring = []
+# widgets = []
+# theme = []
+# layout = []
+# serde = ["dep:serde"]
+# tracing = ["dep:tracing"]
+# inspector = ["tracing"]
 
-[dependencies]
-iced = { version = "0.14", features = ["tokio"] }
-palette = { version = "0.7.6", optional = true, default-features = false, features = [
-    "std",
-] }
-serde = { version = "1", optional = true, features = ["derive"] }
-tracing = { version = "0.1", optional = true }
+[workspace.dependencies]
+iced = "0.14"
+palette = "0.7.6"
+# serde = { version = "1", optional = true, features = ["derive"] }
+tracing = "0.1"
 smallvec = "1.15.1"
 rustc-hash = "2.1.2"
 thiserror = "2"
 
-[dev-dependencies]
-criterion = { version = "0.8.2", default-features = false }
-anyhow = "1"
-tracing-subscriber = "0.3"
+[workspace.dev-dependencies]
 float-cmp = "0.10.0"
+# criterion = { version = "0.8.2", default-features = false }
+# anyhow = "1"
+# tracing-subscriber = "0.3"
 
-[package.metadata.docs.rs]
+[workspace.package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
+[workspace.lints.rust]
 missing_docs = "warn"
 rust_2018_idioms = { level = "warn", priority = -1 }
 unsafe_code = "forbid"
 unreachable_pub = "warn"
 unused_must_use = "deny"
 
-[lints.clippy]
+[workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 alloc_instead_of_core = "warn"

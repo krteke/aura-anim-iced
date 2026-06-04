@@ -1,21 +1,4 @@
-//! Internal interpolation contracts and primitive helper functions.
-
-pub(crate) mod color;
-pub(crate) mod geometry;
-pub(crate) mod shadow;
-#[cfg(test)]
-mod tests;
-
-/// A value that can produce an interpolated sample toward a target value.
-pub(crate) trait Animatable: Sized {
-    /// Returns the value between `from` and `to` at normalized `progress`.
-    fn interpolate(from: Self, to: Self, progress: f32) -> Self {
-        Self::interpolate_progress(from, to, InterpolationProgress::new(progress))
-    }
-
-    /// Interpolates with a pre-normalized progress value.
-    fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self;
-}
+use crate::traits::Interpolate;
 
 /// A normalized interpolation progress value.
 ///
@@ -24,14 +7,14 @@ pub(crate) trait Animatable: Sized {
 /// - Values below `0.0` become `0.0`.
 /// - Values above `1.0` become `1.0`.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub(crate) struct InterpolationProgress(f32);
+pub struct InterpolationProgress(f32);
 
 impl InterpolationProgress {
     /// Creates a new `InterpolationProgress` with the given progress value.
     ///
     /// `NaN` values are replaced with `0.0`, and values are clamped to `[0.0, 1.0]`.
     #[must_use]
-    pub(crate) fn new(progress: f32) -> Self {
+    pub fn new(progress: f32) -> Self {
         if progress.is_nan() {
             Self(0.0)
         } else {
@@ -41,7 +24,7 @@ impl InterpolationProgress {
 
     /// Returns the raw progress value.
     #[must_use]
-    pub(crate) fn value(self) -> f32 {
+    pub fn value(self) -> f32 {
         self.0
     }
 
@@ -64,7 +47,7 @@ impl From<f32> for InterpolationProgress {
     }
 }
 
-impl Animatable for f32 {
+impl Interpolate for f32 {
     fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
         interpolate_with_progress(from, to, progress, |from, to, progress| {
             from + (to - from) * progress.value()
@@ -72,7 +55,7 @@ impl Animatable for f32 {
     }
 }
 
-impl Animatable for f64 {
+impl Interpolate for f64 {
     fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
         interpolate_with_progress(from, to, progress, |from, to, progress| {
             let progress = f64::from(progress.value());
@@ -84,7 +67,7 @@ impl Animatable for f64 {
 macro_rules! impl_interpolate_integer {
     ($($ty:ty),+ $(,)?) => {
         $(
-            impl Animatable for $ty {
+            impl Interpolate for $ty {
                 fn interpolate_progress(
                     from: Self,
                     to: Self,
@@ -113,6 +96,7 @@ macro_rules! impl_interpolate_integer {
 
 impl_interpolate_integer!(u8, i8, u16, i16, u32, i32);
 
+#[inline]
 fn interpolate_with_progress<T>(
     from: T,
     to: T,
@@ -130,9 +114,9 @@ fn interpolate_with_progress<T>(
 
 macro_rules! impl_interpolate_tuple {
     ($($name:ident : $index:tt),+) => {
-        impl<$($name),+> Animatable for ($($name,)+)
+        impl<$($name),+> Interpolate for ($($name,)+)
         where
-            $($name: Animatable),+
+            $($name: Interpolate),+
         {
             fn interpolate_progress(
                 from: Self,
@@ -154,6 +138,19 @@ macro_rules! impl_interpolate_tuple {
 impl_interpolate_tuple!(A: 0, B: 1);
 impl_interpolate_tuple!(A: 0, B: 1, C: 2);
 impl_interpolate_tuple!(A: 0, B: 1, C: 2, D: 3);
+
+impl<T, const N: usize> Interpolate for [T; N]
+where
+    T: Interpolate + Clone,
+{
+    fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
+        interpolate_with_progress(from, to, progress, |from, to, progress| {
+            std::array::from_fn(|i| {
+                <T as Interpolate>::interpolate_progress(from[i].clone(), to[i].clone(), progress)
+            })
+        })
+    }
+}
 
 #[inline]
 fn lerp_f32_raw(from: f32, to: f32, t: f32) -> f32 {
