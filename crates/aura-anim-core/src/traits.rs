@@ -13,7 +13,7 @@ pub trait Animatable: Interpolate + Clone + 'static {}
 impl<T: Interpolate + Clone + 'static> Animatable for T {}
 
 pub trait Update {
-    fn update(&mut self, dt: f32) -> bool;
+    fn update(&mut self, dt: f64) -> bool;
 }
 
 pub trait Playable: Update {

@@ -35,36 +35,12 @@ impl Direction {
         self.sample_progress(last_iteration, 1.0)
     }
 
-    fn is_reversed_iteration(self, iteration_index: u32) -> bool {
+    pub(crate) fn is_reversed_iteration(self, iteration_index: u32) -> bool {
         match self {
             Self::Normal => false,
             Self::Reverse => true,
             Self::Alternate => iteration_index % 2 == 1,
             Self::AlternateReverse => iteration_index.is_multiple_of(2),
         }
-    }
-}
-
-/// How samples outside the active interval should be filled.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum FillMode {
-    /// Do not fill before or after the active interval.
-    #[default]
-    None,
-    /// Fill with the first active sample before the delay completes.
-    Backwards,
-    /// Fill with the final active sample after completion.
-    Forwards,
-    /// Fill both before the delay and after completion.
-    Both,
-}
-
-impl FillMode {
-    pub(crate) const fn fills_before_start(self) -> bool {
-        matches!(self, Self::Backwards | Self::Both)
-    }
-
-    pub(crate) const fn fills_after_end(self) -> bool {
-        matches!(self, Self::Forwards | Self::Both)
     }
 }

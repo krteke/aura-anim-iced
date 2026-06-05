@@ -13,6 +13,10 @@ impl Duration {
     /// A zero-length duration.
     pub const ZERO: Self = Self(StdDuration::ZERO);
 
+    pub fn is_zero(&self) -> bool {
+        self.0.is_zero()
+    }
+
     /// Creates a duration from milliseconds.
     #[must_use]
     pub fn from_millis(millis: f64) -> Self {

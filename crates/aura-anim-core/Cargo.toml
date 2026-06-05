@@ -5,3 +5,7 @@ edition = "2024"
 
 [dependencies]
 palette.workspace = true
+lilt.workspace = true
+
+[dev-dependencies]
+float-cmp = "0.10.0"

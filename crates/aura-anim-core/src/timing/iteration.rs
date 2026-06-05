@@ -7,7 +7,7 @@ pub struct IterationCount {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum IterationCountKind {
+pub(crate) enum IterationCountKind {
     Count(NonZeroU32),
     Infinite,
 }

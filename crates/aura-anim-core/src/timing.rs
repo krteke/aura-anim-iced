@@ -1,24 +1,16 @@
 //! Timing configuration and elapsed-time normalization.
+use lilt::Easing;
 
 mod duration;
 mod iteration;
 mod mode;
-mod normalized;
 mod utils;
 
 pub use duration::{Delay, Duration};
-pub use iced::animation::Easing;
 pub use iteration::IterationCount;
-pub use mode::{Direction, FillMode};
-pub use normalized::{NormalizedTiming, TimingPhase, TimingSampleState};
+pub use mode::Direction;
 
-#[cfg(test)]
-mod tests;
-
-use crate::{
-    nearly_equal_f64,
-    timing::utils::{completed_iterations_from, sanitize_non_negative, sanitize_playback_rate},
-};
+use crate::timing::utils::sanitize_playback_rate;
 
 /// Timing state for an animation track or timeline step.
 ///
@@ -26,21 +18,18 @@ use crate::{
 ///
 /// ```
 /// use aura_anim_iced::timing::{
-///     Delay, Direction, Easing, FillMode, Timing, TimingSampleState,
+///     Delay, Direction, Easing, Timing, TimingSampleState,
 /// };
 ///
 /// let timing = Timing::new(200.0)
 ///     .with_delay(Delay::from_millis(50.0))
 ///     .with_direction(Direction::Alternate)
-///     .with_fill_mode(FillMode::Both)
 ///     .with_easing(Easing::EaseOut)
 ///     .with_iterations(2);
 ///
 /// let before = timing.normalize_elapsed(25.0);
 /// let active = timing.normalize_elapsed(100.0);
 ///
-/// assert_eq!(before.sample_state, TimingSampleState::BackwardsFill);
-/// assert!(active.has_sample());
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Timing {
@@ -50,8 +39,6 @@ pub struct Timing {
     delay: Delay,
     /// Playback direction configuration.
     direction: Direction,
-    /// Fill behavior outside the active interval.
-    fill_mode: FillMode,
     /// Easing curve applied to normalized iteration progress.
     easing: Easing,
     /// Number of active iterations.
@@ -88,12 +75,6 @@ impl Timing {
         self.direction
     }
 
-    /// Returns the fill mode of the timing.
-    #[must_use]
-    pub const fn fill_mode(&self) -> FillMode {
-        self.fill_mode
-    }
-
     /// Returns the easing curve of the timing.
     #[must_use]
     pub const fn easing(&self) -> Easing {
@@ -123,13 +104,6 @@ impl Timing {
     #[must_use]
     pub const fn with_direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
-        self
-    }
-
-    /// Sets the fill mode.
-    #[must_use]
-    pub const fn with_fill_mode(mut self, fill_mode: FillMode) -> Self {
-        self.fill_mode = fill_mode;
         self
     }
 
@@ -169,67 +143,6 @@ impl Timing {
 
         active.checked_add_delay(self.delay)
     }
-
-    /// Normalizes elapsed milliseconds into active timing coordinates.
-    #[must_use]
-    pub fn normalize_elapsed(self, elapsed_ms: f64) -> NormalizedTiming {
-        let elapsed_ms = sanitize_non_negative(elapsed_ms);
-        let scaled_elapsed = elapsed_ms * self.playback_rate;
-        let delay_ms = self.delay.as_millis();
-
-        if scaled_elapsed < delay_ms {
-            return NormalizedTiming::before_start(self.fill_mode, self.direction.start_progress());
-        }
-
-        let active_elapsed = scaled_elapsed - delay_ms;
-        let duration_ms = self.duration.as_millis();
-
-        if nearly_equal_f64(duration_ms, 0.0) {
-            let count = self.iterations.finite_count().unwrap_or(1);
-
-            return NormalizedTiming::after_end(
-                count,
-                self.fill_mode,
-                self.direction.end_progress(count),
-            );
-        }
-
-        let active_progress = active_elapsed / duration_ms;
-        let completed_iterations = completed_iterations_from(active_progress);
-
-        if let Some(iteration_count) = self.iterations.finite_count()
-            && completed_iterations >= iteration_count
-        {
-            return NormalizedTiming::after_end(
-                iteration_count,
-                self.fill_mode,
-                self.direction.end_progress(iteration_count),
-            );
-        }
-
-        if !active_progress.is_finite() {
-            let directed_iteration_progress =
-                self.direction.sample_progress(completed_iterations, 0.0);
-
-            return NormalizedTiming::active(
-                completed_iterations,
-                directed_iteration_progress,
-                f64::from(completed_iterations),
-            );
-        }
-
-        let iteration_elapsed = active_elapsed % duration_ms;
-        let raw_iteration_progress = iteration_elapsed / duration_ms;
-        let directed_iteration_progress = self
-            .direction
-            .sample_progress(completed_iterations, raw_iteration_progress);
-
-        NormalizedTiming::active(
-            completed_iterations,
-            directed_iteration_progress,
-            active_progress,
-        )
-    }
 }
 
 impl Default for Timing {
@@ -238,7 +151,6 @@ impl Default for Timing {
             duration: Duration::ZERO,
             delay: Delay::ZERO,
             direction: Direction::default(),
-            fill_mode: FillMode::default(),
             easing: Easing::Linear,
             iterations: IterationCount::default(),
             playback_rate: 1.0,
