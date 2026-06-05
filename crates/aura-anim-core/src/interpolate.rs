@@ -48,7 +48,7 @@ impl From<f32> for InterpolationProgress {
 }
 
 impl Interpolate for f32 {
-    fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
+    fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self {
         interpolate_with_progress(from, to, progress, |from, to, progress| {
             from + (to - from) * progress.value()
         })
@@ -56,7 +56,7 @@ impl Interpolate for f32 {
 }
 
 impl Interpolate for f64 {
-    fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
+    fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self {
         interpolate_with_progress(from, to, progress, |from, to, progress| {
             let progress = f64::from(progress.value());
             from + (to - from) * progress
@@ -69,13 +69,13 @@ macro_rules! impl_interpolate_integer {
         $(
             impl Interpolate for $ty {
                 fn interpolate_progress(
-                    from: Self,
-                    to: Self,
+                    from: &Self,
+                    to: &Self,
                     progress: InterpolationProgress,
                 ) -> Self {
                     interpolate_with_progress(from, to, progress, |from, to, progress| {
-                        let from = f64::from(from);
-                        let to = f64::from(to);
+                        let from = f64::from(*from);
+                        let to = f64::from(*to);
                         let progress = f64::from(progress.value());
 
                         #[allow(
@@ -97,16 +97,16 @@ macro_rules! impl_interpolate_integer {
 impl_interpolate_integer!(u8, i8, u16, i16, u32, i32);
 
 #[inline]
-fn interpolate_with_progress<T>(
-    from: T,
-    to: T,
+fn interpolate_with_progress<T: Clone>(
+    from: &T,
+    to: &T,
     progress: InterpolationProgress,
-    interpolate_between: impl FnOnce(T, T, InterpolationProgress) -> T,
+    interpolate_between: impl FnOnce(&T, &T, InterpolationProgress) -> T,
 ) -> T {
     if progress.is_start() {
-        from
+        from.clone()
     } else if progress.is_end() {
-        to
+        to.clone()
     } else {
         interpolate_between(from, to, progress)
     }
@@ -116,17 +116,17 @@ macro_rules! impl_interpolate_tuple {
     ($($name:ident : $index:tt),+) => {
         impl<$($name),+> Interpolate for ($($name,)+)
         where
-            $($name: Interpolate),+
+            $($name: Interpolate + Clone),+
         {
             fn interpolate_progress(
-                from: Self,
-                to: Self,
+                from: &Self,
+                to: &Self,
                 progress: InterpolationProgress,
             ) -> Self {
                 interpolate_with_progress(from, to, progress, |from, to, progress| {
                     (
                         $(
-                            $name::interpolate_progress(from.$index, to.$index, progress),
+                            $name::interpolate_progress(&from.$index, &to.$index, progress),
                         )+
                     )
                 })
@@ -143,10 +143,10 @@ impl<T, const N: usize> Interpolate for [T; N]
 where
     T: Interpolate + Clone,
 {
-    fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self {
+    fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self {
         interpolate_with_progress(from, to, progress, |from, to, progress| {
             std::array::from_fn(|i| {
-                <T as Interpolate>::interpolate_progress(from[i].clone(), to[i].clone(), progress)
+                <T as Interpolate>::interpolate_progress(&from[i], &to[i], progress)
             })
         })
     }

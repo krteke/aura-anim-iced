@@ -1,4 +1,5 @@
 use crate::{
+    handle::AnimationHandle,
     timing::{Direction, Timing},
     traits::{Animatable, Playable, Update},
     tween::builder::TweenBuilder,
@@ -22,8 +23,20 @@ struct TweenStatus {
     reverse: bool,
 }
 
+impl TweenStatus {
+    fn init(reverse: bool) -> Self {
+        Self {
+            elapsed: 0.0,
+            state: TweenState::Idle,
+            iterations: 0,
+            reverse,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Tween<T: Animatable> {
+    id: AnimationHandle,
     start: T,
     end: T,
     timing: Timing,
@@ -33,6 +46,10 @@ pub struct Tween<T: Animatable> {
 impl<T: Animatable> Tween<T> {
     pub fn new(start: T, end: T) -> TweenBuilder<T> {
         TweenBuilder::new(start, end)
+    }
+
+    pub fn id(&self) -> AnimationHandle {
+        self.id
     }
 
     pub fn start(&self) -> &T {
@@ -59,15 +76,11 @@ impl<T: Animatable> Tween<T> {
         };
 
         Self {
+            id: AnimationHandle::new(),
             start,
             end,
             timing,
-            status: TweenStatus {
-                elapsed: 0.0,
-                state: TweenState::Idle,
-                iterations: 0,
-                reverse,
-            },
+            status: TweenStatus::init(reverse),
         }
     }
 }

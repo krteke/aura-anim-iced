@@ -1,4 +1,6 @@
+pub mod handle;
 pub mod interpolate;
+pub mod keyframes;
 pub mod timing;
 pub mod traits;
 pub mod tween;

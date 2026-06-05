@@ -1,11 +1,15 @@
 use crate::interpolate::InterpolationProgress;
 
 pub trait Interpolate: Sized {
-    fn interpolate(from: Self, to: Self, progress: f32) -> Self {
+    fn lerp(&self, other: &Self, progress: f32) -> Self {
+        Self::interpolate_progress(self, other, InterpolationProgress::new(progress))
+    }
+
+    fn interpolate(from: &Self, to: &Self, progress: f32) -> Self {
         Self::interpolate_progress(from, to, InterpolationProgress::new(progress))
     }
 
-    fn interpolate_progress(from: Self, to: Self, progress: InterpolationProgress) -> Self;
+    fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self;
 }
 
 pub trait Animatable: Interpolate + Clone + 'static {}
