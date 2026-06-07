@@ -1,161 +1,235 @@
 use crate::{
-    handle::AnimationHandle,
-    timing::{Direction, Timing},
-    traits::{Animatable, Playable, Update},
-    tween::builder::TweenBuilder,
+    timing::{Duration, Timing},
+    traits::{Animatable, Animation, AnimationState},
 };
 
-mod builder;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TweenState {
-    Idle,
-    Running,
-    Paused,
-    Completed,
-}
-
-#[derive(Clone, Debug, Copy)]
-struct TweenStatus {
-    elapsed: f64,
-    state: TweenState,
-    iterations: u32,
-    reverse: bool,
-}
-
-impl TweenStatus {
-    fn init(reverse: bool) -> Self {
-        Self {
-            elapsed: 0.0,
-            state: TweenState::Idle,
-            iterations: 0,
-            reverse,
-        }
-    }
-}
+pub type TweenState = AnimationState;
 
 #[derive(Debug, Clone)]
 pub struct Tween<T: Animatable> {
-    id: AnimationHandle,
-    start: T,
-    end: T,
+    from: T,
+    to: T,
+    current: T,
+    elapsed: Duration,
     timing: Timing,
-    status: TweenStatus,
+    state: AnimationState,
 }
 
 impl<T: Animatable> Tween<T> {
-    pub fn new(start: T, end: T) -> TweenBuilder<T> {
-        TweenBuilder::new(start, end)
+    pub fn new(value: T) -> Self {
+        Self::with_timing(value, Timing::new(200.0))
     }
 
-    pub fn id(&self) -> AnimationHandle {
-        self.id
-    }
-
-    pub fn start(&self) -> &T {
-        &self.start
-    }
-
-    pub fn end(&self) -> &T {
-        &self.end
-    }
-
-    pub fn timing(&self) -> &Timing {
-        &self.timing
-    }
-
-    pub fn with_timing(mut self, timing: Timing) -> Self {
-        self.timing = timing;
-        self
-    }
-
-    pub(crate) fn from_builder(start: T, end: T, timing: Timing) -> Self {
-        let reverse = match timing.direction() {
-            Direction::Normal | Direction::Alternate => false,
-            Direction::Reverse | Direction::AlternateReverse => true,
-        };
-
+    pub fn with_timing(value: T, timing: Timing) -> Self {
         Self {
-            id: AnimationHandle::new(),
-            start,
-            end,
+            from: value.clone(),
+            to: value.clone(),
+            current: value,
+            elapsed: Duration::ZERO,
             timing,
-            status: TweenStatus::init(reverse),
+            state: AnimationState::Idle,
         }
+    }
+
+    pub fn between(from: T, to: T, timing: Timing) -> Self {
+        let mut tween = Self::with_timing(from, timing);
+        tween.transition_to(to);
+        tween
+    }
+
+    pub fn value(&self) -> &T {
+        &self.current
+    }
+
+    pub fn from(&self) -> &T {
+        &self.from
+    }
+
+    pub fn target(&self) -> &T {
+        &self.to
+    }
+
+    pub const fn timing(&self) -> Timing {
+        self.timing
+    }
+
+    pub const fn state(&self) -> AnimationState {
+        self.state
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.state == AnimationState::Running
+    }
+
+    pub fn is_completed(&self) -> bool {
+        self.state == AnimationState::Completed
+    }
+
+    pub fn transition_to(&mut self, target: T) {
+        self.from = self.current.clone();
+        self.to = target;
+        self.elapsed = Duration::ZERO;
+        self.state = AnimationState::Running;
+        self.sample();
+    }
+
+    pub fn tick(&mut self, delta: impl Into<Duration>) {
+        if self.state != AnimationState::Running {
+            return;
+        }
+
+        self.elapsed += delta.into();
+        self.sample();
+    }
+
+    fn remaining(&self) -> Option<Duration> {
+        let total = self.timing.total_duration()?;
+        Some(total.saturating_sub(self.elapsed))
+    }
+
+    pub fn pause(&mut self) {
+        if self.state == AnimationState::Running {
+            self.state = AnimationState::Paused;
+        }
+    }
+
+    pub fn resume(&mut self) {
+        if self.state == AnimationState::Paused {
+            self.state = AnimationState::Running;
+        }
+    }
+
+    pub fn cancel(&mut self) {
+        if matches!(
+            self.state,
+            AnimationState::Running | AnimationState::Paused | AnimationState::Idle
+        ) {
+            self.state = AnimationState::Canceled;
+        }
+    }
+
+    pub fn seek(&mut self, progress: f32) {
+        let progress = if progress.is_nan() {
+            0.0
+        } else {
+            progress.clamp(0.0, 1.0)
+        };
+        self.state = AnimationState::Running;
+        let total = self.timing.total_duration().unwrap_or_else(|| {
+            Duration::from_millis(
+                self.timing.delay().as_millis() + self.timing.duration().as_millis(),
+            )
+        });
+        self.elapsed = Duration::from_millis(total.as_millis() * f64::from(progress));
+        self.sample();
+    }
+
+    pub fn finish(&mut self) {
+        let progress = self
+            .timing
+            .iterations()
+            .finite_count()
+            .map_or(self.timing.direction().sample_progress(1, 1.0), |count| {
+                self.timing.direction().end_progress(count)
+            });
+        self.current = T::interpolate(
+            &self.from,
+            &self.to,
+            self.timing.easing().value(progress as f32),
+        );
+        self.state = AnimationState::Completed;
+    }
+
+    fn sample(&mut self) {
+        let delay = self.timing.delay().as_millis();
+        let elapsed = self.elapsed.as_millis();
+
+        if elapsed < delay {
+            self.current = self.from.clone();
+            return;
+        }
+
+        let duration = self.timing.duration().as_millis();
+        if duration <= 0.0 {
+            self.finish();
+            return;
+        }
+
+        let active_elapsed = elapsed - delay;
+        let iterations = self.timing.iterations().finite_count();
+
+        if let Some(count) = iterations {
+            let total = duration * f64::from(count);
+            if active_elapsed >= total {
+                self.finish();
+                return;
+            }
+        }
+
+        let iteration = (active_elapsed / duration).floor() as u32;
+        let raw_progress = (active_elapsed % duration) / duration;
+        let progress = self
+            .timing
+            .direction()
+            .sample_progress(iteration, raw_progress);
+        let eased = self.timing.easing().value(progress as f32);
+        self.current = T::interpolate(&self.from, &self.to, eased);
     }
 }
 
-impl<T: Animatable> Update for Tween<T> {
-    fn update(&mut self, dt: f64) -> bool {
-        if self.timing.duration().is_zero() {
-            self.status.state = TweenState::Completed;
-            return false;
-        }
-
-        let dt = dt.max(0.0);
-
-        match self.status.state {
-            TweenState::Completed => return false,
-            TweenState::Paused => return true,
-            TweenState::Idle => {
-                self.status.elapsed += dt;
-                if self.status.elapsed < self.timing.delay().as_millis() {
-                    return true;
-                }
-                let overflow = self.status.elapsed - self.timing.delay().as_millis();
-                self.status.state = TweenState::Running;
-                self.status.elapsed += overflow * self.timing.playback_rate();
-            }
-            TweenState::Running => {
-                self.status.elapsed += dt * self.timing.playback_rate();
-            }
-        }
-
-        while self.status.elapsed >= self.timing.duration().as_millis() {
-            match self.timing.iterations().finite_count() {
-                Some(1) => {
-                    self.status.elapsed = self.timing.duration().as_millis();
-                    self.status.state = TweenState::Completed;
-                    self.status.iterations += 1;
-                    return false;
-                }
-                Some(i) => {
-                    self.status.iterations += 1;
-                    if self.status.iterations >= i {
-                        self.status.elapsed = self.timing.duration().as_millis();
-                        self.status.state = TweenState::Completed;
-                        return false;
-                    }
-                    self.status.elapsed -= self.timing.duration().as_millis();
-                    self.status.reverse = self
-                        .timing
-                        .direction()
-                        .is_reversed_iteration(self.status.iterations);
-                }
-                None => {
-                    self.status.elapsed -= self.timing.duration().as_millis();
-                    self.status.reverse = self
-                        .timing
-                        .direction()
-                        .is_reversed_iteration(self.status.iterations);
-                }
-            }
-        }
-
-        true
+impl<T: Animatable> Animation<T> for Tween<T> {
+    fn value(&self) -> &T {
+        self.value()
     }
-}
 
-impl<T: Animatable> Playable for Tween<T> {
-    fn duration(&self) -> f32 {
-        todo!()
+    fn state(&self) -> AnimationState {
+        self.state()
+    }
+
+    fn duration(&self) -> Option<Duration> {
+        self.timing.total_duration()
+    }
+
+    fn tick(&mut self, delta: Duration) {
+        self.tick(delta);
+    }
+
+    fn advance(&mut self, delta: Duration) -> Duration {
+        if self.state != AnimationState::Running {
+            return delta;
+        }
+
+        let Some(remaining) = self.remaining() else {
+            self.tick(delta);
+            return Duration::ZERO;
+        };
+        let consumed = delta.min(remaining);
+        self.tick(consumed);
+        delta.saturating_sub(consumed)
+    }
+
+    fn pause(&mut self) {
+        self.pause();
+    }
+
+    fn resume(&mut self) {
+        self.resume();
+    }
+
+    fn cancel(&mut self) {
+        self.cancel();
     }
 
     fn seek(&mut self, progress: f32) {
-        todo!()
+        self.seek(progress);
     }
 
-    fn is_complete(&self) -> bool {
-        todo!()
+    fn finish(&mut self) {
+        self.finish();
+    }
+
+    fn retarget(&mut self, target: &T) -> bool {
+        self.transition_to(target.clone());
+        true
     }
 }

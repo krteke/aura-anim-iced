@@ -1,2 +1,5 @@
+mod animation;
 mod keyframe;
-mod track;
+
+pub use animation::Keyframes;
+pub use keyframe::Keyframe;

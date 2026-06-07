@@ -1,5 +1,4 @@
 //! Timing configuration and elapsed-time normalization.
-use lilt::Easing;
 
 mod duration;
 mod iteration;
@@ -10,27 +9,8 @@ pub use duration::{Delay, Duration};
 pub use iteration::IterationCount;
 pub use mode::Direction;
 
-use crate::timing::utils::sanitize_playback_rate;
+pub use lilt::Easing;
 
-/// Timing state for an animation track or timeline step.
-///
-/// # Example
-///
-/// ```
-/// use aura_anim_iced::timing::{
-///     Delay, Direction, Easing, Timing, TimingSampleState,
-/// };
-///
-/// let timing = Timing::new(200.0)
-///     .with_delay(Delay::from_millis(50.0))
-///     .with_direction(Direction::Alternate)
-///     .with_easing(Easing::EaseOut)
-///     .with_iterations(2);
-///
-/// let before = timing.normalize_elapsed(25.0);
-/// let active = timing.normalize_elapsed(100.0);
-///
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Timing {
     /// Active duration for one iteration.
@@ -43,8 +23,6 @@ pub struct Timing {
     easing: Easing,
     /// Number of active iterations.
     iterations: IterationCount,
-    /// Elapsed-time multiplier. Values at or below zero are normalized to `1.0`.
-    playback_rate: f64,
 }
 
 impl Timing {
@@ -87,12 +65,6 @@ impl Timing {
         self.iterations
     }
 
-    /// Returns the playback rate of the timing.
-    #[must_use]
-    pub const fn playback_rate(&self) -> f64 {
-        self.playback_rate
-    }
-
     /// Sets the start delay.
     #[must_use]
     pub const fn with_delay(mut self, delay: Delay) -> Self {
@@ -121,13 +93,6 @@ impl Timing {
         self
     }
 
-    /// Sets the playback rate.
-    #[must_use]
-    pub fn with_playback_rate(mut self, playback_rate: f64) -> Self {
-        self.playback_rate = sanitize_playback_rate(playback_rate);
-        self
-    }
-
     /// Returns the total active duration when the timing has a finite length.
     #[must_use]
     pub fn active_duration(self) -> Option<Duration> {
@@ -143,6 +108,11 @@ impl Timing {
 
         active.checked_add_delay(self.delay)
     }
+
+    pub(crate) fn with_duration(mut self, duration: Duration) -> Self {
+        self.duration = duration;
+        self
+    }
 }
 
 impl Default for Timing {
@@ -153,7 +123,6 @@ impl Default for Timing {
             direction: Direction::default(),
             easing: Easing::Linear,
             iterations: IterationCount::default(),
-            playback_rate: 1.0,
         }
     }
 }

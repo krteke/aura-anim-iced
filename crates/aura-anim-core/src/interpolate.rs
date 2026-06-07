@@ -22,6 +22,14 @@ impl InterpolationProgress {
         }
     }
 
+    pub(crate) fn extrapolated(progress: f32) -> Self {
+        if progress.is_finite() {
+            Self(progress)
+        } else {
+            Self(0.0)
+        }
+    }
+
     /// Returns the raw progress value.
     #[must_use]
     pub fn value(self) -> f32 {
@@ -37,7 +45,7 @@ impl InterpolationProgress {
     /// Returns `true` if the progress is at the end (1.0).
     #[must_use]
     pub(crate) fn is_end(self) -> bool {
-        self.0 >= 1.0
+        self.0 == 1.0
     }
 }
 
@@ -150,9 +158,4 @@ where
             })
         })
     }
-}
-
-#[inline]
-fn lerp_f32_raw(from: f32, to: f32, t: f32) -> f32 {
-    from + (to - from) * t
 }

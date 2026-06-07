@@ -2,20 +2,6 @@
 resolver = "3"
 members = ["crates/*"]
 
-# [package]
-# name = "aura-anim-iced"
-# include = [
-#     "src/**/*.rs",
-#     "examples/**/*.rs",
-#     "benches/**/*.rs",
-#     "tests/**/*.rs",
-#     "README.md",
-#     "CHANGELOG.md",
-#     "LICENSE",
-#     "Cargo.toml",
-# ]
-
-
 [workspace.package]
 version = "0.2.1"
 edition = "2024"
@@ -51,6 +37,7 @@ categories = ["gui", "graphics"]
 
 [workspace.dependencies]
 iced = "0.14"
+iced_core = "0.14"
 lilt = "0.8.1"
 palette = "0.7.6"
 # serde = { version = "1", optional = true, features = ["derive"] }

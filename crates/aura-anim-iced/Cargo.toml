@@ -3,4 +3,14 @@ name = "aura-anim-iced"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["rgba"]
+rgba = ["aura-anim-core/rgba"]
+oklaba = ["aura-anim-core/oklaba"]
+
 [dependencies]
+aura-anim-core = { path = "../aura-anim-core", features = ["iced"] }
+iced = { workspace = true, features = ["tokio"] }
+
+[dev-dependencies]
+palette.workspace = true

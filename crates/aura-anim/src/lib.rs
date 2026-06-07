@@ -1,14 +1,19 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub use aura_anim_core as core;
+pub use aura_anim_iced as iced;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub use aura_anim_core::{
+    Animatable, Animation, AnimationCommand, AnimationState, Hold, Interpolate,
+    InterpolationProgress, Motion, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence,
+    Spring, SpringConfig, Timeline, Tween, TweenState, keyframes::Keyframes,
+};
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub mod prelude {
+    pub use aura_anim_core::{
+        Animatable, Animation, AnimationCommand, AnimationState, Hold, Interpolate,
+        InterpolationProgress, Motion, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence,
+        Spring, SpringConfig, Timeline, Tween, TweenState,
+        keyframes::Keyframes,
+        timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
+    };
+    pub use aura_anim_iced::{TickPolicy, subscription, subscription_with_policy};
 }

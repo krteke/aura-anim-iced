@@ -3,9 +3,19 @@ name = "aura-anim-core"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+iced = ["dep:iced_core"]
+rgba = ["iced"]
+oklaba = ["iced", "dep:palette"]
+
 [dependencies]
-palette.workspace = true
+aura-anim-macros = { path = "../aura-anim-macros" }
+iced_core = { workspace = true, optional = true }
 lilt.workspace = true
+palette = { workspace = true, optional = true }
+smallvec.workspace = true
+rustc-hash.workspace = true
 
 [dev-dependencies]
 float-cmp = "0.10.0"

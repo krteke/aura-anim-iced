@@ -3,4 +3,11 @@ name = "aura-anim"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["rgba"]
+rgba = ["aura-anim-iced/rgba"]
+oklaba = ["aura-anim-iced/oklaba"]
+
 [dependencies]
+aura-anim-core = { path = "../aura-anim-core" }
+aura-anim-iced = { path = "../aura-anim-iced", default-features = false }

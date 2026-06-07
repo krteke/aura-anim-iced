@@ -1,23 +1,22 @@
 use lilt::Easing;
 
-use crate::{timing::Delay, traits::Animatable};
+use crate::traits::Animatable;
 
 #[derive(Debug, Clone)]
 pub struct Keyframe<T: Animatable> {
-    // milliseconds
     time: f64,
     value: T,
     easing: Easing,
-    delay: Delay,
 }
 
 impl<T: Animatable> Keyframe<T> {
     pub fn new(time: f64, value: T) -> Self {
+        let time = if time.is_finite() { time } else { 0.0 };
+
         Self {
             time,
             value,
             easing: Easing::default(),
-            delay: Delay::default(),
         }
     }
 
@@ -33,17 +32,8 @@ impl<T: Animatable> Keyframe<T> {
         self.easing
     }
 
-    pub fn delay(&self) -> Delay {
-        self.delay
-    }
-
     pub fn with_easing(mut self, easing: Easing) -> Self {
         self.easing = easing;
-        self
-    }
-
-    pub fn with_delay(mut self, delay: Delay) -> Self {
-        self.delay = delay;
         self
     }
 }

@@ -1,17 +1,20 @@
-pub mod handle;
+#[cfg(feature = "iced")]
+mod iced;
 pub mod interpolate;
 pub mod keyframes;
+pub mod presence;
+pub mod runtime;
+pub mod spring;
+pub mod timeline;
 pub mod timing;
 pub mod traits;
 pub mod tween;
 
-const EPSILON_F32: f32 = 1e-5;
-const EPSILON_F64: f64 = 1e-10;
-
-pub(crate) fn nearly_equal_f64(a: f64, b: f64) -> bool {
-    (a - b).abs() < EPSILON_F64
-}
-
-pub(crate) fn nearly_equal_f32(a: f32, b: f32) -> bool {
-    (a - b).abs() < EPSILON_F32
-}
+pub use aura_anim_macros::Animatable;
+pub use interpolate::InterpolationProgress;
+pub use presence::Presence;
+pub use runtime::{AnimationCommand, Motion, MotionRuntime, RetainPolicy};
+pub use spring::{Spring, SpringConfig};
+pub use timeline::{Hold, Parallel, Sequence, Timeline};
+pub use traits::{Animatable, Animation, AnimationState, Interpolate};
+pub use tween::{Tween, TweenState};

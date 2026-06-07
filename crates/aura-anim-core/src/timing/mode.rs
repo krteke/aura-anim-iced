@@ -25,10 +25,6 @@ impl Direction {
         }
     }
 
-    pub(crate) fn start_progress(self) -> f64 {
-        self.sample_progress(0, 0.0)
-    }
-
     pub(crate) fn end_progress(self, iteration_count: u32) -> f64 {
         let last_iteration = iteration_count.saturating_sub(1);
 

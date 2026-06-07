@@ -49,8 +49,12 @@ impl Duration {
         self.0.checked_add(rhs.0).map(Self)
     }
 
-    pub(crate) fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self)
+    pub(crate) fn saturating_sub(self, rhs: Self) -> Self {
+        Self(self.0.saturating_sub(rhs.0))
+    }
+
+    pub(crate) fn min(self, rhs: Self) -> Self {
+        Self(self.0.min(rhs.0))
     }
 
     pub(crate) fn max(self, rhs: Self) -> Self {

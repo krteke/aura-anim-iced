@@ -1,4 +1,4 @@
-use crate::interpolate::InterpolationProgress;
+use crate::{interpolate::InterpolationProgress, timing::Duration};
 
 pub trait Interpolate: Sized {
     fn lerp(&self, other: &Self, progress: f32) -> Self {
@@ -9,6 +9,10 @@ pub trait Interpolate: Sized {
         Self::interpolate_progress(from, to, InterpolationProgress::new(progress))
     }
 
+    fn extrapolate(from: &Self, to: &Self, progress: f32) -> Self {
+        Self::interpolate_progress(from, to, InterpolationProgress::extrapolated(progress))
+    }
+
     fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self;
 }
 
@@ -16,15 +20,46 @@ pub trait Animatable: Interpolate + Clone + 'static {}
 
 impl<T: Interpolate + Clone + 'static> Animatable for T {}
 
-pub trait Update {
-    fn update(&mut self, dt: f64) -> bool;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnimationState {
+    Idle,
+    Running,
+    Paused,
+    Completed,
+    Canceled,
 }
 
-pub trait Playable: Update {
-    // milliseconds
-    fn duration(&self) -> f32;
+pub trait Animation<T: Animatable>: 'static {
+    fn value(&self) -> &T;
+
+    fn state(&self) -> AnimationState;
+
+    fn duration(&self) -> Option<Duration> {
+        None
+    }
+
+    fn tick(&mut self, delta: Duration);
+
+    fn advance(&mut self, delta: Duration) -> Duration {
+        self.tick(delta);
+        Duration::ZERO
+    }
+
+    fn pause(&mut self);
+
+    fn resume(&mut self);
+
+    fn cancel(&mut self);
 
     fn seek(&mut self, progress: f32);
 
-    fn is_complete(&self) -> bool;
+    fn finish(&mut self);
+
+    fn retarget(&mut self, _target: &T) -> bool {
+        false
+    }
+
+    fn is_active(&self) -> bool {
+        self.state() == AnimationState::Running
+    }
 }
