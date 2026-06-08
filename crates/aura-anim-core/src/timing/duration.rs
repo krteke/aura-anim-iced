@@ -116,3 +116,43 @@ impl From<StdDuration> for Delay {
         Self(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Delay, Duration};
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn duration_constructors_sanitize_negative_and_nan_values() {
+        assert!(Duration::from_millis(-10.0).is_zero());
+        assert!(Duration::from_secs(f64::NAN).is_zero());
+        assert!(Delay::from_millis(-10.0).as_millis().abs() <= f64::EPSILON);
+    }
+
+    #[test]
+    fn duration_reports_seconds_and_milliseconds() {
+        let duration = Duration::from_millis(1_250.0);
+
+        assert_approx_eq!(f64, duration.as_secs(), 1.25);
+        assert_approx_eq!(f64, duration.as_millis(), 1_250.0);
+    }
+
+    #[test]
+    fn duration_arithmetic_is_saturating_where_expected() {
+        let short = Duration::from_millis(25.0);
+        let long = Duration::from_millis(100.0);
+
+        assert_eq!(short.saturating_sub(long), Duration::ZERO);
+        assert_eq!(short.min(long), short);
+        assert_eq!(short.max(long), long);
+        assert_approx_eq!(f64, short.checked_mul(2).unwrap().as_millis(), 50.0);
+        assert_approx_eq!(
+            f64,
+            short
+                .checked_add_delay(Delay::from_millis(25.0))
+                .unwrap()
+                .as_millis(),
+            50.0
+        );
+    }
+}

@@ -60,3 +60,19 @@ impl From<u32> for IterationCount {
         Self::count(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::IterationCount;
+
+    #[test]
+    fn count_clamps_zero_to_one() {
+        assert_eq!(IterationCount::count(0).finite_count(), Some(1));
+        assert_eq!(IterationCount::count(3).finite_count(), Some(3));
+    }
+
+    #[test]
+    fn infinite_has_no_finite_count() {
+        assert_eq!(IterationCount::infinite().finite_count(), None);
+    }
+}

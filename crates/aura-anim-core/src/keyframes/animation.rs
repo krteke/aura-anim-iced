@@ -99,7 +99,7 @@ impl<T: Animatable> Keyframes<T> {
 
     /// Returns the time of the final keyframe.
     #[must_use]
-    pub fn duration(&self) -> Duration {
+    fn duration(&self) -> Duration {
         Duration::from_millis(self.frames.last().map_or(0.0, Keyframe::time))
     }
 

@@ -21,6 +21,9 @@ oklaba = ["aura-anim-core/oklaba"]
 aura-anim-core = { workspace = true, features = ["iced"] }
 iced = { workspace = true, features = ["tokio"] }
 
+[dev-dependencies]
+float-cmp.workspace = true
+
 [lints]
 workspace = true
 

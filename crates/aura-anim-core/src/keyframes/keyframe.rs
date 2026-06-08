@@ -48,3 +48,25 @@ impl<T: Animatable> Keyframe<T> {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Keyframe;
+    use float_cmp::assert_approx_eq;
+    use lilt::Easing;
+
+    #[test]
+    fn invalid_time_is_replaced_with_zero() {
+        assert_approx_eq!(f64, Keyframe::new(f64::NAN, 1.0_f32).time(), 0.0);
+        assert_approx_eq!(f64, Keyframe::new(f64::INFINITY, 1.0_f32).time(), 0.0);
+    }
+
+    #[test]
+    fn accessors_return_stored_values() {
+        let frame = Keyframe::new(25.0, 3_i32).with_easing(Easing::EaseIn);
+
+        assert_approx_eq!(f64, frame.time(), 25.0);
+        assert_eq!(*frame.value(), 3);
+        assert_eq!(frame.easing(), Easing::EaseIn);
+    }
+}

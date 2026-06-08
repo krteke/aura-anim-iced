@@ -87,3 +87,63 @@ pub mod prelude {
 
     pub use crate::{TickPolicy, frame, subscription, subscription_with_policy};
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{TickPolicy, frame, subscription, subscription_with_policy};
+    use aura_anim_core::{MotionRuntime, timing::Timing};
+    use float_cmp::assert_approx_eq;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn default_policy_uses_window_frames() {
+        assert_eq!(TickPolicy::default(), TickPolicy::Frames);
+        assert_eq!(TickPolicy::frames(), TickPolicy::Frames);
+    }
+
+    #[test]
+    fn interval_policy_preserves_duration() {
+        let duration = Duration::from_millis(20);
+
+        assert_eq!(
+            TickPolicy::interval(duration),
+            TickPolicy::Interval(duration)
+        );
+    }
+
+    #[test]
+    fn fps_policy_converts_rate_to_interval() {
+        assert_eq!(
+            TickPolicy::fps(50),
+            TickPolicy::Interval(Duration::from_millis(20))
+        );
+        assert_eq!(
+            TickPolicy::fps(0),
+            TickPolicy::Interval(Duration::from_secs(1))
+        );
+    }
+
+    #[test]
+    fn subscriptions_can_be_built_for_idle_runtime() {
+        let runtime = MotionRuntime::new();
+
+        let frames = subscription(&runtime);
+        let interval =
+            subscription_with_policy(&runtime, TickPolicy::interval(Duration::from_millis(10)));
+
+        let _ = (frames, interval);
+    }
+
+    #[test]
+    fn frame_advances_runtime_using_instants() {
+        let mut runtime = MotionRuntime::new();
+        let motion = runtime.motion_with(0.0_f32, Timing::new(100.0));
+        assert!(motion.transition_to(10.0, &mut runtime));
+        let start = Instant::now();
+
+        frame(&mut runtime, start);
+        frame(&mut runtime, start + Duration::from_millis(50));
+
+        assert_approx_eq!(f32, motion.value(&runtime), 5.0, epsilon = 0.001);
+    }
+}

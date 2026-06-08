@@ -24,6 +24,9 @@ iced_core = { workspace = true, optional = true }
 lilt.workspace = true
 palette = { workspace = true, optional = true }
 
+[dev-dependencies]
+float-cmp.workspace = true
+
 [lints]
 workspace = true
 

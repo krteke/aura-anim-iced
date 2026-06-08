@@ -47,7 +47,7 @@ impl InterpolationProgress {
     /// Returns `true` if the progress is at the end (1.0).
     #[must_use]
     pub(crate) fn is_end(self) -> bool {
-        self.0 >= 1.0
+        (self.0 - 1.0).abs() < 1e-5
     }
 }
 
@@ -159,5 +159,53 @@ where
                 <T as Interpolate>::interpolate_progress(&from[i], &to[i], progress)
             })
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::InterpolationProgress;
+    use crate::Interpolate;
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn progress_clamps_invalid_values() {
+        assert_approx_eq!(f32, InterpolationProgress::new(f32::NAN).value(), 0.0);
+        assert_approx_eq!(f32, InterpolationProgress::new(-0.5).value(), 0.0);
+        assert_approx_eq!(f32, InterpolationProgress::new(1.5).value(), 1.0);
+    }
+
+    #[test]
+    fn progress_allows_finite_extrapolation() {
+        assert_approx_eq!(f32, InterpolationProgress::extrapolated(1.5).value(), 1.5);
+        assert_approx_eq!(
+            f32,
+            InterpolationProgress::extrapolated(f32::INFINITY).value(),
+            0.0
+        );
+    }
+
+    #[test]
+    fn interpolates_floating_point_values() {
+        assert_approx_eq!(f32, f32::interpolate(&2.0, &6.0, 0.25), 3.0);
+        assert_approx_eq!(f64, f64::interpolate(&2.0, &6.0, 0.25), 3.0);
+    }
+
+    #[test]
+    fn interpolates_integer_values_with_rounding() {
+        assert_eq!(i32::interpolate(&0, &10, 0.26), 3);
+        assert_eq!(u8::interpolate(&0, &10, 0.24), 2);
+    }
+
+    #[test]
+    fn interpolates_tuples_and_arrays() {
+        assert_eq!(
+            <(f32, i32)>::interpolate(&(0.0, 0), &(10.0, 10), 0.5),
+            (5.0, 5)
+        );
+        let array = <[f32; 2]>::interpolate(&[0.0, 10.0], &[10.0, 20.0], 0.5);
+
+        assert_approx_eq!(f32, array[0], 5.0);
+        assert_approx_eq!(f32, array[1], 15.0);
     }
 }

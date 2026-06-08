@@ -85,3 +85,44 @@ impl<T: Animatable> Animation<T> for Hold<T> {
         self.state = AnimationState::Completed;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Hold;
+    use crate::{Animation, AnimationState, timing::Duration};
+
+    #[test]
+    fn advance_returns_overflow_after_completion() {
+        let mut hold = Hold::new(4_i32, Duration::from_millis(50.0));
+
+        let overflow = hold.advance(Duration::from_millis(80.0));
+
+        assert_eq!(overflow, Duration::from_millis(30.0));
+        assert_eq!(hold.state(), AnimationState::Completed);
+        assert_eq!(*hold.value(), 4);
+    }
+
+    #[test]
+    fn pause_resume_cancel_and_finish_update_state() {
+        let mut hold = Hold::new(4_i32, Duration::from_millis(50.0));
+
+        hold.pause();
+        assert_eq!(hold.state(), AnimationState::Paused);
+        hold.resume();
+        assert_eq!(hold.state(), AnimationState::Running);
+        hold.cancel();
+        assert_eq!(hold.state(), AnimationState::Canceled);
+        hold.finish();
+        assert_eq!(hold.state(), AnimationState::Completed);
+    }
+
+    #[test]
+    fn seek_clamps_progress_and_updates_state() {
+        let mut hold = Hold::new(4_i32, Duration::from_millis(50.0));
+
+        hold.seek(f32::NAN);
+        assert_eq!(hold.state(), AnimationState::Running);
+        hold.seek(2.0);
+        assert_eq!(hold.state(), AnimationState::Completed);
+    }
+}

@@ -283,3 +283,97 @@ impl<T: Animatable> Animation<T> for Tween<T> {
         true
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Tween;
+    use crate::{
+        Animation, AnimationState,
+        timing::{Direction, Duration, IterationCount, Timing},
+    };
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn new_tween_is_idle_with_matching_endpoints() {
+        let tween = Tween::new(3.0_f32);
+
+        assert_eq!(tween.state(), AnimationState::Idle);
+        assert_approx_eq!(f32, *tween.value(), 3.0);
+        assert_approx_eq!(f32, *tween.from(), 3.0);
+        assert_approx_eq!(f32, *tween.target(), 3.0);
+        assert_approx_eq!(f64, tween.timing().duration().as_millis(), 200.0);
+    }
+
+    #[test]
+    fn transition_uses_current_value_as_new_start() {
+        let mut tween = Tween::between(0.0_f32, 10.0, Timing::new(100.0));
+        tween.tick(Duration::from_millis(40.0));
+        tween.transition_to(20.0);
+
+        assert_approx_eq!(f32, *tween.from(), 4.0);
+        assert_approx_eq!(f32, *tween.value(), 4.0);
+        assert_approx_eq!(f32, *tween.target(), 20.0);
+    }
+
+    #[test]
+    fn paused_and_canceled_tweens_do_not_tick() {
+        let mut tween = Tween::between(0.0_f32, 10.0, Timing::new(100.0));
+        tween.pause();
+        tween.tick(Duration::from_millis(50.0));
+        assert_approx_eq!(f32, *tween.value(), 0.0);
+
+        tween.resume();
+        tween.tick(Duration::from_millis(25.0));
+        assert_approx_eq!(f32, *tween.value(), 2.5);
+
+        tween.cancel();
+        tween.tick(Duration::from_millis(75.0));
+        assert_eq!(tween.state(), AnimationState::Canceled);
+        assert_approx_eq!(f32, *tween.value(), 2.5);
+    }
+
+    #[test]
+    fn advance_returns_unconsumed_duration() {
+        let mut tween = Tween::between(0.0_f32, 1.0, Timing::new(100.0));
+
+        let overflow = Animation::advance(&mut tween, Duration::from_millis(125.0));
+
+        assert_eq!(overflow, Duration::from_millis(25.0));
+        assert_eq!(tween.state(), AnimationState::Completed);
+    }
+
+    #[test]
+    fn infinite_tween_consumes_all_advanced_time() {
+        let timing = Timing::new(100.0).with_iterations(IterationCount::INFINITE);
+        let mut tween = Tween::between(0.0_f32, 1.0, timing);
+
+        let overflow = Animation::advance(&mut tween, Duration::from_millis(250.0));
+
+        assert_eq!(overflow, Duration::ZERO);
+        assert_eq!(tween.state(), AnimationState::Running);
+        assert_approx_eq!(f32, *tween.value(), 0.5);
+    }
+
+    #[test]
+    fn finish_respects_repeated_direction() {
+        let timing = Timing::new(100.0)
+            .with_iterations(2)
+            .with_direction(Direction::Alternate);
+        let mut tween = Tween::between(0.0_f32, 10.0, timing);
+
+        tween.finish();
+
+        assert_eq!(tween.state(), AnimationState::Completed);
+        assert_approx_eq!(f32, *tween.value(), 0.0);
+    }
+
+    #[test]
+    fn zero_duration_tween_finishes_on_tick() {
+        let mut tween = Tween::between(0.0_f32, 10.0, Timing::new(0.0));
+
+        tween.tick(Duration::ZERO);
+
+        assert_eq!(tween.state(), AnimationState::Completed);
+        assert_approx_eq!(f32, *tween.value(), 10.0);
+    }
+}

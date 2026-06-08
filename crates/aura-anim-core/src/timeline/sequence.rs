@@ -209,3 +209,45 @@ impl<T: Animatable> Animation<T> for Sequence<T> {
         self.state = AnimationState::Completed;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Sequence;
+    use crate::{Animation, AnimationState, Tween, timing::Timing};
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn empty_sequence_remains_idle_when_advanced() {
+        let mut sequence = Sequence::new(2.0_f32);
+
+        let overflow = sequence.advance(crate::timing::Duration::from_millis(10.0));
+
+        assert_eq!(sequence.state(), AnimationState::Idle);
+        assert_eq!(overflow, crate::timing::Duration::from_millis(10.0));
+        assert_approx_eq!(f32, *sequence.value(), 2.0);
+    }
+
+    #[test]
+    fn seek_updates_current_child_value() {
+        let mut sequence = Sequence::new(0.0_f32)
+            .then(Tween::between(0.0, 10.0, Timing::new(100.0)))
+            .then(Tween::between(10.0, 20.0, Timing::new(100.0)));
+
+        sequence.seek(0.75);
+
+        assert_eq!(sequence.state(), AnimationState::Running);
+        assert_approx_eq!(f32, *sequence.value(), 15.0);
+    }
+
+    #[test]
+    fn finish_uses_last_child_value() {
+        let mut sequence = Sequence::new(0.0_f32)
+            .then(Tween::between(0.0, 10.0, Timing::new(100.0)))
+            .then(Tween::between(10.0, 20.0, Timing::new(100.0)));
+
+        sequence.finish();
+
+        assert_eq!(sequence.state(), AnimationState::Completed);
+        assert_approx_eq!(f32, *sequence.value(), 20.0);
+    }
+}

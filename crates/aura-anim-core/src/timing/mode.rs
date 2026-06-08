@@ -40,3 +40,36 @@ impl Direction {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Direction;
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn sample_progress_applies_direction() {
+        assert_approx_eq!(f64, Direction::Normal.sample_progress(0, 0.25), 0.25);
+        assert_approx_eq!(f64, Direction::Reverse.sample_progress(0, 0.25), 0.75);
+        assert_approx_eq!(f64, Direction::Alternate.sample_progress(1, 0.25), 0.75);
+        assert_approx_eq!(
+            f64,
+            Direction::AlternateReverse.sample_progress(0, 0.25),
+            0.75
+        );
+    }
+
+    #[test]
+    fn end_progress_uses_last_iteration_direction() {
+        assert_approx_eq!(f64, Direction::Normal.end_progress(3), 1.0);
+        assert_approx_eq!(f64, Direction::Reverse.end_progress(3), 0.0);
+        assert_approx_eq!(f64, Direction::Alternate.end_progress(2), 0.0);
+        assert_approx_eq!(f64, Direction::AlternateReverse.end_progress(2), 1.0);
+    }
+
+    #[test]
+    fn sample_progress_clamps_raw_progress() {
+        assert_approx_eq!(f64, Direction::Normal.sample_progress(0, -1.0), 0.0);
+        assert_approx_eq!(f64, Direction::Normal.sample_progress(0, 2.0), 1.0);
+        assert_approx_eq!(f64, Direction::Normal.sample_progress(0, f64::NAN), 0.0);
+    }
+}
