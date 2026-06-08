@@ -188,9 +188,8 @@ aura-anim = {
 
 ```text
 Iced sRGB
-→ linear sRGB
+→ palette sRGB
 → Oklab interpolation
-→ linear sRGB
 → display sRGB
 ```
 
@@ -292,6 +291,24 @@ Run the Iced showcase:
 
 ```sh
 cargo run -p aura-anim-iced --example showcase
+```
+
+Run the focused visual examples:
+
+```sh
+cargo run -p aura-anim-iced --example tween
+cargo run -p aura-anim-iced --example keyframes
+cargo run -p aura-anim-iced --example timeline
+cargo run -p aura-anim-iced --example spring
+```
+
+Run the interactive UI examples:
+
+```sh
+cargo run -p aura-anim-iced --example button
+cargo run -p aura-anim-iced --example menu
+cargo run -p aura-anim-iced --example notification
+cargo run -p aura-anim-iced --example route_transition
 ```
 
 Run the showcase with perceptual color interpolation:

@@ -128,6 +128,7 @@ fn benchmark_timing(criterion: &mut Criterion) {
     group.finish();
 }
 
+#[allow(clippy::too_many_lines)]
 fn benchmark_animation_sources(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("animation_source");
 
@@ -345,6 +346,7 @@ fn benchmark_animation_sources(criterion: &mut Criterion) {
     group.finish();
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn keyframes_with_frames(frame_count: usize) -> Keyframes<f32> {
     (1..=frame_count).fold(Keyframes::new(0.0_f32), |keyframes, index| {
         let time = index as f64 * 16.0;
@@ -352,6 +354,7 @@ fn keyframes_with_frames(frame_count: usize) -> Keyframes<f32> {
     })
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn sequence_with_steps(step_count: usize) -> Sequence<f32> {
     (0..step_count).fold(Sequence::new(0.0_f32), |sequence, index| {
         sequence.then(Tween::between(
@@ -362,6 +365,7 @@ fn sequence_with_steps(step_count: usize) -> Sequence<f32> {
     })
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn parallel_with_children(child_count: usize) -> Parallel<f32> {
     (0..child_count).fold(
         Parallel::new(0.0_f32, |values| values.iter().copied().sum()),
@@ -388,6 +392,7 @@ fn runtime_with_motions(count: usize) -> (MotionRuntime, Vec<Motion<f32>>) {
     (runtime, motions)
 }
 
+#[allow(clippy::too_many_lines)]
 fn benchmark_runtime(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("runtime");
 
