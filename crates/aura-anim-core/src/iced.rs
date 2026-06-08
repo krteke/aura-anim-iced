@@ -104,14 +104,11 @@ impl Interpolate for Color {
     fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self {
         use palette::{FromColor, Mix, Oklab, Srgb};
 
-        let from_lin = from.into_linear();
-        let from_lab = Oklab::from_color(Srgb::new(from_lin[0], from_lin[1], from_lin[2]));
-        let to_lin = to.into_linear();
-        let to_lab = Oklab::from_color(Srgb::new(to_lin[0], to_lin[1], to_lin[2]));
+        let from_lab = Oklab::from_color(Srgb::new(from.r, from.g, from.b));
+        let to_lab = Oklab::from_color(Srgb::new(to.r, to.g, to.b));
 
         let lab = from_lab.mix(to_lab, progress.value());
-        let linear_rgb: LinSrgb = LinSrgb::from_color(lab);
-        let rgb: Srgb<f32> = Srgb::from_linear(linear_rgb);
+        let rgb = Srgb::from_color(lab);
 
         Color {
             r: rgb.red.clamp(0.0, 1.0),

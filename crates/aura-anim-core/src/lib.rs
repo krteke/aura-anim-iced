@@ -1,3 +1,5 @@
+//! Core animation primitives, timing types, composition utilities, and runtime storage.
+
 #[cfg(feature = "iced")]
 mod iced;
 pub mod interpolate;

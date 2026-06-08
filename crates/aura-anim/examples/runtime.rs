@@ -1,3 +1,5 @@
+//! Demonstrates runtime-managed tweens, timelines, keyframes, and presence.
+
 use std::time::Duration;
 
 use aura_anim::prelude::*;
@@ -14,6 +16,7 @@ struct NestedMotion {
     y: f32,
 }
 
+#[allow(clippy::too_many_lines)]
 fn main() {
     let mut runtime = MotionRuntime::new();
     let button = runtime.motion_with(

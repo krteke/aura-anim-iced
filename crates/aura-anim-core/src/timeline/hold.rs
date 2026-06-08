@@ -1,5 +1,6 @@
 use crate::{Animatable, Animation, AnimationState, timeline::normalized, timing::Duration};
 
+/// An animation that keeps a value unchanged for a fixed duration.
 #[derive(Debug, Clone)]
 pub struct Hold<T: Animatable> {
     value: T,
@@ -9,6 +10,8 @@ pub struct Hold<T: Animatable> {
 }
 
 impl<T: Animatable> Hold<T> {
+    /// Creates a running hold animation.
+    #[must_use]
     pub fn new(value: T, duration: impl Into<Duration>) -> Self {
         Self {
             value,

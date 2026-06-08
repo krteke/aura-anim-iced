@@ -1,7 +1,16 @@
 [package]
 name = "aura-anim-core"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Typed animation runtime and composable animation sources."
+documentation = "https://docs.rs/aura-anim-core"
 
 [features]
 default = []
@@ -10,12 +19,14 @@ rgba = ["iced"]
 oklaba = ["iced", "dep:palette"]
 
 [dependencies]
-aura-anim-macros = { path = "../aura-anim-macros" }
+aura-anim-macros.workspace = true
 iced_core = { workspace = true, optional = true }
 lilt.workspace = true
 palette = { workspace = true, optional = true }
-smallvec.workspace = true
-rustc-hash.workspace = true
 
-[dev-dependencies]
-float-cmp = "0.10.0"
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+features = ["iced", "rgba"]
+rustdoc-args = ["--cfg", "docsrs"]

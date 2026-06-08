@@ -1,7 +1,16 @@
 [package]
 name = "aura-anim-iced"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Iced integration for the aura typed animation runtime."
+documentation = "https://docs.rs/aura-anim-iced"
 
 [features]
 default = ["rgba"]
@@ -9,8 +18,12 @@ rgba = ["aura-anim-core/rgba"]
 oklaba = ["aura-anim-core/oklaba"]
 
 [dependencies]
-aura-anim-core = { path = "../aura-anim-core", features = ["iced"] }
+aura-anim-core = { workspace = true, features = ["iced"] }
 iced = { workspace = true, features = ["tokio"] }
 
-[dev-dependencies]
-palette.workspace = true
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+features = ["rgba"]
+rustdoc-args = ["--cfg", "docsrs"]

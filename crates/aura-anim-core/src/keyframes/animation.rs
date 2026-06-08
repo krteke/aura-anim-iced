@@ -8,6 +8,23 @@ use crate::{
     traits::{Animatable, Animation, AnimationState},
 };
 
+/// An animation composed of time-positioned [`Keyframe`] values.
+///
+/// # Examples
+///
+/// ```
+/// use aura_anim_core::{Animation, keyframes::Keyframes, timing::Duration};
+///
+/// let mut animation = Keyframes::new(0.0_f32)
+///     .push(100.0, 1.0)
+///     .push(200.0, 0.0);
+///
+/// animation.tick(Duration::from_millis(100.0));
+/// assert_eq!(*animation.value(), 1.0);
+///
+/// animation.tick(Duration::from_millis(100.0));
+/// assert_eq!(*animation.value(), 0.0);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Keyframes<T: Animatable> {
     frames: Vec<Keyframe<T>>,
@@ -18,6 +35,8 @@ pub struct Keyframes<T: Animatable> {
 }
 
 impl<T: Animatable> Keyframes<T> {
+    /// Creates a running keyframe animation with an initial frame at zero.
+    #[must_use]
     pub fn new(initial: T) -> Self {
         Self {
             frames: vec![Keyframe::new(0.0, initial.clone())],
@@ -28,15 +47,21 @@ impl<T: Animatable> Keyframes<T> {
         }
     }
 
+    /// Adds a keyframe with linear easing after the preceding frame.
+    #[must_use]
     pub fn push(self, time_ms: f64, value: T) -> Self {
         self.push_eased(time_ms, value, Easing::Linear)
     }
 
+    /// Adds a keyframe with the provided easing.
+    #[must_use]
     pub fn push_eased(self, time_ms: f64, value: T, easing: Easing) -> Self {
         let frame = Keyframe::new(time_ms.max(0.0), value).with_easing(easing);
         self.push_frame(frame)
     }
 
+    /// Adds or replaces a keyframe at the frame's time.
+    #[must_use]
     pub fn push_frame(mut self, frame: Keyframe<T>) -> Self {
         match self.frames.binary_search_by(|existing| {
             existing
@@ -51,21 +76,29 @@ impl<T: Animatable> Keyframes<T> {
         self
     }
 
+    /// Sets the delay before playback begins.
+    #[must_use]
     pub fn with_delay(mut self, delay: Delay) -> Self {
         self.timing = self.timing.with_delay(delay);
         self
     }
 
+    /// Sets the number of playback iterations.
+    #[must_use]
     pub fn with_iterations(mut self, iterations: impl Into<IterationCount>) -> Self {
         self.timing = self.timing.with_iterations(iterations);
         self
     }
 
+    /// Sets the playback direction.
+    #[must_use]
     pub fn with_direction(mut self, direction: Direction) -> Self {
         self.timing = self.timing.with_direction(direction);
         self
     }
 
+    /// Returns the time of the final keyframe.
+    #[must_use]
     pub fn duration(&self) -> Duration {
         Duration::from_millis(self.frames.last().map_or(0.0, Keyframe::time))
     }
@@ -93,7 +126,10 @@ impl<T: Animatable> Keyframes<T> {
             }
         }
 
+        #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_sign_loss)]
         let iteration = (active_elapsed / duration).floor() as u32;
+
         let raw_progress = (active_elapsed % duration) / duration;
         let progress = self
             .timing
@@ -116,7 +152,10 @@ impl<T: Animatable> Keyframes<T> {
         let to = &self.frames[upper];
         let span = (to.time() - from.time()).max(f64::EPSILON);
         let progress = ((time_ms - from.time()) / span).clamp(0.0, 1.0);
+
+        #[allow(clippy::cast_possible_truncation)]
         let eased = from.easing().value(progress as f32);
+
         T::interpolate(from.value(), to.value(), eased)
     }
 }

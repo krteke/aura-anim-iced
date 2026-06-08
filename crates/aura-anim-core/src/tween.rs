@@ -1,10 +1,30 @@
+//! Duration-based interpolation animations.
+
 use crate::{
     timing::{Duration, Timing},
     traits::{Animatable, Animation, AnimationState},
 };
 
+/// The lifecycle state of a [`Tween`].
 pub type TweenState = AnimationState;
 
+/// An animation that interpolates between two values using [`Timing`].
+///
+/// # Examples
+///
+/// ```
+/// use aura_anim_core::{Tween, timing::Timing};
+/// use std::time::Duration;
+///
+/// let mut tween = Tween::between(0.0_f32, 10.0, Timing::new(100.0));
+///
+/// tween.tick(Duration::from_millis(50));
+/// assert_eq!(*tween.value(), 5.0);
+///
+/// tween.tick(Duration::from_millis(50));
+/// assert!(tween.is_completed());
+/// assert_eq!(*tween.value(), 10.0);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Tween<T: Animatable> {
     from: T,
@@ -16,10 +36,14 @@ pub struct Tween<T: Animatable> {
 }
 
 impl<T: Animatable> Tween<T> {
+    /// Creates an idle tween with the default 200 millisecond timing.
+    #[must_use]
     pub fn new(value: T) -> Self {
         Self::with_timing(value, Timing::new(200.0))
     }
 
+    /// Creates an idle tween with the provided timing.
+    #[must_use]
     pub fn with_timing(value: T, timing: Timing) -> Self {
         Self {
             from: value.clone(),
@@ -31,40 +55,57 @@ impl<T: Animatable> Tween<T> {
         }
     }
 
+    /// Creates a running tween from `from` to `to`.
+    #[must_use]
     pub fn between(from: T, to: T, timing: Timing) -> Self {
         let mut tween = Self::with_timing(from, timing);
         tween.transition_to(to);
         tween
     }
 
+    /// Returns the current interpolated value.
+    #[must_use]
     pub fn value(&self) -> &T {
         &self.current
     }
 
+    /// Returns the value at the start of the current transition.
+    #[must_use]
     pub fn from(&self) -> &T {
         &self.from
     }
 
+    /// Returns the target value of the current transition.
+    #[must_use]
     pub fn target(&self) -> &T {
         &self.to
     }
 
+    /// Returns the timing configuration.
+    #[must_use]
     pub const fn timing(&self) -> Timing {
         self.timing
     }
 
+    /// Returns the current lifecycle state.
+    #[must_use]
     pub const fn state(&self) -> AnimationState {
         self.state
     }
 
+    /// Returns whether the tween is currently running.
+    #[must_use]
     pub fn is_active(&self) -> bool {
         self.state == AnimationState::Running
     }
 
+    /// Returns whether the tween has completed.
+    #[must_use]
     pub fn is_completed(&self) -> bool {
         self.state == AnimationState::Completed
     }
 
+    /// Starts a transition from the current value to `target`.
     pub fn transition_to(&mut self, target: T) {
         self.from = self.current.clone();
         self.to = target;
@@ -73,6 +114,7 @@ impl<T: Animatable> Tween<T> {
         self.sample();
     }
 
+    /// Advances the tween by `delta`.
     pub fn tick(&mut self, delta: impl Into<Duration>) {
         if self.state != AnimationState::Running {
             return;
@@ -87,18 +129,21 @@ impl<T: Animatable> Tween<T> {
         Some(total.saturating_sub(self.elapsed))
     }
 
+    /// Pauses the tween when it is running.
     pub fn pause(&mut self) {
         if self.state == AnimationState::Running {
             self.state = AnimationState::Paused;
         }
     }
 
+    /// Resumes the tween when it is paused.
     pub fn resume(&mut self) {
         if self.state == AnimationState::Paused {
             self.state = AnimationState::Running;
         }
     }
 
+    /// Cancels the tween unless it is already completed or canceled.
     pub fn cancel(&mut self) {
         if matches!(
             self.state,
@@ -108,6 +153,7 @@ impl<T: Animatable> Tween<T> {
         }
     }
 
+    /// Seeks to normalized progress within the complete timing interval.
     pub fn seek(&mut self, progress: f32) {
         let progress = if progress.is_nan() {
             0.0
@@ -124,6 +170,8 @@ impl<T: Animatable> Tween<T> {
         self.sample();
     }
 
+    /// Moves the tween to its final value and completed state.
+    #[allow(clippy::cast_possible_truncation)]
     pub fn finish(&mut self) {
         let progress = self
             .timing
@@ -140,6 +188,8 @@ impl<T: Animatable> Tween<T> {
         self.state = AnimationState::Completed;
     }
 
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_possible_truncation)]
     fn sample(&mut self) {
         let delay = self.timing.delay().as_millis();
         let elapsed = self.elapsed.as_millis();

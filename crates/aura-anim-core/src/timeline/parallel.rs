@@ -2,6 +2,7 @@ use crate::{Animatable, Animation, AnimationState, timeline::normalized, timing:
 
 type Compositor<T> = Box<dyn Fn(&[T]) -> T>;
 
+/// Runs child animations together and composes their output values.
 pub struct Parallel<T: Animatable> {
     children: Vec<Box<dyn Animation<T>>>,
     outputs: Vec<T>,
@@ -11,6 +12,8 @@ pub struct Parallel<T: Animatable> {
 }
 
 impl<T: Animatable> Parallel<T> {
+    /// Creates an empty parallel animation with an output compositor.
+    #[must_use]
     pub fn new(initial: T, compose: impl Fn(&[T]) -> T + 'static) -> Self {
         Self {
             children: Vec::new(),
@@ -21,21 +24,28 @@ impl<T: Animatable> Parallel<T> {
         }
     }
 
+    /// Appends an animation and returns the updated parallel composition.
+    #[must_use]
     pub fn with(mut self, animation: impl Animation<T>) -> Self {
         self.push(animation);
         self
     }
 
+    /// Appends an animation to the parallel composition.
     pub fn push(&mut self, animation: impl Animation<T>) {
         self.outputs.push(animation.value().clone());
         self.children.push(Box::new(animation));
         self.state = AnimationState::Running;
     }
 
+    /// Returns the number of child animations.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.children.len()
     }
 
+    /// Returns whether the composition contains no child animations.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.children.is_empty()
     }
@@ -127,6 +137,7 @@ impl<T: Animatable> Animation<T> for Parallel<T> {
         let progress = normalized(progress);
         let duration = self.duration();
         for (index, child) in self.children.iter_mut().enumerate() {
+            #[allow(clippy::cast_possible_truncation)]
             let child_progress = match (duration, child.duration()) {
                 (Some(total), Some(child_duration)) if !child_duration.is_zero() => {
                     (total.as_secs() * f64::from(progress) / child_duration.as_secs())

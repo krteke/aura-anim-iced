@@ -10,49 +10,17 @@ authors = ["krteke"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/krteke/aura-anim-iced"
-description = "Iced-first animation primitives."
-documentation = "https://docs.rs/aura-anim-iced"
 keywords = ["iced", "animation", "ui", "motion"]
 categories = ["gui", "graphics"]
-
-
-# [lib]
-# name = "aura_anim_iced"
-# path = "crates/aura-anim/src/lib.rs"
-
-# [[bench]]
-# name = "sampling"
-# harness = false
-
-# [features]
-# default = []
-# palette = ["dep:palette"]
-# spring = []
-# widgets = []
-# theme = []
-# layout = []
-# serde = ["dep:serde"]
-# tracing = ["dep:tracing"]
-# inspector = ["tracing"]
 
 [workspace.dependencies]
 iced = "0.14"
 iced_core = "0.14"
 lilt = "0.8.1"
 palette = "0.7.6"
-# serde = { version = "1", optional = true, features = ["derive"] }
-tracing = "0.1"
-smallvec = "1.15.1"
-rustc-hash = "2.1.2"
-thiserror = "2"
-
-# criterion = { version = "0.8.2", default-features = false }
-# anyhow = "1"
-# tracing-subscriber = "0.3"
-
-[workspace.package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
+aura-anim-core = { version = "0.2.1", path = "crates/aura-anim-core" }
+aura-anim-iced = { version = "0.2.1", path = "crates/aura-anim-iced", default-features = false }
+aura-anim-macros = { version = "0.2.1", path = "crates/aura-anim-macros" }
 
 [workspace.lints.rust]
 missing_docs = "warn"

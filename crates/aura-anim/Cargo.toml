@@ -1,7 +1,16 @@
 [package]
 name = "aura-anim"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Convenience facade for aura animation core and Iced integration."
+documentation = "https://docs.rs/aura-anim"
 
 [features]
 default = ["rgba"]
@@ -9,5 +18,12 @@ rgba = ["aura-anim-iced/rgba"]
 oklaba = ["aura-anim-iced/oklaba"]
 
 [dependencies]
-aura-anim-core = { path = "../aura-anim-core" }
-aura-anim-iced = { path = "../aura-anim-iced", default-features = false }
+aura-anim-core.workspace = true
+aura-anim-iced.workspace = true
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+features = ["rgba"]
+rustdoc-args = ["--cfg", "docsrs"]

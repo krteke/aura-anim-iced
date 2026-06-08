@@ -1,8 +1,14 @@
+//! Derive macros for Aura animation values.
+
 use proc_macro::TokenStream;
 use proc_macro_crate::{FoundCrate, crate_name};
 use quote::{format_ident, quote};
 use syn::{Data, DeriveInput, Fields, parse_macro_input, parse_quote};
 
+/// Derives field-by-field interpolation for a struct.
+///
+/// Every field must implement `Animatable`. Named, tuple, and unit structs are
+/// supported.
 #[proc_macro_derive(Animatable)]
 pub fn derive_animatable(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

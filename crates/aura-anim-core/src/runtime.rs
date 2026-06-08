@@ -1,3 +1,5 @@
+//! Runtime storage, typed handles, and animation commands.
+
 use std::marker::PhantomData;
 
 use crate::{
@@ -18,10 +20,13 @@ mod typed;
 pub use command::AnimationCommand;
 pub use motion::Motion;
 
+/// Controls whether the runtime retains an animation after it settles.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum RetainPolicy {
+    /// Keep the animation and its final value until explicitly removed.
     #[default]
     Keep,
+    /// Remove the animation after it completes or is canceled.
     DropWhenSettled,
 }
 
@@ -34,6 +39,23 @@ struct AnimationSlot {
     queued: bool,
 }
 
+/// Stores animations and advances their active values.
+///
+/// # Examples
+///
+/// ```
+/// use aura_anim_core::{MotionRuntime, timing::Timing};
+/// use std::time::Duration;
+///
+/// let mut runtime = MotionRuntime::new();
+/// let opacity = runtime.motion_with(0.0_f32, Timing::new(100.0));
+///
+/// assert!(opacity.transition_to(1.0, &mut runtime));
+/// runtime.tick(Duration::from_millis(50));
+///
+/// assert_eq!(opacity.value(&runtime), 0.5);
+/// assert!(opacity.is_active(&runtime));
+/// ```
 #[derive(Default)]
 pub struct MotionRuntime {
     slots: Vec<AnimationSlot>,
@@ -46,18 +68,23 @@ pub struct MotionRuntime {
 }
 
 impl MotionRuntime {
+    /// Creates an empty motion runtime.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Inserts an idle motion with the default transition timing.
     pub fn motion<T: Animatable>(&mut self, initial: T) -> Motion<T> {
         self.motion_with(initial, Timing::new(200.0))
     }
 
+    /// Inserts an idle motion with the provided transition timing.
     pub fn motion_with<T: Animatable>(&mut self, initial: T, timing: Timing) -> Motion<T> {
         self.insert(Tween::with_timing(initial, timing), timing)
     }
 
+    /// Inserts an animation that remains stored after it settles.
     pub fn insert<T: Animatable>(
         &mut self,
         animation: impl Animation<T>,
@@ -66,10 +93,12 @@ impl MotionRuntime {
         self.insert_with_policy(animation, transition, RetainPolicy::Keep)
     }
 
+    /// Inserts an animation that is removed after it settles.
     pub fn play_once<T: Animatable>(&mut self, animation: impl Animation<T>) -> Motion<T> {
         self.insert_with_policy(animation, Timing::default(), RetainPolicy::DropWhenSettled)
     }
 
+    /// Inserts an animation with transition timing and a retention policy.
     pub fn insert_with_policy<T: Animatable>(
         &mut self,
         animation: impl Animation<T>,
@@ -117,6 +146,7 @@ impl MotionRuntime {
         motion
     }
 
+    /// Advances every active animation by `delta`.
     pub fn tick(&mut self, delta: impl Into<Duration>) {
         let delta = delta.into();
         self.next_active.clear();
@@ -168,6 +198,9 @@ impl MotionRuntime {
         }
     }
 
+    /// Advances active animations using elapsed wall-clock time.
+    ///
+    /// The first call establishes the clock origin and advances by zero.
     pub fn tick_at(&mut self, now: std::time::Instant) {
         let delta = self.last_tick.map_or(std::time::Duration::ZERO, |last| {
             now.saturating_duration_since(last)
@@ -176,22 +209,31 @@ impl MotionRuntime {
         self.tick(delta);
     }
 
+    /// Returns the number of animations currently marked active.
+    #[must_use]
     pub fn active_count(&self) -> usize {
         self.active_count
     }
 
+    /// Returns whether at least one animation is active.
+    #[must_use]
     pub fn has_active(&self) -> bool {
         self.active_count > 0
     }
 
+    /// Returns the number of stored animations.
+    #[must_use]
     pub fn motion_count(&self) -> usize {
         self.motion_count
     }
 
+    /// Returns the allocated capacity of the runtime slot storage.
+    #[must_use]
     pub fn slot_capacity(&self) -> usize {
         self.slots.capacity()
     }
 
+    /// Releases unused slot and queue capacity.
     pub fn shrink_to_fit(&mut self) {
         while self
             .slots
@@ -207,19 +249,28 @@ impl MotionRuntime {
         self.next_active.shrink_to_fit();
     }
 
+    /// Returns the current value for a valid motion handle.
+    #[must_use]
     pub fn value<T: Animatable>(&self, motion: Motion<T>) -> Option<&T> {
         self.animation(motion.id())?.value_any().downcast_ref::<T>()
     }
 
+    /// Returns the state for a valid motion handle.
+    #[must_use]
     pub fn state<T: Animatable>(&self, motion: Motion<T>) -> Option<AnimationState> {
         self.animation(motion.id()).map(AnimationDyn::state)
     }
 
+    /// Returns whether the referenced motion is active.
+    #[must_use]
     pub fn is_active<T: Animatable>(&self, motion: Motion<T>) -> bool {
         self.animation(motion.id())
             .is_some_and(AnimationDyn::is_active)
     }
 
+    /// Transitions a valid motion toward `target`.
+    ///
+    /// Returns `false` when the handle is no longer valid.
     pub fn transition_to<T: Animatable>(&mut self, motion: Motion<T>, target: T) -> bool {
         if self
             .animation_mut(motion.id())
@@ -240,6 +291,9 @@ impl MotionRuntime {
         true
     }
 
+    /// Replaces the animation associated with a valid motion.
+    ///
+    /// Returns `false` when the handle is no longer valid.
     pub fn play<T: Animatable>(&mut self, motion: Motion<T>, animation: impl Animation<T>) -> bool {
         if self.value(motion).is_none() {
             return false;
@@ -249,6 +303,9 @@ impl MotionRuntime {
         true
     }
 
+    /// Applies a command to a valid motion.
+    ///
+    /// Returns `false` when the handle is no longer valid.
     pub fn command<T: Animatable>(&mut self, motion: Motion<T>, command: AnimationCommand) -> bool {
         let (active, state) = {
             let Some(animation) = self.animation_mut(motion.id()) else {
@@ -273,6 +330,9 @@ impl MotionRuntime {
         true
     }
 
+    /// Removes the animation referenced by `motion`.
+    ///
+    /// Returns `false` when the handle is no longer valid.
     pub fn remove<T: Animatable>(&mut self, motion: Motion<T>) -> bool {
         let Some(slot) = self.slots.get_mut(motion.id().slot()) else {
             return false;

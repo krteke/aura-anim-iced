@@ -1,5 +1,22 @@
 use crate::{Animatable, Animation, AnimationState, timeline::normalized, timing::Duration};
 
+/// Runs child animations one after another.
+///
+/// # Examples
+///
+/// ```
+/// use aura_anim_core::{
+///     Animation, Sequence, Tween,
+///     timing::{Duration, Timing},
+/// };
+///
+/// let mut sequence = Sequence::new(0.0_f32)
+///     .then(Tween::between(0.0, 1.0, Timing::new(100.0)))
+///     .then(Tween::between(1.0, 2.0, Timing::new(100.0)));
+///
+/// sequence.tick(Duration::from_millis(150.0));
+/// assert_eq!(*sequence.value(), 1.5);
+/// ```
 pub struct Sequence<T: Animatable> {
     children: Vec<Box<dyn Animation<T>>>,
     current: T,
@@ -8,6 +25,8 @@ pub struct Sequence<T: Animatable> {
 }
 
 impl<T: Animatable> Sequence<T> {
+    /// Creates an empty sequence with an initial output value.
+    #[must_use]
     pub fn new(initial: T) -> Self {
         Self {
             children: Vec::new(),
@@ -17,20 +36,27 @@ impl<T: Animatable> Sequence<T> {
         }
     }
 
+    /// Appends an animation and returns the updated sequence.
+    #[must_use]
     pub fn then(mut self, animation: impl Animation<T>) -> Self {
         self.push(animation);
         self
     }
 
+    /// Appends an animation to the sequence.
     pub fn push(&mut self, animation: impl Animation<T>) {
         self.children.push(Box::new(animation));
         self.state = AnimationState::Running;
     }
 
+    /// Returns the number of child animations.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.children.len()
     }
 
+    /// Returns whether the sequence contains no child animations.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.children.is_empty()
     }
@@ -119,6 +145,9 @@ impl<T: Animatable> Animation<T> for Sequence<T> {
         }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_precision_loss)]
     fn seek(&mut self, progress: f32) {
         if self.children.is_empty() {
             self.state = AnimationState::Completed;
@@ -146,13 +175,16 @@ impl<T: Animatable> Animation<T> for Sequence<T> {
                 }
             }
         } else {
-            let scaled = progress * self.children.len() as f32;
-            let index = (scaled.floor() as usize).min(self.children.len() - 1);
-            for child in &mut self.children[..index] {
+            let len = self.children.len() as f32;
+            let scaled = progress * len;
+            let index = (scaled.floor()).min(len - 1.0);
+            let index_usize = index as usize;
+
+            for child in &mut self.children[..index_usize] {
                 child.finish();
             }
-            self.index = index;
-            self.children[index].seek((scaled - index as f32).clamp(0.0, 1.0));
+            self.index = index_usize;
+            self.children[index_usize].seek((scaled - index).clamp(0.0, 1.0));
         }
 
         if self.index >= self.children.len() {

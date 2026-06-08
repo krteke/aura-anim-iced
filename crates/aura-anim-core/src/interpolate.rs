@@ -1,3 +1,5 @@
+//! Interpolation progress and built-in interpolation implementations.
+
 use crate::traits::Interpolate;
 
 /// A normalized interpolation progress value.
@@ -45,7 +47,7 @@ impl InterpolationProgress {
     /// Returns `true` if the progress is at the end (1.0).
     #[must_use]
     pub(crate) fn is_end(self) -> bool {
-        self.0 == 1.0
+        self.0 >= 1.0
     }
 }
 

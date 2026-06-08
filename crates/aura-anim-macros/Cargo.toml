@@ -1,7 +1,16 @@
 [package]
 name = "aura-anim-macros"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Derive macros for aura animation values."
+documentation = "https://docs.rs/aura-anim-macros"
 
 [lib]
 proc-macro = true
@@ -11,3 +20,9 @@ proc-macro-crate = "3.5"
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["full"] }
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--cfg", "docsrs"]

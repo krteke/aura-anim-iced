@@ -11,6 +11,22 @@ pub use mode::Direction;
 
 pub use lilt::Easing;
 
+/// Timing configuration shared by duration-based animations.
+///
+/// # Examples
+///
+/// ```
+/// use aura_anim_core::timing::{Delay, Direction, Easing, Timing};
+///
+/// let timing = Timing::new(250.0)
+///     .with_delay(Delay::from_millis(50.0))
+///     .with_easing(Easing::EaseOut)
+///     .with_direction(Direction::Alternate)
+///     .with_iterations(2);
+///
+/// assert_eq!(timing.duration().as_millis(), 250.0);
+/// assert_eq!(timing.total_duration().unwrap().as_millis(), 550.0);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Timing {
     /// Active duration for one iteration.

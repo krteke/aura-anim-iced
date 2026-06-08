@@ -1,64 +1,102 @@
+//! Core traits implemented by animatable values and animation sources.
+
 use crate::{interpolate::InterpolationProgress, timing::Duration};
 
+/// Interpolates values of the same type.
 pub trait Interpolate: Sized {
+    /// Interpolates from `self` to `other` using normalized progress.
+    #[must_use]
     fn lerp(&self, other: &Self, progress: f32) -> Self {
         Self::interpolate_progress(self, other, InterpolationProgress::new(progress))
     }
 
+    /// Interpolates from `from` to `to` using normalized progress.
+    #[must_use]
     fn interpolate(from: &Self, to: &Self, progress: f32) -> Self {
         Self::interpolate_progress(from, to, InterpolationProgress::new(progress))
     }
 
+    /// Interpolates or extrapolates from `from` to `to` without clamping finite progress.
+    #[must_use]
     fn extrapolate(from: &Self, to: &Self, progress: f32) -> Self {
         Self::interpolate_progress(from, to, InterpolationProgress::extrapolated(progress))
     }
 
+    /// Interpolates from `from` to `to` using a prepared progress value.
+    #[must_use]
     fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self;
 }
 
+/// Marker trait for cloneable, owned values that can be animated.
 pub trait Animatable: Interpolate + Clone + 'static {}
 
 impl<T: Interpolate + Clone + 'static> Animatable for T {}
 
+/// Lifecycle state of an animation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AnimationState {
+    /// The animation has not started.
     Idle,
+    /// The animation is advancing.
     Running,
+    /// The animation is suspended and retains its current value.
     Paused,
+    /// The animation reached its final value.
     Completed,
+    /// The animation was canceled before completion.
     Canceled,
 }
 
+/// A stateful source that produces animated values over time.
 pub trait Animation<T: Animatable>: 'static {
+    /// Returns the animation's current value.
+    #[must_use]
     fn value(&self) -> &T;
 
+    /// Returns the animation's lifecycle state.
+    #[must_use]
     fn state(&self) -> AnimationState;
 
+    /// Returns the total duration when it is finite and known.
+    #[must_use]
     fn duration(&self) -> Option<Duration> {
         None
     }
 
+    /// Advances the animation by `delta`.
     fn tick(&mut self, delta: Duration);
 
+    /// Advances the animation and returns any unconsumed duration.
     fn advance(&mut self, delta: Duration) -> Duration {
         self.tick(delta);
         Duration::ZERO
     }
 
+    /// Pauses a running animation.
     fn pause(&mut self);
 
+    /// Resumes a paused animation.
     fn resume(&mut self);
 
+    /// Cancels the animation.
     fn cancel(&mut self);
 
+    /// Seeks to normalized progress within the animation.
     fn seek(&mut self, progress: f32);
 
+    /// Moves the animation to its completed state.
     fn finish(&mut self);
 
+    /// Attempts to continue the animation toward a new target.
+    ///
+    /// Returns `true` when the animation supports retargeting.
+    #[must_use]
     fn retarget(&mut self, _target: &T) -> bool {
         false
     }
 
+    /// Returns whether the animation is currently running.
+    #[must_use]
     fn is_active(&self) -> bool {
         self.state() == AnimationState::Running
     }

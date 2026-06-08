@@ -1,13 +1,20 @@
+//! Spring-based animations.
+
 use crate::{
     timing::Duration,
     traits::{Animatable, Animation, AnimationState},
 };
 
+/// Physical parameters used by a [`Spring`].
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SpringConfig {
+    /// Restoring force applied toward the target.
     pub stiffness: f32,
+    /// Resistance applied against the current velocity.
     pub damping: f32,
+    /// Inertial mass used by the spring simulation.
     pub mass: f32,
+    /// Position and velocity threshold used to detect completion.
     pub epsilon: f32,
 }
 
@@ -22,6 +29,7 @@ impl Default for SpringConfig {
     }
 }
 
+/// An animation driven by a damped spring simulation.
 #[derive(Debug, Clone)]
 pub struct Spring<T: Animatable> {
     from: T,
@@ -34,6 +42,8 @@ pub struct Spring<T: Animatable> {
 }
 
 impl<T: Animatable> Spring<T> {
+    /// Creates a running spring animation from `from` to `to`.
+    #[must_use]
     pub fn new(from: T, to: T, config: SpringConfig) -> Self {
         Self {
             current: from.clone(),
@@ -46,6 +56,7 @@ impl<T: Animatable> Spring<T> {
         }
     }
 
+    /// Restarts the spring from its current value toward `target`.
     pub fn retarget(&mut self, target: T) {
         self.from = self.current.clone();
         self.to = target;
@@ -53,6 +64,7 @@ impl<T: Animatable> Spring<T> {
         self.state = AnimationState::Running;
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn integrate(&mut self, delta: Duration) {
         let mut remaining = delta.as_secs().min(0.1) as f32;
         let step = 1.0 / 120.0;

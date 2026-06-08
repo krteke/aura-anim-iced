@@ -1,3 +1,5 @@
+//! Keyframe definitions and keyframe-based animations.
+
 mod animation;
 mod keyframe;
 

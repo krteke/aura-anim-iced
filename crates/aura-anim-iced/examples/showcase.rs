@@ -1,3 +1,5 @@
+//! Interactive showcase for Aura animation primitives in Iced.
+
 use std::time::Instant;
 
 use aura_anim_core::{
@@ -73,7 +75,7 @@ struct Showcase {
     route_swapped: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum Message {
     Frame(Instant),
     HeroEnter,
@@ -151,6 +153,7 @@ impl Showcase {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn update(&mut self, message: Message) {
         match message {
             Message::Frame(now) => {
@@ -230,7 +233,7 @@ impl Showcase {
                         width: 454.0,
                         lift: 8.0,
                         glow: 0.55,
-                        accent: Color::from_rgb(0.51, 0.41, 1.0),
+                        accent: Color::from_rgb(0.51, 0.5, 1.0),
                     },
                     &mut self.runtime,
                 );
@@ -340,6 +343,7 @@ impl Showcase {
             .map(Message::Frame)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn view(&self) -> Element<'_, Message> {
         let hero = self.hero.value_ref(&self.runtime);
         let pulse = self.pulse.value_ref(&self.runtime);
