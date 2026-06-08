@@ -1,37 +1,123 @@
 # Changelog
 
-## Unreleased
+## v0.2.2 - 2026-06-08
+
+This release replaces the previous property/target registration architecture
+with a typed motion runtime. It is a breaking architecture reset while the
+project is still pre-1.0.
+
+### Breaking Changes
+
+- Replaced `AnimationRuntime`, `AnimationTargetId`, property snapshots, property
+  tracks, behavior bindings, and target-based lookup with `MotionRuntime` and
+  typed `Motion<T>` handles.
+- Applications now store `Motion<T>` handles and read values with
+  `motion.value(&runtime)` instead of querying runtime targets or properties.
+- Animation objects are owned and ticked by `MotionRuntime`; application code no
+  longer stores or manually ticks individual tween, spring, or keyframe objects.
+- Replaced property-oriented timelines with value-oriented
+  `Sequence<T>`, `Parallel<T>`, and `Hold<T>` animation sources.
+- Reworked crate exports and preludes around the new typed runtime. Existing
+  code using the v0.2.0/v0.2.1 property, behavior, state, route, or effect APIs
+  must migrate to typed motion values.
 
 ### Added
 
-- Added `AnimationFlow` as a standard Iced integration path that owns a runtime,
-  reuses tick output, captures registration-time visual values, routes tick
-  updates, and exposes subscription gating from one product-facing API.
-- Added `AnimationTargetOutput` for reusable target-scoped visual output reads
-  from product view code.
-- Added shared completion cleanup through `AnimationCompletionCleanup` and `AnimationFlow::cleanup_completed`.
-- Added `DefaultMotions` for product-level duration, easing, fill mode,
-  color interpolation, and spring motion defaults.
-- Added a compact product quick start covering value animation, state
-  animation, widget motion, theme switching, and spring motion defaults.
-- Added feature flags for palette, spring, widgets, theme, layout, serde,
-  tracing, and inspector work while keeping the core animation API available
-  without default features.
-- Added feature-gated product defaults, widget-oriented example declarations,
-  documentation snippets, and tests for optional product extension layers.
-- Added `AnimColor` as the animation color value model, with always-available
-  sRGB-alpha interpolation and optional `palette`-backed Oklab-alpha sampling
-  for perceptual theme and brand color transitions.
-- Added color interpolation regression coverage for sRGB midpoint and alpha
-  sampling, dark-to-light transitions, and palette hue-sensitive transitions.
-- Added a palette-gated theme comparison example showing ordinary sRGB-alpha
-  interpolation beside perceptual Oklab-alpha interpolation.
-- Added feature-gated stable scalar spring sampling for product UI motion.
+- Added `Motion<T>`, a lightweight typed handle containing a slot ID,
+  generation, and type marker.
+- Added `MotionRuntime` with typed motion creation, centralized ticking,
+  retargeting, playback commands, value access, slot removal, and capacity
+  inspection.
+- Added `#[derive(Animatable)]` for named, tuple, and unit structs whose fields
+  implement `Animatable`.
+- Added the common `Animation<T>` protocol with value, state, duration,
+  overflow-aware advancement, pause, resume, cancel, seek, finish, and optional
+  retargeting.
+- Added value-oriented `Tween<T>`, `Keyframes<T>`, and `Spring<T>` animation
+  sources.
+- Added recursive timeline composition through `Sequence<T>`, `Parallel<T>`,
+  and `Hold<T>`. Nested forms such as
+  `Sequence(Parallel(Sequence, Sequence), Sequence)` are supported.
+- Added explicit parallel compositors so independent branches can animate
+  different fields without implicit last-writer behavior.
+- Added `Presence<T>` for enter/exit motion while keeping content mounted until
+  its exit animation completes.
+- Added `RetainPolicy` and `MotionRuntime::play_once` for transient animations
+  that automatically release their slot after completion or cancellation.
+- Added interpolation implementations for scalar integers, floats, tuples, and
+  arrays.
+- Added an `aura-anim` facade crate that re-exports the core runtime, Iced
+  integration, and common prelude.
+
+### Iced Integration
+
+- Added `Interpolate` support for `iced::Vector`, `Point`, `Size`, `Rectangle`,
+  `Padding`, and `border::Radius`.
+- Added color-feature-gated interpolation for `iced::Color`, `Shadow`, and
+  `Border`.
+- Added the default `rgba` feature for component-wise sRGB-alpha interpolation.
+- Added the mutually exclusive `oklaba` feature for Oklab RGB interpolation
+  with independently interpolated alpha.
+- Added `TickPolicy::Frames`, `TickPolicy::interval`, and `TickPolicy::fps`.
+- Added `subscription_with_policy`; Iced frame or timer subscriptions are only
+  active while the runtime contains active animations.
+- Added `frame` integration using elapsed wall-clock time through
+  `MotionRuntime::tick_at`.
 
 ### Changed
 
-- Changed the crate root to expose public modules without root-level re-exports, and reduced the prelude to common product animation imports.
-- Use generic dispatch instead of writing a bunch of functions like `oklaba_from_srgba`.
+- `Tween::transition_to` and runtime retargeting now continue from the currently
+  sampled value instead of restarting from a stale origin.
+- `Animation::advance` returns unconsumed time so sequences can cross multiple
+  children correctly during large frame deltas.
+- Parallel duration is determined by the longest finite branch, while sequence
+  duration is the sum of finite child durations.
+- Parallel seek maps global timeline progress to each child using that child's
+  duration.
+- Keyframes support per-segment easing, duplicate-time replacement, delays,
+  playback direction, and finite or infinite iteration counts.
+- Spring interpolation supports overshoot, seek, finish, and live retargeting.
+- Split the workspace into `aura-anim-core`, `aura-anim-iced`,
+  `aura-anim-macros`, and the `aura-anim` facade.
+- Unified workspace package metadata, internal dependency versions, docs.rs
+  feature selection, and release packaging at version `0.2.2`.
+
+### Lifecycle And Performance
+
+- Runtime ticks only active slots instead of scanning all retained motions.
+- Added an active queue with duplicate-queue prevention and O(1)
+  `has_active`/`active_count` checks.
+- Completed retained animations are compacted to a lightweight settled value,
+  releasing keyframe and timeline trees while keeping the typed handle valid.
+- Removed and transient slots are reused through a free list.
+- Added generation checks so stale handles cannot access animations allocated
+  into reused slots.
+- Added `motion_count`, `slot_capacity`, and `shrink_to_fit` runtime inspection
+  and capacity controls.
+- Avoided type downcasts in the runtime tick loop; downcasting is limited to
+  typed value access and retargeting.
+
+### Examples
+
+- Added focused Iced examples for tween interruption, keyframes, spring
+  retargeting, timeline composition, interactive buttons, menus,
+  notifications, and route transitions.
+- Added an interactive showcase combining typed motion, Presence, keyframes,
+  spring, nested sequence/parallel composition, route transitions, Iced value
+  interpolation, and configurable tick policy.
+- Added a command-line runtime example covering retargeting, infinite
+  keyframes, spring, nested timelines, and transient slot cleanup.
+
+### Testing And Benchmarks
+
+- Added public API integration coverage for runtime lifecycle, retargeting,
+  playback commands, keyframes, recursive timelines, Presence, Spring,
+  interpolation, retain policies, and facade exports.
+- Added Iced integration coverage for common Iced value interpolation, RGBA and
+  Oklaba color paths, and tick policies.
+- Added Criterion benchmarks for interpolation, timing, animation sources,
+  nested timelines, runtime ticking, commands, slot reuse, and lifecycle
+  operations.
 
 ## v0.2.1 - 2026-06-02
 
