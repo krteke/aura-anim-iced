@@ -37,25 +37,37 @@ jobs:
         run: cargo fmt --all --check
 
       - name: Check default features
-        run: cargo check --all-targets
+        run: cargo check --workspace --all-targets
 
-      - name: Check all features
-        run: cargo check --all-targets --all-features
+      - name: Check RGBA features
+        run: cargo check -p aura-anim-core --all-targets --features iced,rgba
 
-      - name: Check examples
-        run: cargo check --all-targets --all-features --examples
+      - name: Check Oklaba features
+        run: |
+          cargo check -p aura-anim-core --all-targets --features iced,oklaba
+          cargo check -p aura-anim-iced --all-targets --no-default-features --features oklaba
+          cargo check -p aura-anim --all-targets --no-default-features --features oklaba
 
-      - name: Check Benchmarks
-        run: cargo bench --no-run
+      - name: Check benchmarks
+        run: cargo bench -p aura-anim-core --bench animation --no-run
 
-      - name: Test
-        run: cargo test --all-features
+      - name: Test default features
+        run: cargo test --workspace --all-targets
 
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Test Oklaba features
+        run: cargo test -p aura-anim-core --all-targets --features iced,oklaba
+
+      - name: Clippy default features
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Clippy Oklaba features
+        run: cargo clippy -p aura-anim-core --all-targets --features iced,oklaba -- -D warnings
 
       - name: Docs
-        run: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps
 
-      - name: Package
-        run: cargo package --all-features
+      - name: Package workspace
+        if: ${{ matrix.toolchain == 'stable' }}
+        run: cargo package --workspace --locked

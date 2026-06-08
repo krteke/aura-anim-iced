@@ -25,7 +25,12 @@ lilt.workspace = true
 palette = { workspace = true, optional = true }
 
 [dev-dependencies]
+criterion.workspace = true
 float-cmp.workspace = true
+
+[[bench]]
+name = "animation"
+harness = false
 
 [lints]
 workspace = true
