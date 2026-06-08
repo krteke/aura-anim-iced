@@ -229,6 +229,48 @@ motion.play(
 
 Spring interpolation may overshoot and can be retargeted while active.
 
+For values whose fields need different physical responses, create independent
+spring channels and explicitly compose their outputs:
+
+```rust
+#[derive(Clone, Debug, Animatable)]
+struct PanelMotion {
+    offset: f32,
+    opacity: f32,
+}
+
+let movement = SpringConfig {
+    stiffness: 180.0,
+    damping: 20.0,
+    ..SpringConfig::default()
+};
+let fade = SpringConfig {
+    stiffness: 420.0,
+    damping: 32.0,
+    ..SpringConfig::default()
+};
+
+let spring = Spring::with_channels(
+    PanelMotion {
+        offset: 24.0,
+        opacity: 0.0,
+    },
+    PanelMotion {
+        offset: 0.0,
+        opacity: 1.0,
+    },
+    [movement, fade],
+    |outputs| PanelMotion {
+        offset: outputs[0].offset,
+        opacity: outputs[1].opacity,
+    },
+);
+```
+
+Each channel owns its own position, velocity and `SpringConfig`. Spring
+advancement uses the analytic damped-oscillator solution, so long frame
+intervals are fully consumed instead of being truncated.
+
 ## Timeline Composition
 
 `Sequence`, `Parallel` and `Hold` all implement `Animation<T>`, so composition

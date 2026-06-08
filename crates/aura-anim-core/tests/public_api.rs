@@ -235,6 +235,31 @@ fn spring_can_seek_finish_and_retarget() {
 }
 
 #[test]
+fn spring_channels_support_per_field_physics() {
+    let slow = SpringConfig {
+        stiffness: 40.0,
+        damping: 14.0,
+        ..SpringConfig::default()
+    };
+    let fast = SpringConfig {
+        stiffness: 420.0,
+        damping: 28.0,
+        ..SpringConfig::default()
+    };
+    let mut spring = Spring::with_channels(
+        (0.0_f32, 0.0_f32),
+        (100.0, 100.0),
+        [slow, fast],
+        |outputs| (outputs[0].0, outputs[1].1),
+    );
+
+    spring.tick(Duration::from_millis(100.0));
+
+    assert_eq!(spring.channel_count(), 2);
+    assert!(spring.value().1 > spring.value().0 * 2.0);
+}
+
+#[test]
 fn seek_normalizes_invalid_progress_values() {
     let mut tween = Tween::between(0.0_f32, 10.0, Timing::new(100.0));
 

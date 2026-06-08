@@ -1,5 +1,11 @@
 # Changelog
 
+## Unrelease
+
+### Added
+
+- Spring channels for independent value interpolation on struct fields.
+
 ## v0.2.2 - 2026-06-08
 
 This release replaces the previous property/target registration architecture

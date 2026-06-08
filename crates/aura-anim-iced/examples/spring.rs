@@ -72,18 +72,23 @@ impl SpringExample {
                 size: 58.0,
             }
         };
-        let damping = if self.bouncy { 11.0 } else { 30.0 };
+        let movement = SpringConfig {
+            stiffness: 210.0,
+            damping: if self.bouncy { 11.0 } else { 30.0 },
+            mass: 1.0,
+            epsilon: 0.001,
+        };
+        let size = SpringConfig {
+            stiffness: 420.0,
+            damping: if self.bouncy { 24.0 } else { 42.0 },
+            mass: 1.0,
+            epsilon: 0.001,
+        };
         self.value.play(
-            Spring::new(
-                current,
-                target,
-                SpringConfig {
-                    stiffness: 210.0,
-                    damping,
-                    mass: 1.0,
-                    epsilon: 0.001,
-                },
-            ),
+            Spring::with_channels(current, target, [movement, size], |outputs| SpringValue {
+                x: outputs[0].x,
+                size: outputs[1].size,
+            }),
             &mut self.runtime,
         );
     }
@@ -136,7 +141,7 @@ impl SpringExample {
         container(
             column![
                 text("Spring").size(34).color(Color::WHITE),
-                text("Retarget while moving to preserve continuous, physically simulated motion.")
+                text("Position and size use independent physical channels and can be retargeted while moving.")
                     .size(14)
                     .color(Color::from_rgb8(174, 182, 211)),
                 stage,
@@ -151,7 +156,7 @@ impl SpringExample {
                 ]
                 .spacing(12),
                 text(format!(
-                    "{:?}  x: {:.1}  size: {:.1}  damping: {}",
+                    "{:?}  x: {:.1}  size: {:.1}  movement damping: {}",
                     self.value.state(&self.runtime),
                     value.x,
                     value.size,
