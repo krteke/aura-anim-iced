@@ -191,33 +191,29 @@ impl<T: Animatable> Tween<T> {
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_possible_truncation)]
     fn sample(&mut self) {
-        let delay = self.timing.delay().as_millis();
-        let elapsed = self.elapsed.as_millis();
-
-        if elapsed < delay {
+        let Some(active_elapsed) = self.elapsed.checked_sub_delay(self.timing.delay()) else {
             self.current = self.from.clone();
             return;
-        }
+        };
 
-        let duration = self.timing.duration().as_millis();
-        if duration <= 0.0 {
+        let duration = self.timing.duration();
+        if duration.is_zero() {
             self.finish();
             return;
         }
 
-        let active_elapsed = elapsed - delay;
-        let iterations = self.timing.iterations().finite_count();
-
-        if let Some(count) = iterations {
-            let total = duration * f64::from(count);
-            if active_elapsed >= total {
-                self.finish();
-                return;
-            }
+        if self
+            .timing
+            .active_duration()
+            .is_some_and(|total| active_elapsed >= total)
+        {
+            self.finish();
+            return;
         }
 
-        let iteration = (active_elapsed / duration).floor() as u32;
-        let raw_progress = (active_elapsed % duration) / duration;
+        let iteration_progress = active_elapsed.as_secs() / duration.as_secs();
+        let iteration = iteration_progress.floor() as u32;
+        let raw_progress = iteration_progress.fract();
         let progress = self
             .timing
             .direction()
@@ -293,7 +289,7 @@ mod tests {
     use super::Tween;
     use crate::{
         Animation, AnimationState,
-        timing::{Direction, Duration, IterationCount, Timing},
+        timing::{Delay, Direction, Duration, IterationCount, Timing},
     };
     use float_cmp::assert_approx_eq;
 
@@ -356,6 +352,31 @@ mod tests {
         assert_eq!(overflow, Duration::ZERO);
         assert_eq!(tween.state(), AnimationState::Running);
         assert_approx_eq!(f32, *tween.value(), 0.5);
+    }
+
+    #[test]
+    fn delay_and_submillisecond_progress_preserve_duration_precision() {
+        let timing = Timing::new(0.5).with_delay(Delay::from_millis(0.25));
+        let mut tween = Tween::between(0.0_f32, 10.0, timing);
+
+        tween.tick(std::time::Duration::from_micros(250));
+        assert_approx_eq!(f32, *tween.value(), 0.0);
+
+        tween.tick(std::time::Duration::from_micros(125));
+        assert_approx_eq!(f32, *tween.value(), 2.5);
+    }
+
+    #[test]
+    fn repeated_tween_samples_progress_within_alternate_iteration() {
+        let timing = Timing::new(100.0)
+            .with_iterations(2)
+            .with_direction(Direction::Alternate);
+        let mut tween = Tween::between(0.0_f32, 10.0, timing);
+
+        tween.tick(Duration::from_millis(150.0));
+
+        assert_eq!(tween.state(), AnimationState::Running);
+        assert_approx_eq!(f32, *tween.value(), 5.0);
     }
 
     #[test]

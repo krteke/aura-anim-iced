@@ -51,6 +51,10 @@ impl Duration {
         self.0.checked_add(rhs.0).map(Self)
     }
 
+    pub(crate) fn checked_sub_delay(self, rhs: Delay) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
+    }
+
     pub(crate) fn saturating_sub(self, rhs: Self) -> Self {
         Self(self.0.saturating_sub(rhs.0))
     }
@@ -154,5 +158,10 @@ mod tests {
                 .as_millis(),
             50.0
         );
+        assert_eq!(
+            long.checked_sub_delay(Delay::from_millis(25.0)),
+            Some(Duration::from_millis(75.0))
+        );
+        assert_eq!(short.checked_sub_delay(Delay::from_millis(50.0)), None);
     }
 }
