@@ -296,6 +296,7 @@ dependencies = [
  "iced_core",
  "lilt",
  "palette",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

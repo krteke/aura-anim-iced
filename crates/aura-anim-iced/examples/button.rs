@@ -75,14 +75,14 @@ impl ButtonExample {
     }
 
     fn set_button_state(&mut self, state: ButtonState) {
-        self.binding
-            .set_state(
-                &mut self.binding_state,
-                state,
-                self.button,
-                &mut self.runtime,
-            )
-            .expect("the example keeps its motion handle and binding states valid");
+        if let Err(error) = self.binding.set_state(
+            &mut self.binding_state,
+            state,
+            self.button,
+            &mut self.runtime,
+        ) {
+            eprintln!("button motion binding failed: {error}");
+        }
     }
 
     fn update(&mut self, message: Message) {
@@ -114,7 +114,7 @@ impl ButtonExample {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let motion = self.button.value_ref(&self.runtime);
+        let motion = self.button.value_ref(&self.runtime).unwrap();
         let color = motion.color;
         let surface = container(
             row![

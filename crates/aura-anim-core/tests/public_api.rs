@@ -2,8 +2,8 @@
 
 use aura_anim_core::{
     Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
-    MotionBinding, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence, Spring, SpringConfig,
-    Timeline, Tween,
+    MotionBinding, MotionError, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence, Spring,
+    SpringConfig, Timeline, Tween,
     keyframes::{Keyframe, Keyframes},
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
 };
@@ -99,23 +99,23 @@ fn runtime_manages_motion_lifecycle_and_retargeting() {
     let mut runtime = MotionRuntime::new();
     let motion = runtime.motion_with(0.0_f32, Timing::new(100.0).with_easing(Easing::Linear));
 
-    assert!(motion.transition_to(10.0, &mut runtime));
+    assert!(motion.transition_to(10.0, &mut runtime).is_ok());
     assert!(runtime.has_active());
     runtime.tick(Duration::from_millis(40.0));
-    assert_approx_eq!(f32, motion.value(&runtime), 4.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 4.0);
 
-    assert!(motion.transition_to(14.0, &mut runtime));
+    assert!(motion.transition_to(14.0, &mut runtime).is_ok());
     runtime.tick(Duration::from_millis(50.0));
-    assert_approx_eq!(f32, motion.value(&runtime), 9.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 9.0);
 
-    assert!(motion.pause(&mut runtime));
+    assert!(motion.pause(&mut runtime).is_ok());
     runtime.tick(Duration::from_millis(50.0));
-    assert_approx_eq!(f32, motion.value(&runtime), 9.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 9.0);
 
-    assert!(motion.resume(&mut runtime));
+    assert!(motion.resume(&mut runtime).is_ok());
     runtime.tick(Duration::from_millis(50.0));
-    assert!(motion.is_completed(&runtime));
-    assert_approx_eq!(f32, motion.value(&runtime), 14.0);
+    assert!(motion.is_completed(&runtime).unwrap());
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 14.0);
 }
 
 #[test]
@@ -144,7 +144,7 @@ fn motion_binding_drives_existing_motion_from_business_state() {
             .unwrap()
     );
     runtime.tick(Duration::from_millis(40.0));
-    assert_approx_eq!(f32, motion.value(&runtime), -2.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), -2.0);
 
     assert!(
         binding
@@ -153,7 +153,7 @@ fn motion_binding_drives_existing_motion_from_business_state() {
     );
     runtime.tick(Duration::from_millis(50.0));
 
-    assert_approx_eq!(f32, motion.value(&runtime), 20.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 20.0);
     assert_eq!(state.current(), &State::Pressed);
 }
 
@@ -166,7 +166,10 @@ fn play_once_drops_settled_animation() {
     assert_eq!(runtime.motion_count(), retained + 1);
     runtime.tick(Duration::from_millis(10.0));
 
-    assert!(transient.try_value(&runtime).is_none());
+    assert_eq!(
+        transient.value(&runtime),
+        Err(MotionError::Removed { slot: 0 })
+    );
     assert_eq!(runtime.motion_count(), retained);
     assert_eq!(runtime.active_count(), 0);
 }
@@ -241,21 +244,21 @@ fn presence_mounts_until_exit_animation_settles() {
     let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
 
     assert!(!presence.is_mounted());
-    presence.show(&mut runtime);
+    presence.show(&mut runtime).unwrap();
     assert!(presence.is_mounted());
     assert!(presence.is_visible());
 
     runtime.tick(Duration::from_millis(100.0));
-    assert_approx_eq!(f32, *presence.value(&runtime), 1.0);
+    assert_approx_eq!(f32, *presence.value(&runtime).unwrap(), 1.0);
 
-    presence.hide(&mut runtime);
+    presence.hide(&mut runtime).unwrap();
     assert!(presence.is_mounted());
     assert!(!presence.is_visible());
 
     runtime.tick(Duration::from_millis(100.0));
-    presence.sync(&runtime);
+    presence.sync(&runtime).unwrap();
     assert!(!presence.is_mounted());
-    assert_approx_eq!(f32, *presence.value(&runtime), 0.0);
+    assert_approx_eq!(f32, *presence.value(&runtime).unwrap(), 0.0);
 }
 
 #[test]
@@ -507,16 +510,20 @@ fn runtime_supports_direct_insert_play_and_commands() {
         Timing::new(25.0),
     );
 
-    assert_eq!(runtime.state(motion), Some(AnimationState::Running));
-    assert!(runtime.command(motion, AnimationCommand::Seek(0.5)));
+    assert_eq!(runtime.state(motion), Ok(AnimationState::Running));
+    assert!(runtime.command(motion, AnimationCommand::Seek(0.5)).is_ok());
     assert_approx_eq!(f32, *runtime.value(motion).unwrap(), 5.0);
 
-    assert!(runtime.command(motion, AnimationCommand::Pause));
-    assert_eq!(runtime.state(motion), Some(AnimationState::Paused));
-    assert!(runtime.command(motion, AnimationCommand::Resume));
-    assert!(runtime.play(motion, Keyframes::new(5.0_f32).push(50.0, 15.0)));
+    assert!(runtime.command(motion, AnimationCommand::Pause).is_ok());
+    assert_eq!(runtime.state(motion), Ok(AnimationState::Paused));
+    assert!(runtime.command(motion, AnimationCommand::Resume).is_ok());
+    assert!(
+        runtime
+            .play(motion, Keyframes::new(5.0_f32).push(50.0, 15.0))
+            .is_ok()
+    );
     runtime.tick(Duration::from_millis(50.0));
-    assert_approx_eq!(f32, motion.value(&runtime), 15.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 15.0);
 }
 
 #[test]
@@ -525,15 +532,15 @@ fn runtime_finish_cancel_and_remove_commands_update_storage() {
     let finished = runtime.motion(0.0_f32);
     let canceled = runtime.motion(0.0_f32);
 
-    assert!(finished.transition_to(1.0, &mut runtime));
-    assert!(canceled.transition_to(1.0, &mut runtime));
-    assert!(finished.finish(&mut runtime));
-    assert!(canceled.cancel(&mut runtime));
-    assert_eq!(finished.state(&runtime), Some(AnimationState::Completed));
-    assert_eq!(canceled.state(&runtime), Some(AnimationState::Canceled));
+    assert!(finished.transition_to(1.0, &mut runtime).is_ok());
+    assert!(canceled.transition_to(1.0, &mut runtime).is_ok());
+    assert!(finished.finish(&mut runtime).is_ok());
+    assert!(canceled.cancel(&mut runtime).is_ok());
+    assert_eq!(finished.state(&runtime), Ok(AnimationState::Completed));
+    assert_eq!(canceled.state(&runtime), Ok(AnimationState::Canceled));
 
-    assert!(finished.remove(&mut runtime));
-    assert!(canceled.remove(&mut runtime));
+    assert!(finished.remove(&mut runtime).is_ok());
+    assert!(canceled.remove(&mut runtime).is_ok());
     assert_eq!(runtime.motion_count(), 0);
     assert!(!runtime.has_active());
 }
@@ -542,16 +549,47 @@ fn runtime_finish_cancel_and_remove_commands_update_storage() {
 fn stale_motion_handles_fail_without_affecting_reused_slots() {
     let mut runtime = MotionRuntime::new();
     let stale = runtime.motion(1.0_f32);
-    assert!(runtime.remove(stale));
+    assert!(runtime.remove(stale).is_ok());
+    assert_eq!(stale.value(&runtime), Err(MotionError::Removed { slot: 0 }));
 
     let current = runtime.motion(2.0_f32);
 
-    assert!(stale.try_value(&runtime).is_none());
-    assert_eq!(stale.state(&runtime), None);
-    assert!(!stale.transition_to(3.0, &mut runtime));
-    assert!(!stale.pause(&mut runtime));
-    assert!(!stale.remove(&mut runtime));
-    assert_approx_eq!(f32, current.value(&runtime), 2.0);
+    let expected_error = MotionError::StaleHandle {
+        slot: 0,
+        handle_generation: 0,
+        actual_generation: 1,
+    };
+    assert_eq!(stale.value(&runtime), Err(expected_error.clone()));
+    assert_eq!(stale.state(&runtime), Err(expected_error.clone()));
+    assert_eq!(
+        stale.transition_to(3.0, &mut runtime),
+        Err(expected_error.clone())
+    );
+    assert_eq!(stale.pause(&mut runtime), Err(expected_error.clone()));
+    assert_eq!(stale.remove(&mut runtime), Err(expected_error));
+    assert_approx_eq!(f32, current.value(&runtime).unwrap(), 2.0);
+}
+
+#[test]
+fn motion_errors_diagnose_cross_runtime_handle_misuse() {
+    let mut source_runtime = MotionRuntime::new();
+    let float_motion = source_runtime.motion(1.0_f32);
+    let empty_runtime = MotionRuntime::new();
+
+    assert_eq!(
+        float_motion.value(&empty_runtime),
+        Err(MotionError::SlotOutOfBounds { slot: 0 })
+    );
+
+    let mut integer_runtime = MotionRuntime::new();
+    let _integer_motion = integer_runtime.motion(1_i32);
+    assert_eq!(
+        float_motion.value(&integer_runtime),
+        Err(MotionError::TypeMismatch {
+            expected: std::any::type_name::<f32>(),
+            actual: std::any::type_name::<i32>(),
+        })
+    );
 }
 
 #[test]
@@ -563,7 +601,7 @@ fn shrink_to_fit_releases_unused_slot_capacity() {
     let capacity_before = runtime.slot_capacity();
 
     for motion in motions {
-        assert!(runtime.remove(motion));
+        assert!(runtime.remove(motion).is_ok());
     }
     runtime.shrink_to_fit();
 
@@ -580,7 +618,10 @@ fn drop_when_settled_removes_precompleted_animation_immediately() {
     let motion =
         runtime.insert_with_policy(animation, Timing::default(), RetainPolicy::DropWhenSettled);
 
-    assert!(motion.try_value(&runtime).is_none());
+    assert_eq!(
+        motion.value(&runtime),
+        Err(MotionError::Removed { slot: 0 })
+    );
     assert_eq!(runtime.motion_count(), 0);
 }
 
@@ -588,13 +629,13 @@ fn drop_when_settled_removes_precompleted_animation_immediately() {
 fn tick_at_uses_elapsed_instants() {
     let mut runtime = MotionRuntime::new();
     let motion = runtime.motion_with(0.0_f32, Timing::new(100.0));
-    assert!(motion.transition_to(10.0, &mut runtime));
+    assert!(motion.transition_to(10.0, &mut runtime).is_ok());
     let start = std::time::Instant::now();
 
     runtime.tick_at(start);
-    assert_approx_eq!(f32, motion.value(&runtime), 0.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 0.0);
     runtime.tick_at(start + std::time::Duration::from_millis(50));
-    assert_approx_eq!(f32, motion.value(&runtime), 5.0, epsilon = 0.001);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 5.0, epsilon = 0.001);
 }
 
 #[test]
@@ -602,16 +643,20 @@ fn presence_accepts_custom_enter_and_exit_animations() {
     let mut runtime = MotionRuntime::new();
     let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
 
-    presence.show_with(Tween::between(0.0, 2.0, Timing::new(50.0)), &mut runtime);
+    presence
+        .show_with(Tween::between(0.0, 2.0, Timing::new(50.0)), &mut runtime)
+        .unwrap();
     runtime.tick(Duration::from_millis(50.0));
-    assert_approx_eq!(f32, *presence.value(&runtime), 2.0);
+    assert_approx_eq!(f32, *presence.value(&runtime).unwrap(), 2.0);
 
-    presence.hide_with(Tween::between(2.0, -1.0, Timing::new(50.0)), &mut runtime);
+    presence
+        .hide_with(Tween::between(2.0, -1.0, Timing::new(50.0)), &mut runtime)
+        .unwrap();
     runtime.tick(Duration::from_millis(50.0));
-    presence.sync(&runtime);
+    presence.sync(&runtime).unwrap();
 
     assert!(!presence.is_mounted());
-    assert_approx_eq!(f32, *presence.value(&runtime), -1.0);
+    assert_approx_eq!(f32, *presence.value(&runtime).unwrap(), -1.0);
 }
 
 #[test]

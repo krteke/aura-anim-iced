@@ -26,16 +26,20 @@ fn prelude_exports_core_runtime_and_derive_macro() {
         Timing::new(100.0),
     );
 
-    assert!(panel.transition_to(
-        PanelMotion {
-            opacity: 1.0,
-            scale: 1.0,
-        },
-        &mut runtime,
-    ));
+    assert!(
+        panel
+            .transition_to(
+                PanelMotion {
+                    opacity: 1.0,
+                    scale: 1.0,
+                },
+                &mut runtime,
+            )
+            .is_ok()
+    );
     runtime.tick(Duration::from_millis(50.0));
 
-    let value = panel.value(&runtime);
+    let value = panel.value(&runtime).unwrap();
     assert_approx_eq!(f32, value.opacity, 0.5, epsilon = 0.000_1);
     assert_approx_eq!(f32, value.scale, 0.9, epsilon = 0.000_1);
 }
@@ -71,7 +75,7 @@ fn prelude_exports_motion_binding_and_boxed_factories() {
         .unwrap();
     runtime.tick(Duration::from_millis(20.0));
 
-    assert_approx_eq!(f32, motion.value(&runtime), 1.0);
+    assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 1.0);
 }
 
 #[test]

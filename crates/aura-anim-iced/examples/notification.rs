@@ -99,34 +99,38 @@ impl NotificationExample {
         match message {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
-                self.toast.sync(&self.runtime);
+                self.toast.sync(&self.runtime).unwrap();
             }
             Message::Show(kind) => {
                 self.kind = kind;
-                let current = self.toast.value(&self.runtime).clone();
-                self.toast.show_with(
-                    Spring::new(
-                        current,
-                        visible(),
-                        SpringConfig {
-                            stiffness: 330.0,
-                            damping: 24.0,
-                            ..SpringConfig::default()
-                        },
-                    ),
-                    &mut self.runtime,
-                );
+                let current = self.toast.value(&self.runtime).unwrap().clone();
+                self.toast
+                    .show_with(
+                        Spring::new(
+                            current,
+                            visible(),
+                            SpringConfig {
+                                stiffness: 330.0,
+                                damping: 24.0,
+                                ..SpringConfig::default()
+                            },
+                        ),
+                        &mut self.runtime,
+                    )
+                    .unwrap();
             }
             Message::Dismiss => {
-                let current = self.toast.value(&self.runtime).clone();
-                self.toast.hide_with(
-                    Tween::between(
-                        current,
-                        hidden(),
-                        Timing::new(160.0).with_easing(Easing::EaseIn),
-                    ),
-                    &mut self.runtime,
-                );
+                let current = self.toast.value(&self.runtime).unwrap().clone();
+                self.toast
+                    .hide_with(
+                        Tween::between(
+                            current,
+                            hidden(),
+                            Timing::new(160.0).with_easing(Easing::EaseIn),
+                        ),
+                        &mut self.runtime,
+                    )
+                    .unwrap();
             }
         }
     }
@@ -144,7 +148,7 @@ impl NotificationExample {
         .spacing(10);
 
         let toast: Element<'_, Message> = if self.toast.is_mounted() {
-            let motion = self.toast.value(&self.runtime);
+            let motion = self.toast.value(&self.runtime).unwrap();
             let accent = self.kind.color();
             container(
                 row![

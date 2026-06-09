@@ -131,14 +131,16 @@ impl Showcase {
             })
         });
         let pulse = runtime.motion(PulseMotion { glow: 0.2 });
-        pulse.play(
-            Keyframes::new(PulseMotion { glow: 0.2 })
-                .push_eased(900.0, PulseMotion { glow: 0.9 }, Easing::EaseInOut)
-                .push_eased(1800.0, PulseMotion { glow: 0.2 }, Easing::EaseInOut)
-                .with_iterations(IterationCount::INFINITE)
-                .with_direction(Direction::Alternate),
-            &mut runtime,
-        );
+        pulse
+            .play(
+                Keyframes::new(PulseMotion { glow: 0.2 })
+                    .push_eased(900.0, PulseMotion { glow: 0.9 }, Easing::EaseInOut)
+                    .push_eased(1800.0, PulseMotion { glow: 0.2 }, Easing::EaseInOut)
+                    .with_iterations(IterationCount::INFINITE)
+                    .with_direction(Direction::Alternate),
+                &mut runtime,
+            )
+            .unwrap();
 
         Self {
             runtime,
@@ -159,10 +161,10 @@ impl Showcase {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
 
-                self.menu.sync(&self.runtime);
+                self.menu.sync(&self.runtime).unwrap();
 
                 if let Some(pending) = self.pending_route
-                    && self.route_motion.is_completed(&self.runtime)
+                    && self.route_motion.is_completed(&self.runtime).unwrap()
                 {
                     if self.route_swapped {
                         self.pending_route = None;
@@ -170,76 +172,86 @@ impl Showcase {
                     } else {
                         self.route = pending;
                         self.route_swapped = true;
-                        let hidden = self.route_motion.value(&self.runtime);
-                        self.route_motion.play(
-                            Tween::between(
-                                hidden,
-                                RouteMotion {
-                                    opacity: 1.0,
-                                    offset: Vector::new(0.0, 0.0),
-                                },
-                                Timing::new(210.0).with_easing(Easing::EaseOut),
-                            ),
-                            &mut self.runtime,
-                        );
+                        let hidden = self.route_motion.value(&self.runtime).unwrap();
+                        self.route_motion
+                            .play(
+                                Tween::between(
+                                    hidden,
+                                    RouteMotion {
+                                        opacity: 1.0,
+                                        offset: Vector::new(0.0, 0.0),
+                                    },
+                                    Timing::new(210.0).with_easing(Easing::EaseOut),
+                                ),
+                                &mut self.runtime,
+                            )
+                            .unwrap();
                     }
                 }
             }
             Message::HeroEnter => {
-                self.hero.transition_to(
-                    HeroMotion {
-                        width: 454.0,
-                        lift: 8.0,
-                        glow: 0.55,
-                        accent: Color::from_rgb(0.51, 0.41, 1.0),
-                    },
-                    &mut self.runtime,
-                );
+                self.hero
+                    .transition_to(
+                        HeroMotion {
+                            width: 454.0,
+                            lift: 8.0,
+                            glow: 0.55,
+                            accent: Color::from_rgb(0.51, 0.41, 1.0),
+                        },
+                        &mut self.runtime,
+                    )
+                    .unwrap();
             }
             Message::HeroExit => {
-                self.hero.transition_to(
-                    HeroMotion {
-                        width: 430.0,
-                        lift: 0.0,
-                        glow: 0.18,
-                        accent: Color::from_rgb(0.39, 0.45, 1.0),
-                    },
-                    &mut self.runtime,
-                );
+                self.hero
+                    .transition_to(
+                        HeroMotion {
+                            width: 430.0,
+                            lift: 0.0,
+                            glow: 0.18,
+                            accent: Color::from_rgb(0.39, 0.45, 1.0),
+                        },
+                        &mut self.runtime,
+                    )
+                    .unwrap();
             }
             Message::HeroPress => {
-                let current = self.hero.value(&self.runtime);
-                self.hero.play(
-                    Spring::new(
-                        current,
-                        HeroMotion {
-                            width: 414.0,
-                            lift: 2.0,
-                            glow: 0.8,
-                            accent: Color::from_rgb(0.64, 0.36, 1.0),
-                        },
-                        SpringConfig {
-                            stiffness: 240.0,
-                            damping: 10.0,
-                            ..SpringConfig::default()
-                        },
-                    ),
-                    &mut self.runtime,
-                );
+                let current = self.hero.value(&self.runtime).unwrap();
+                self.hero
+                    .play(
+                        Spring::new(
+                            current,
+                            HeroMotion {
+                                width: 414.0,
+                                lift: 2.0,
+                                glow: 0.8,
+                                accent: Color::from_rgb(0.64, 0.36, 1.0),
+                            },
+                            SpringConfig {
+                                stiffness: 240.0,
+                                damping: 10.0,
+                                ..SpringConfig::default()
+                            },
+                        ),
+                        &mut self.runtime,
+                    )
+                    .unwrap();
             }
             Message::HeroRelease => {
-                self.hero.transition_to(
-                    HeroMotion {
-                        width: 454.0,
-                        lift: 8.0,
-                        glow: 0.55,
-                        accent: Color::from_rgb(0.51, 0.5, 1.0),
-                    },
-                    &mut self.runtime,
-                );
+                self.hero
+                    .transition_to(
+                        HeroMotion {
+                            width: 454.0,
+                            lift: 8.0,
+                            glow: 0.55,
+                            accent: Color::from_rgb(0.51, 0.5, 1.0),
+                        },
+                        &mut self.runtime,
+                    )
+                    .unwrap();
             }
             Message::ToggleMenu => {
-                let current = self.menu.value(&self.runtime).clone();
+                let current = self.menu.value(&self.runtime).unwrap().clone();
                 let target = if self.menu.is_visible() {
                     MenuMotion {
                         width: 0.0,
@@ -261,9 +273,9 @@ impl Showcase {
                     },
                 );
                 if self.menu.is_visible() {
-                    self.menu.hide_with(animation, &mut self.runtime);
+                    self.menu.hide_with(animation, &mut self.runtime).unwrap();
                 } else {
-                    self.menu.show_with(animation, &mut self.runtime);
+                    self.menu.show_with(animation, &mut self.runtime).unwrap();
                 }
             }
             Message::Navigate(route) => {
@@ -271,25 +283,27 @@ impl Showcase {
                     return;
                 }
 
-                let current = self.route_motion.value(&self.runtime);
+                let current = self.route_motion.value(&self.runtime).unwrap();
                 let hidden = RouteMotion {
                     opacity: 0.0,
                     offset: Vector::new(-18.0, 0.0),
                 };
-                self.route_motion.play(
-                    Tween::between(
-                        current,
-                        hidden,
-                        Timing::new(130.0).with_easing(Easing::EaseIn),
-                    ),
-                    &mut self.runtime,
-                );
+                self.route_motion
+                    .play(
+                        Tween::between(
+                            current,
+                            hidden,
+                            Timing::new(130.0).with_easing(Easing::EaseIn),
+                        ),
+                        &mut self.runtime,
+                    )
+                    .unwrap();
                 self.pending_route = Some(route);
                 self.route_swapped = false;
             }
             Message::ReplayCards => {
                 for (index, card) in self.cards.iter().copied().enumerate() {
-                    let current = card.value(&self.runtime);
+                    let current = card.value(&self.runtime).unwrap();
                     let delay = std::time::Duration::from_millis(index as u64 * 55);
                     let compressed = CardMotion {
                         height: 112.0,
@@ -332,7 +346,8 @@ impl Showcase {
                             Timing::new(260.0).with_easing(Easing::EaseOut),
                         )),
                         &mut self.runtime,
-                    );
+                    )
+                    .unwrap();
                 }
             }
         }
@@ -345,9 +360,9 @@ impl Showcase {
 
     #[allow(clippy::too_many_lines)]
     fn view(&self) -> Element<'_, Message> {
-        let hero = self.hero.value_ref(&self.runtime);
-        let pulse = self.pulse.value_ref(&self.runtime);
-        let route_motion = self.route_motion.value_ref(&self.runtime);
+        let hero = self.hero.value_ref(&self.runtime).unwrap();
+        let pulse = self.pulse.value_ref(&self.runtime).unwrap();
+        let route_motion = self.route_motion.value_ref(&self.runtime).unwrap();
 
         let hero_color = hero.accent;
         let hero_panel = container(
@@ -409,7 +424,7 @@ impl Showcase {
                     .size(14)
                     .color(Color::from_rgba8(188, 194, 225, route_motion.opacity)),
                 row(self.cards.iter().enumerate().map(|(index, card)| {
-                    let motion = card.value_ref(&self.runtime);
+                    let motion = card.value_ref(&self.runtime).unwrap();
                     let tint = match index {
                         0 => Color::from_rgb8(112, 99, 255),
                         1 => Color::from_rgb8(39, 207, 173),
@@ -476,7 +491,7 @@ impl Showcase {
             .width(Fill);
 
         let menu: Element<'_, Message> = if self.menu.is_mounted() {
-            let motion = self.menu.value(&self.runtime);
+            let motion = self.menu.value(&self.runtime).unwrap();
             container(
                 column![
                     text("Quick menu").size(20).color(Color::from_rgba(

@@ -17,8 +17,21 @@
   transition factory results.
 - Added `SpringConfig::snappy()` as a responsive control-animation preset.
 
+### Breaking Changes
+
+- Replaced ambiguous `Option`/`bool` motion access and mutation results with
+  `Result<_, MotionError>`. Runtime failures now distinguish out-of-bounds
+  slots, removed animations, stale generations, and value type mismatches.
+- Changed `Motion::value` and `Motion::value_ref` to return errors instead of
+  panicking for invalid handles.
+- Changed Presence playback, value access, and synchronization methods to
+  propagate `MotionError` instead of silently ignoring invalid motions.
+
 ### Changed
 
+- Slot generations now advance when storage is reused rather than when an
+  animation is removed. Removed handles report `Removed` until reuse and
+  `StaleHandle` afterward.
 - Motion bindings now resolve targets, sample the current motion value,
   construct the configured animation, and call `motion.play(...)`
   automatically when business state changes.

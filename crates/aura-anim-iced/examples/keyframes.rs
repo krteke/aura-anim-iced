@@ -54,7 +54,7 @@ impl KeyframesExample {
     }
 
     fn replay(&mut self) {
-        self.ball.play(animation(), &mut self.runtime);
+        self.ball.play(animation(), &mut self.runtime).unwrap();
     }
 
     fn update(&mut self, message: Message) {
@@ -69,7 +69,7 @@ impl KeyframesExample {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let ball = self.ball.value_ref(&self.runtime);
+        let ball = self.ball.value_ref(&self.runtime).unwrap();
         let size = 46.0 * ball.scale;
         let hue = ball.hue;
         let marker = container("")

@@ -384,7 +384,7 @@ fn runtime_with_motions(count: usize) -> (MotionRuntime, Vec<Motion<f32>>) {
     let motions = (0..count)
         .map(|_| {
             let motion = runtime.motion_with(0.0_f32, Timing::new(1_000.0));
-            assert!(motion.transition_to(1.0, &mut runtime));
+            assert!(motion.transition_to(1.0, &mut runtime).is_ok());
             motion
         })
         .collect();
@@ -418,7 +418,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
             MotionRuntime::new,
             |mut runtime| {
                 let motion = runtime.motion_with(0.0_f32, Timing::new(200.0));
-                black_box(motion.transition_to(1.0, &mut runtime));
+                let _ = black_box(motion.transition_to(1.0, &mut runtime));
                 black_box(motion)
             },
             BatchSize::SmallInput,
@@ -435,7 +435,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
                     |(runtime, motions)| {
                         let mut total = 0.0;
                         for motion in &motions {
-                            total += *motion.value_ref(&runtime);
+                            total += *motion.value_ref(&runtime).unwrap();
                         }
                         black_box(total)
                     },
@@ -454,8 +454,8 @@ fn benchmark_runtime(criterion: &mut Criterion) {
                     || runtime_with_motions(count),
                     |(mut runtime, motions)| {
                         for motion in &motions {
-                            black_box(motion.pause(&mut runtime));
-                            black_box(motion.resume(&mut runtime));
+                            let _ = black_box(motion.pause(&mut runtime));
+                            let _ = black_box(motion.resume(&mut runtime));
                         }
                         black_box(runtime.active_count())
                     },
@@ -474,7 +474,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
                     || runtime_with_motions(count),
                     |(mut runtime, motions)| {
                         for motion in &motions {
-                            black_box(motion.seek(0.5, &mut runtime));
+                            let _ = black_box(motion.seek(0.5, &mut runtime));
                         }
                         black_box(motions[0].value(&runtime))
                     },
@@ -493,7 +493,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
                     || runtime_with_motions(count),
                     |(mut runtime, motions)| {
                         for motion in &motions {
-                            black_box(motion.finish(&mut runtime));
+                            let _ = black_box(motion.finish(&mut runtime));
                         }
                         black_box(runtime.active_count())
                     },
@@ -512,7 +512,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
                     || runtime_with_motions(count),
                     |(mut runtime, motions)| {
                         for motion in motions {
-                            black_box(motion.remove(&mut runtime));
+                            let _ = black_box(motion.remove(&mut runtime));
                         }
                         black_box(runtime.motion_count())
                     },
@@ -535,7 +535,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
             },
             |(mut runtime, motion)| {
                 runtime.tick(black_box(Duration::from_millis(100.0)));
-                black_box(motion.try_value(&runtime).is_some())
+                black_box(motion.value(&runtime).is_ok())
             },
             BatchSize::SmallInput,
         );
@@ -546,13 +546,13 @@ fn benchmark_runtime(criterion: &mut Criterion) {
             || {
                 let mut runtime = MotionRuntime::new();
                 let motion = runtime.motion_with(0.0_f32, Timing::new(1_000.0));
-                assert!(motion.transition_to(1.0, &mut runtime));
+                assert!(motion.transition_to(1.0, &mut runtime).is_ok());
                 (runtime, motion, std::time::Instant::now())
             },
             |(mut runtime, motion, now)| {
                 runtime.tick_at(black_box(now));
                 runtime.tick_at(black_box(now + std::time::Duration::from_millis(16)));
-                black_box(motion.value(&runtime))
+                black_box(motion.value(&runtime).unwrap())
             },
             BatchSize::SmallInput,
         );
@@ -563,7 +563,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
             || runtime_with_motions(100),
             |(mut runtime, motions)| {
                 for motion in &motions {
-                    black_box(motion.seek(0.25, &mut runtime));
+                    let _ = black_box(motion.seek(0.25, &mut runtime));
                 }
                 black_box(motions[0].value(&runtime))
             },
@@ -576,7 +576,7 @@ fn benchmark_runtime(criterion: &mut Criterion) {
             || runtime_with_motions(100),
             |(mut runtime, motions)| {
                 for motion in &motions {
-                    black_box(runtime.command(*motion, AnimationCommand::Seek(0.25)));
+                    let _ = black_box(runtime.command(*motion, AnimationCommand::Seek(0.25)));
                 }
                 black_box(motions[0].value(&runtime))
             },
@@ -598,12 +598,12 @@ fn benchmark_presence(criterion: &mut Criterion) {
                 (runtime, presence)
             },
             |(mut runtime, mut presence)| {
-                presence.show(&mut runtime);
+                presence.show(&mut runtime).unwrap();
                 runtime.tick(black_box(Duration::from_millis(100.0)));
-                presence.hide(&mut runtime);
+                presence.hide(&mut runtime).unwrap();
                 runtime.tick(black_box(Duration::from_millis(100.0)));
-                presence.sync(&runtime);
-                black_box((presence.is_mounted(), *presence.value(&runtime)))
+                presence.sync(&runtime).unwrap();
+                black_box((presence.is_mounted(), *presence.value(&runtime).unwrap()))
             },
             BatchSize::SmallInput,
         );
@@ -617,15 +617,19 @@ fn benchmark_presence(criterion: &mut Criterion) {
                 (runtime, presence)
             },
             |(mut runtime, mut presence)| {
-                presence.show_with(
-                    Spring::new(0.0_f32, 1.0, SpringConfig::default()),
-                    &mut runtime,
-                );
+                presence
+                    .show_with(
+                        Spring::new(0.0_f32, 1.0, SpringConfig::default()),
+                        &mut runtime,
+                    )
+                    .unwrap();
                 runtime.tick(black_box(Duration::from_millis(16.0)));
-                presence.hide_with(Tween::between(1.0, 0.0, Timing::new(100.0)), &mut runtime);
+                presence
+                    .hide_with(Tween::between(1.0, 0.0, Timing::new(100.0)), &mut runtime)
+                    .unwrap();
                 runtime.tick(black_box(Duration::from_millis(100.0)));
-                presence.sync(&runtime);
-                black_box((presence.is_visible(), *presence.value(&runtime)))
+                presence.sync(&runtime).unwrap();
+                black_box((presence.is_visible(), *presence.value(&runtime).unwrap()))
             },
             BatchSize::SmallInput,
         );

@@ -80,8 +80,8 @@ pub mod prelude {
     pub use aura_anim_core::{
         Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Hold,
         Interpolate, InterpolationProgress, Motion, MotionBinding, MotionBindingError,
-        MotionBindingState, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence, Spring,
-        SpringConfig, Timeline, TransitionContext, Tween, TweenState,
+        MotionBindingState, MotionError, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence,
+        Spring, SpringConfig, Timeline, TransitionContext, Tween, TweenState,
         keyframes::Keyframes,
         timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
     };
@@ -139,12 +139,12 @@ mod tests {
     fn frame_advances_runtime_using_instants() {
         let mut runtime = MotionRuntime::new();
         let motion = runtime.motion_with(0.0_f32, Timing::new(100.0));
-        assert!(motion.transition_to(10.0, &mut runtime));
+        assert!(motion.transition_to(10.0, &mut runtime).is_ok());
         let start = Instant::now();
 
         frame(&mut runtime, start);
         frame(&mut runtime, start + Duration::from_millis(50));
 
-        assert_approx_eq!(f32, motion.value(&runtime), 5.0, epsilon = 0.001);
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 5.0, epsilon = 0.001);
     }
 }

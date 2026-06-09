@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{Animatable, Animation, AnimationCommand, AnimationState, MotionRuntime};
+use crate::{Animatable, Animation, AnimationCommand, AnimationState, MotionError, MotionRuntime};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct RawMotionId {
@@ -50,95 +50,72 @@ impl<T: Animatable> Motion<T> {
     }
 
     /// Transitions this motion toward `target`.
-    ///
-    /// Returns `false` when the handle is no longer valid.
-    pub fn transition_to(self, target: T, runtime: &mut MotionRuntime) -> bool {
+    pub fn transition_to(self, target: T, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.transition_to(self, target)
     }
 
     /// Replaces this motion's current animation.
-    ///
-    /// Returns `false` when the handle is no longer valid.
-    pub fn play(self, animation: impl Animation<T>, runtime: &mut MotionRuntime) -> bool {
+    pub fn play(
+        self,
+        animation: impl Animation<T>,
+        runtime: &mut MotionRuntime,
+    ) -> Result<(), MotionError> {
         runtime.play(self, animation)
     }
 
     /// Clones and returns the current value.
-    ///
-    /// # Panics
-    ///
-    /// Panics when the handle is no longer valid.
-    #[must_use]
-    pub fn value(self, runtime: &MotionRuntime) -> T {
-        runtime
-            .value(self)
-            .cloned()
-            .expect("motion handle is no longer valid")
+    pub fn value(self, runtime: &MotionRuntime) -> Result<T, MotionError> {
+        runtime.value(self).cloned()
     }
 
     /// Borrows the current value.
-    ///
-    /// # Panics
-    ///
-    /// Panics when the handle is no longer valid.
-    #[must_use]
-    pub fn value_ref(self, runtime: &MotionRuntime) -> &T {
-        runtime
-            .value(self)
-            .expect("motion handle is no longer valid")
-    }
-
-    /// Borrows the current value when the handle is valid.
-    #[must_use]
-    pub fn try_value(self, runtime: &MotionRuntime) -> Option<&T> {
+    pub fn value_ref(self, runtime: &MotionRuntime) -> Result<&T, MotionError> {
         runtime.value(self)
     }
 
-    /// Returns the current state when the handle is valid.
-    #[must_use]
-    pub fn state(self, runtime: &MotionRuntime) -> Option<AnimationState> {
+    /// Returns the current lifecycle state.
+    pub fn state(self, runtime: &MotionRuntime) -> Result<AnimationState, MotionError> {
         runtime.state(self)
     }
 
     /// Returns whether the motion is active.
-    #[must_use]
-    pub fn is_active(self, runtime: &MotionRuntime) -> bool {
+    pub fn is_active(self, runtime: &MotionRuntime) -> Result<bool, MotionError> {
         runtime.is_active(self)
     }
 
     /// Returns whether the motion completed.
-    #[must_use]
-    pub fn is_completed(self, runtime: &MotionRuntime) -> bool {
-        self.state(runtime) == Some(AnimationState::Completed)
+    pub fn is_completed(self, runtime: &MotionRuntime) -> Result<bool, MotionError> {
+        self.state(runtime)
+            .map(|state| state == AnimationState::Completed)
     }
 
-    /// Pauses the motion if the handle is valid.
-    pub fn pause(self, runtime: &mut MotionRuntime) -> bool {
+    /// Pauses the motion.
+    pub fn pause(self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.command(self, AnimationCommand::Pause)
     }
 
-    /// Resumes the motion if the handle is valid.
-    pub fn resume(self, runtime: &mut MotionRuntime) -> bool {
+    /// Resumes the motion.
+    pub fn resume(self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.command(self, AnimationCommand::Resume)
     }
 
-    /// Cancels the motion if the handle is valid.
-    pub fn cancel(self, runtime: &mut MotionRuntime) -> bool {
+    /// Cancels the motion.
+    pub fn cancel(self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.command(self, AnimationCommand::Cancel)
     }
 
-    /// Seeks the motion to normalized progress if the handle is valid.
-    pub fn seek(self, progress: f32, runtime: &mut MotionRuntime) -> bool {
+    /// Seeks the motion to normalized progress.
+    pub fn seek(self, progress: f32, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.command(self, AnimationCommand::Seek(progress))
     }
 
-    /// Moves the motion to completion if the handle is valid.
-    pub fn finish(self, runtime: &mut MotionRuntime) -> bool {
+    /// Moves the motion to completion.
+    pub fn finish(self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.command(self, AnimationCommand::Finish)
     }
 
     /// Removes the motion from the runtime.
-    pub fn remove(self, runtime: &mut MotionRuntime) -> bool {
+    pub fn remove(self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.remove(self)
     }
 }

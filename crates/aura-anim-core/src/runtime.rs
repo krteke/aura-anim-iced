@@ -13,11 +13,13 @@ use crate::{
 
 mod anim_dyn;
 mod command;
+mod error;
 mod motion;
 mod settled;
 mod typed;
 
 pub use command::AnimationCommand;
+pub use error::MotionError;
 pub use motion::Motion;
 
 /// Controls whether the runtime retains an animation after it settles.
@@ -50,11 +52,11 @@ struct AnimationSlot {
 /// let mut runtime = MotionRuntime::new();
 /// let opacity = runtime.motion_with(0.0_f32, Timing::new(100.0));
 ///
-/// assert!(opacity.transition_to(1.0, &mut runtime));
+/// opacity.transition_to(1.0, &mut runtime).unwrap();
 /// runtime.tick(Duration::from_millis(50));
 ///
-/// assert_eq!(opacity.value(&runtime), 0.5);
-/// assert!(opacity.is_active(&runtime));
+/// assert_eq!(opacity.value(&runtime).unwrap(), 0.5);
+/// assert!(opacity.is_active(&runtime).unwrap());
 /// ```
 #[derive(Default)]
 pub struct MotionRuntime {
@@ -110,6 +112,7 @@ impl MotionRuntime {
         let animation: Box<dyn AnimationDyn> = Box::new(animation);
         let id = if let Some(slot_index) = self.free.pop() {
             let slot = &mut self.slots[slot_index];
+            slot.generation = slot.generation.wrapping_add(1);
             slot.transition = transition;
             slot.retain_policy = retain_policy;
             slot.animation = Some(animation);
@@ -131,17 +134,17 @@ impl MotionRuntime {
 
         self.motion_count += 1;
         let motion = Motion::new(id, PhantomData);
-        if self.animation(id).is_some_and(AnimationDyn::is_active) {
+        if self.animation(id).is_ok_and(AnimationDyn::is_active) {
             self.activate(id);
         } else if retain_policy == RetainPolicy::DropWhenSettled
-            && self.animation(id).is_some_and(|animation| {
+            && self.animation(id).is_ok_and(|animation| {
                 matches!(
                     animation.state(),
                     AnimationState::Completed | AnimationState::Canceled
                 )
             })
         {
-            self.remove(motion);
+            debug_assert!(self.remove(motion).is_ok());
         }
         motion
     }
@@ -181,7 +184,6 @@ impl MotionRuntime {
                     )
                 {
                     slot.animation = None;
-                    slot.generation = slot.generation.wrapping_add(1);
                     self.motion_count = self.motion_count.saturating_sub(1);
                     self.free.push(id.slot());
                 } else {
@@ -249,68 +251,65 @@ impl MotionRuntime {
         self.next_active.shrink_to_fit();
     }
 
-    /// Returns the current value for a valid motion handle.
-    #[must_use]
-    pub fn value<T: Animatable>(&self, motion: Motion<T>) -> Option<&T> {
-        self.animation(motion.id())?.value_any().downcast_ref::<T>()
+    /// Returns the current value for `motion`.
+    pub fn value<T: Animatable>(&self, motion: Motion<T>) -> Result<&T, MotionError> {
+        let animation = self.animation(motion.id())?;
+        animation
+            .value_any()
+            .downcast_ref::<T>()
+            .ok_or(MotionError::TypeMismatch {
+                expected: std::any::type_name::<T>(),
+                actual: animation.value_type_name(),
+            })
     }
 
-    /// Returns the state for a valid motion handle.
-    #[must_use]
-    pub fn state<T: Animatable>(&self, motion: Motion<T>) -> Option<AnimationState> {
+    /// Returns the lifecycle state for `motion`.
+    pub fn state<T: Animatable>(&self, motion: Motion<T>) -> Result<AnimationState, MotionError> {
         self.animation(motion.id()).map(AnimationDyn::state)
     }
 
-    /// Returns whether the referenced motion is active.
-    #[must_use]
-    pub fn is_active<T: Animatable>(&self, motion: Motion<T>) -> bool {
-        self.animation(motion.id())
-            .is_some_and(AnimationDyn::is_active)
+    /// Returns whether `motion` is active.
+    pub fn is_active<T: Animatable>(&self, motion: Motion<T>) -> Result<bool, MotionError> {
+        self.animation(motion.id()).map(AnimationDyn::is_active)
     }
 
-    /// Transitions a valid motion toward `target`.
-    ///
-    /// Returns `false` when the handle is no longer valid.
-    pub fn transition_to<T: Animatable>(&mut self, motion: Motion<T>, target: T) -> bool {
-        if self
-            .animation_mut(motion.id())
-            .is_some_and(|animation| animation.retarget_any(&target))
-        {
+    /// Transitions `motion` toward `target`.
+    pub fn transition_to<T: Animatable>(
+        &mut self,
+        motion: Motion<T>,
+        target: T,
+    ) -> Result<(), MotionError> {
+        if self.animation_mut(motion.id())?.retarget_any(&target) {
             self.activate(motion.id());
-            return true;
+            return Ok(());
         }
 
-        let Some(current) = self.value(motion).cloned() else {
-            return false;
-        };
+        let current = self.value(motion)?.clone();
         let transition = self.slots[motion.id().slot()].transition;
         self.replace(
             motion.id(),
             TypedAnimation::new(Tween::between(current, target, transition)),
-        );
-        true
+        )
     }
 
-    /// Replaces the animation associated with a valid motion.
-    ///
-    /// Returns `false` when the handle is no longer valid.
-    pub fn play<T: Animatable>(&mut self, motion: Motion<T>, animation: impl Animation<T>) -> bool {
-        if self.value(motion).is_none() {
-            return false;
-        }
-
-        self.replace(motion.id(), TypedAnimation::new(animation));
-        true
+    /// Replaces the animation associated with `motion`.
+    pub fn play<T: Animatable>(
+        &mut self,
+        motion: Motion<T>,
+        animation: impl Animation<T>,
+    ) -> Result<(), MotionError> {
+        self.value(motion)?;
+        self.replace(motion.id(), TypedAnimation::new(animation))
     }
 
-    /// Applies a command to a valid motion.
-    ///
-    /// Returns `false` when the handle is no longer valid.
-    pub fn command<T: Animatable>(&mut self, motion: Motion<T>, command: AnimationCommand) -> bool {
+    /// Applies a command to `motion`.
+    pub fn command<T: Animatable>(
+        &mut self,
+        motion: Motion<T>,
+        command: AnimationCommand,
+    ) -> Result<(), MotionError> {
         let (active, state) = {
-            let Some(animation) = self.animation_mut(motion.id()) else {
-                return false;
-            };
+            let animation = self.animation_mut(motion.id())?;
             animation.command(command);
             (animation.is_active(), animation.state())
         };
@@ -322,30 +321,23 @@ impl MotionRuntime {
             if self.slots[motion.id().slot()].retain_policy == RetainPolicy::DropWhenSettled
                 && matches!(state, AnimationState::Completed | AnimationState::Canceled)
             {
-                self.remove(motion);
-            } else if let Some(animation) = self.animation_mut(motion.id()) {
-                animation.compact();
+                self.remove(motion)?;
+            } else {
+                self.animation_mut(motion.id())?.compact();
             }
         }
-        true
+        Ok(())
     }
 
     /// Removes the animation referenced by `motion`.
-    ///
-    /// Returns `false` when the handle is no longer valid.
-    pub fn remove<T: Animatable>(&mut self, motion: Motion<T>) -> bool {
-        let Some(slot) = self.slots.get_mut(motion.id().slot()) else {
-            return false;
-        };
-        if slot.generation != motion.id().generation() || slot.animation.is_none() {
-            return false;
-        }
+    pub fn remove<T: Animatable>(&mut self, motion: Motion<T>) -> Result<(), MotionError> {
+        self.animation(motion.id())?;
+        let slot = &mut self.slots[motion.id().slot()];
 
         let was_active = slot.active;
         slot.animation = None;
         slot.active = false;
         slot.queued = false;
-        slot.generation = slot.generation.wrapping_add(1);
         if was_active {
             self.active_count = self.active_count.saturating_sub(1);
         }
@@ -353,46 +345,62 @@ impl MotionRuntime {
         self.free.push(motion.id().slot());
 
         let slot_idx = motion.id().slot();
-        let new_gen = slot.generation;
-        self.active
-            .retain(|id| id.slot() != slot_idx || id.generation() == new_gen);
-        self.next_active
-            .retain(|id| id.slot() != slot_idx || id.generation() == new_gen);
+        self.active.retain(|id| id.slot() != slot_idx);
+        self.next_active.retain(|id| id.slot() != slot_idx);
 
         if self.active_count == 0 {
             self.active.clear();
             self.next_active.clear();
             self.last_tick = None;
         }
-        true
+        Ok(())
     }
 
-    fn animation(&self, id: RawMotionId) -> Option<&dyn AnimationDyn> {
-        let slot = self.slots.get(id.slot())?;
+    fn animation(&self, id: RawMotionId) -> Result<&dyn AnimationDyn, MotionError> {
+        let slot = self
+            .slots
+            .get(id.slot())
+            .ok_or(MotionError::SlotOutOfBounds { slot: id.slot() })?;
         if slot.generation != id.generation() {
-            return None;
+            return Err(MotionError::StaleHandle {
+                slot: id.slot(),
+                handle_generation: id.generation(),
+                actual_generation: slot.generation,
+            });
         }
-        slot.animation.as_deref()
+        slot.animation
+            .as_deref()
+            .ok_or(MotionError::Removed { slot: id.slot() })
     }
 
-    fn animation_mut(&mut self, id: RawMotionId) -> Option<&mut (dyn AnimationDyn + '_)> {
-        let slot = self.slots.get_mut(id.slot())?;
+    fn animation_mut(
+        &mut self,
+        id: RawMotionId,
+    ) -> Result<&mut (dyn AnimationDyn + '_), MotionError> {
+        let slot = self
+            .slots
+            .get_mut(id.slot())
+            .ok_or(MotionError::SlotOutOfBounds { slot: id.slot() })?;
         if slot.generation != id.generation() {
-            return None;
+            return Err(MotionError::StaleHandle {
+                slot: id.slot(),
+                handle_generation: id.generation(),
+                actual_generation: slot.generation,
+            });
         }
         match slot.animation.as_mut() {
-            Some(animation) => Some(animation.as_mut()),
-            None => None,
+            Some(animation) => Ok(animation.as_mut()),
+            None => Err(MotionError::Removed { slot: id.slot() }),
         }
     }
 
-    fn replace(&mut self, id: RawMotionId, animation: TypedAnimation<impl Animatable>) {
-        let Some(slot) = self.slots.get_mut(id.slot()) else {
-            return;
-        };
-        if slot.generation != id.generation() {
-            return;
-        }
+    fn replace(
+        &mut self,
+        id: RawMotionId,
+        animation: TypedAnimation<impl Animatable>,
+    ) -> Result<(), MotionError> {
+        self.animation(id)?;
+        let slot = &mut self.slots[id.slot()];
         let mut animation = animation;
         animation.compact();
         slot.animation = Some(Box::new(animation));
@@ -405,6 +413,7 @@ impl MotionRuntime {
         } else {
             self.deactivate(id);
         }
+        Ok(())
     }
 
     fn activate(&mut self, id: RawMotionId) {

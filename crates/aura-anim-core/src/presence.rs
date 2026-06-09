@@ -1,7 +1,7 @@
 //! Animated visibility lifecycle management.
 
 use crate::{
-    runtime::{Motion, MotionRuntime},
+    runtime::{Motion, MotionError, MotionRuntime},
     timing::Timing,
     traits::{Animatable, Animation},
 };
@@ -17,14 +17,14 @@ use crate::{
 /// let mut runtime = MotionRuntime::new();
 /// let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
 ///
-/// presence.show(&mut runtime);
+/// presence.show(&mut runtime).unwrap();
 /// assert!(presence.is_mounted());
 /// runtime.tick(Duration::from_millis(100));
-/// assert_eq!(*presence.value(&runtime), 1.0);
+/// assert_eq!(*presence.value(&runtime).unwrap(), 1.0);
 ///
-/// presence.hide(&mut runtime);
+/// presence.hide(&mut runtime).unwrap();
 /// runtime.tick(Duration::from_millis(100));
-/// presence.sync(&runtime);
+/// presence.sync(&runtime).unwrap();
 /// assert!(!presence.is_mounted());
 /// ```
 pub struct Presence<T: Animatable> {
@@ -54,8 +54,7 @@ impl<T: Animatable> Presence<T> {
     }
 
     /// Returns the current animated value.
-    #[must_use]
-    pub fn value<'a>(&self, runtime: &'a MotionRuntime) -> &'a T {
+    pub fn value<'a>(&self, runtime: &'a MotionRuntime) -> Result<&'a T, MotionError> {
         self.motion.value_ref(runtime)
     }
 
@@ -72,35 +71,48 @@ impl<T: Animatable> Presence<T> {
     }
 
     /// Mounts the content and transitions toward the visible value.
-    pub fn show(&mut self, runtime: &mut MotionRuntime) {
+    pub fn show(&mut self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
+        self.motion.transition_to(self.visible.clone(), runtime)?;
         self.mounted = true;
         self.shown = true;
-        self.motion.transition_to(self.visible.clone(), runtime);
+        Ok(())
     }
 
     /// Transitions toward the hidden value.
-    pub fn hide(&mut self, runtime: &mut MotionRuntime) {
+    pub fn hide(&mut self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
+        self.motion.transition_to(self.hidden.clone(), runtime)?;
         self.shown = false;
-        self.motion.transition_to(self.hidden.clone(), runtime);
+        Ok(())
     }
 
     /// Mounts the content and plays a custom enter animation.
-    pub fn show_with(&mut self, animation: impl Animation<T>, runtime: &mut MotionRuntime) {
+    pub fn show_with(
+        &mut self,
+        animation: impl Animation<T>,
+        runtime: &mut MotionRuntime,
+    ) -> Result<(), MotionError> {
+        self.motion.play(animation, runtime)?;
         self.mounted = true;
         self.shown = true;
-        self.motion.play(animation, runtime);
+        Ok(())
     }
 
     /// Plays a custom exit animation.
-    pub fn hide_with(&mut self, animation: impl Animation<T>, runtime: &mut MotionRuntime) {
+    pub fn hide_with(
+        &mut self,
+        animation: impl Animation<T>,
+        runtime: &mut MotionRuntime,
+    ) -> Result<(), MotionError> {
+        self.motion.play(animation, runtime)?;
         self.shown = false;
-        self.motion.play(animation, runtime);
+        Ok(())
     }
 
     /// Unmounts hidden content after its animation completes.
-    pub fn sync(&mut self, runtime: &MotionRuntime) {
-        if !self.shown && self.motion.is_completed(runtime) {
+    pub fn sync(&mut self, runtime: &MotionRuntime) -> Result<(), MotionError> {
+        if !self.shown && self.motion.is_completed(runtime)? {
             self.mounted = false;
         }
+        Ok(())
     }
 }

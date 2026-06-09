@@ -100,7 +100,7 @@ impl TimelineExample {
                 },
                 Timing::new(480.0).with_easing(Easing::EaseInOut),
             ));
-        self.card.play(timeline, &mut self.runtime);
+        self.card.play(timeline, &mut self.runtime).unwrap();
     }
 
     fn update(&mut self, message: Message) {
@@ -115,7 +115,7 @@ impl TimelineExample {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let card = self.card.value_ref(&self.runtime);
+        let card = self.card.value_ref(&self.runtime).unwrap();
         let opacity = card.opacity;
         let visual = container(
             column![

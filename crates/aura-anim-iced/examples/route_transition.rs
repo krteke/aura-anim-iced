@@ -77,21 +77,26 @@ impl RouteExample {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
 
-                if self.pending.is_some() && self.motion.is_completed(&self.runtime) {
+                if self.pending.is_some() && self.motion.is_completed(&self.runtime).unwrap() {
                     if self.entering {
                         self.pending = None;
                         self.entering = false;
                     } else {
-                        self.route = self.pending.expect("pending route must exist");
+                        let Some(pending) = self.pending else {
+                            return;
+                        };
+                        self.route = pending;
                         self.entering = true;
-                        self.motion.play(
-                            Tween::between(
-                                hidden_right(),
-                                visible(),
-                                Timing::new(260.0).with_easing(Easing::EaseOut),
-                            ),
-                            &mut self.runtime,
-                        );
+                        self.motion
+                            .play(
+                                Tween::between(
+                                    hidden_right(),
+                                    visible(),
+                                    Timing::new(260.0).with_easing(Easing::EaseOut),
+                                ),
+                                &mut self.runtime,
+                            )
+                            .unwrap();
                     }
                 }
             }
@@ -100,15 +105,17 @@ impl RouteExample {
                     return;
                 }
 
-                let current = self.motion.value(&self.runtime);
-                self.motion.play(
-                    Tween::between(
-                        current,
-                        hidden_left(),
-                        Timing::new(150.0).with_easing(Easing::EaseIn),
-                    ),
-                    &mut self.runtime,
-                );
+                let current = self.motion.value(&self.runtime).unwrap();
+                self.motion
+                    .play(
+                        Tween::between(
+                            current,
+                            hidden_left(),
+                            Timing::new(150.0).with_easing(Easing::EaseIn),
+                        ),
+                        &mut self.runtime,
+                    )
+                    .unwrap();
                 self.pending = Some(route);
                 self.entering = false;
             }
@@ -120,7 +127,7 @@ impl RouteExample {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let motion = self.motion.value_ref(&self.runtime);
+        let motion = self.motion.value_ref(&self.runtime).unwrap();
         let navigation = row(Route::ALL.map(|route| {
             let selected = route == self.route;
             button(text(route.label()).size(14))

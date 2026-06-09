@@ -52,6 +52,10 @@ impl<T: Animatable> AnimationDyn for TypedAnimation<T> {
         self.animation.value()
     }
 
+    fn value_type_name(&self) -> &'static str {
+        std::any::type_name::<T>()
+    }
+
     fn retarget_any(&mut self, target: &dyn Any) -> bool {
         target
             .downcast_ref::<T>()

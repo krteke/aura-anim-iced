@@ -60,7 +60,7 @@ impl SpringExample {
 
     fn retarget(&mut self) {
         self.target_right = !self.target_right;
-        let current = self.value.value(&self.runtime);
+        let current = self.value.value(&self.runtime).unwrap();
         let target = if self.target_right {
             SpringValue {
                 x: 620.0,
@@ -84,13 +84,15 @@ impl SpringExample {
             mass: 1.0,
             epsilon: 0.001,
         };
-        self.value.play(
-            Spring::with_channels(current, target, [movement, size], |outputs| SpringValue {
-                x: outputs[0].x,
-                size: outputs[1].size,
-            }),
-            &mut self.runtime,
-        );
+        self.value
+            .play(
+                Spring::with_channels(current, target, [movement, size], |outputs| SpringValue {
+                    x: outputs[0].x,
+                    size: outputs[1].size,
+                }),
+                &mut self.runtime,
+            )
+            .unwrap();
     }
 
     fn update(&mut self, message: Message) {
@@ -109,7 +111,7 @@ impl SpringExample {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let value = self.value.value_ref(&self.runtime);
+        let value = self.value.value_ref(&self.runtime).unwrap();
         let color = if self.bouncy {
             Color::from_rgb8(255, 124, 159)
         } else {

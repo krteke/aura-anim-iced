@@ -17,7 +17,7 @@ pub use aura_anim_macros::Animatable;
 pub use binding::{MotionBinding, MotionBindingError, MotionBindingState, TransitionContext};
 pub use interpolate::InterpolationProgress;
 pub use presence::Presence;
-pub use runtime::{AnimationCommand, Motion, MotionRuntime, RetainPolicy};
+pub use runtime::{AnimationCommand, Motion, MotionError, MotionRuntime, RetainPolicy};
 pub use spring::{Spring, SpringConfig};
 pub use timeline::{Hold, Parallel, Sequence, Timeline};
 pub use traits::{Animatable, Animation, AnimationExt, AnimationState, BoxAnimation, Interpolate};

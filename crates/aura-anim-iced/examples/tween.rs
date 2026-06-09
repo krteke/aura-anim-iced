@@ -56,16 +56,18 @@ impl TweenExample {
     }
 
     fn animate_to(&mut self, at_end: bool) {
-        let current = self.dot.value(&self.runtime);
+        let current = self.dot.value(&self.runtime).unwrap();
         let target = if at_end { end() } else { start() };
-        self.dot.play(
-            Tween::between(
-                current,
-                target,
-                Timing::new(900.0).with_easing(Easing::EaseInOut),
-            ),
-            &mut self.runtime,
-        );
+        self.dot
+            .play(
+                Tween::between(
+                    current,
+                    target,
+                    Timing::new(900.0).with_easing(Easing::EaseInOut),
+                ),
+                &mut self.runtime,
+            )
+            .unwrap();
         self.at_end = at_end;
     }
 
@@ -74,14 +76,16 @@ impl TweenExample {
             Message::Frame(now) => aura_anim_iced::frame(&mut self.runtime, now),
             Message::Toggle => self.animate_to(!self.at_end),
             Message::Replay => {
-                self.dot.play(
-                    Tween::between(
-                        start(),
-                        end(),
-                        Timing::new(900.0).with_easing(Easing::EaseInOut),
-                    ),
-                    &mut self.runtime,
-                );
+                self.dot
+                    .play(
+                        Tween::between(
+                            start(),
+                            end(),
+                            Timing::new(900.0).with_easing(Easing::EaseInOut),
+                        ),
+                        &mut self.runtime,
+                    )
+                    .unwrap();
                 self.at_end = true;
             }
         }
@@ -92,7 +96,7 @@ impl TweenExample {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let dot = self.dot.value_ref(&self.runtime);
+        let dot = self.dot.value_ref(&self.runtime).unwrap();
         let color = dot.color;
         let marker = container("")
             .width(dot.size)

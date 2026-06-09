@@ -23,6 +23,7 @@ aura-anim-macros.workspace = true
 iced_core = { workspace = true, optional = true }
 lilt.workspace = true
 palette = { workspace = true, optional = true }
+thiserror.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true

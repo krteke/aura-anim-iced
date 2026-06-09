@@ -1,8 +1,8 @@
 //! Declarative business-state to motion bindings.
 
-use std::{error::Error, fmt, sync::Arc};
+use std::sync::Arc;
 
-use crate::{Animatable, BoxAnimation, Motion, MotionRuntime};
+use crate::{Animatable, BoxAnimation, Motion, MotionError, MotionRuntime};
 
 /// Owned values supplied to a [`MotionBinding`] transition factory.
 ///
@@ -45,40 +45,23 @@ impl<S> MotionBindingState<S> {
 }
 
 /// Failure returned while applying a motion binding.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum MotionBindingError<S> {
     /// The requested business state has no target value.
+    #[error("motion binding has no target for state {0:?}")]
     MissingTarget(S),
     /// Neither an exact transition nor a fallback factory was configured.
+    #[error("motion binding has no transition from {from:?} to {to:?}")]
     MissingTransition {
         /// Previously applied state.
         from: S,
         /// Requested state.
         to: S,
     },
-    /// The supplied motion handle is no longer valid.
-    InvalidMotion,
+    /// The runtime rejected the supplied motion handle.
+    #[error(transparent)]
+    Motion(#[from] MotionError),
 }
-
-impl<S: fmt::Debug> fmt::Display for MotionBindingError<S> {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::MissingTarget(state) => {
-                write!(
-                    formatter,
-                    "motion binding has no target for state {state:?}"
-                )
-            }
-            Self::MissingTransition { from, to } => write!(
-                formatter,
-                "motion binding has no transition from {from:?} to {to:?}"
-            ),
-            Self::InvalidMotion => formatter.write_str("motion handle is no longer valid"),
-        }
-    }
-}
-
-impl<S: fmt::Debug> Error for MotionBindingError<S> {}
 
 type TransitionFactory<S, T> = Arc<dyn Fn(TransitionContext<S, T>) -> BoxAnimation<T> + 'static>;
 
@@ -130,11 +113,12 @@ struct Transition<S, T: Animatable> {
 ///     .unwrap();
 /// runtime.tick(Duration::from_millis(120.0));
 ///
-/// assert_eq!(motion.value(&runtime), 1.0);
+/// assert_eq!(motion.value(&runtime).unwrap(), 1.0);
 /// ```
 #[derive(Clone)]
 pub struct MotionBinding<S, T: Animatable> {
     initial_state: S,
+    initial_target: T,
     targets: Vec<(S, T)>,
     transitions: Vec<Transition<S, T>>,
     fallback: Option<TransitionFactory<S, T>>,
@@ -150,6 +134,7 @@ where
     pub fn new(initial_state: S, initial_target: T) -> Self {
         Self {
             initial_state: initial_state.clone(),
+            initial_target: initial_target.clone(),
             targets: vec![(initial_state, initial_target)],
             transitions: Vec::new(),
             fallback: None,
@@ -159,6 +144,9 @@ where
     /// Adds or replaces the target associated with `state`.
     #[must_use]
     pub fn when(mut self, state: S, target: T) -> Self {
+        if state == self.initial_state {
+            self.initial_target = target.clone();
+        }
         if let Some((_, existing)) = self
             .targets
             .iter_mut()
@@ -209,11 +197,11 @@ where
     }
 
     /// Returns the target associated with `state`.
-    #[must_use]
-    pub fn target(&self, state: &S) -> Option<&T> {
+    pub fn target(&self, state: &S) -> Result<&T, MotionBindingError<S>> {
         self.targets
             .iter()
             .find_map(|(candidate, target)| (candidate == state).then_some(target))
+            .ok_or_else(|| MotionBindingError::MissingTarget(state.clone()))
     }
 
     /// Creates independent state tracking for one consumer.
@@ -224,11 +212,7 @@ where
 
     /// Creates a motion at the initial target and its independent state tracker.
     pub fn create_motion(&self, runtime: &mut MotionRuntime) -> (Motion<T>, MotionBindingState<S>) {
-        let target = self
-            .target(&self.initial_state)
-            .expect("MotionBinding::new always stores the initial target")
-            .clone();
-        (runtime.motion(target), self.state())
+        (runtime.motion(self.initial_target.clone()), self.state())
     }
 
     /// Applies `next_state` to an existing motion.
@@ -247,10 +231,7 @@ where
             return Ok(false);
         }
 
-        let target = self
-            .target(&next_state)
-            .cloned()
-            .ok_or_else(|| MotionBindingError::MissingTarget(next_state.clone()))?;
+        let target = self.target(&next_state).cloned()?;
         let previous = binding_state.previous.clone();
         let factory = self
             .transitions
@@ -262,10 +243,7 @@ where
                 from: previous.clone(),
                 to: next_state.clone(),
             })?;
-        let current = motion
-            .try_value(runtime)
-            .cloned()
-            .ok_or(MotionBindingError::InvalidMotion)?;
+        let current = motion.value(runtime)?;
         let animation = factory(TransitionContext {
             from_state: previous,
             to_state: next_state.clone(),
@@ -273,9 +251,7 @@ where
             to: target,
         });
 
-        if !motion.play(animation, runtime) {
-            return Err(MotionBindingError::InvalidMotion);
-        }
+        motion.play(animation, runtime)?;
 
         binding_state.previous = next_state;
         Ok(true)
@@ -323,13 +299,13 @@ mod tests {
             .set_state(&mut state, State::Hovered, motion, &mut runtime)
             .unwrap();
         runtime.tick(Duration::from_millis(40.0));
-        assert_approx_eq!(f32, motion.value(&runtime), 4.0);
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 4.0);
 
         binding
             .set_state(&mut state, State::Pressed, motion, &mut runtime)
             .unwrap();
 
-        assert_approx_eq!(f32, motion.value(&runtime), 4.0);
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 4.0);
         assert_eq!(state.current(), &State::Pressed);
     }
 
@@ -344,7 +320,7 @@ mod tests {
             .unwrap();
         runtime.tick(Duration::from_millis(50.0));
 
-        assert_approx_eq!(f32, motion.value(&runtime), 20.0);
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 20.0);
     }
 
     #[test]
@@ -374,7 +350,7 @@ mod tests {
 
         assert_eq!(first_state.current(), &State::Hovered);
         assert_eq!(second_state.current(), &State::Idle);
-        assert_approx_eq!(f32, second.value(&runtime), 0.0);
+        assert_approx_eq!(f32, second.value(&runtime).unwrap(), 0.0);
     }
 
     #[test]
@@ -394,7 +370,25 @@ mod tests {
                 to: State::Hovered,
             }
         );
-        assert!(!motion.is_active(&runtime));
+        assert!(!motion.is_active(&runtime).unwrap());
+    }
+
+    #[test]
+    fn runtime_errors_are_preserved_by_binding_errors() {
+        let binding = binding();
+        let mut runtime = MotionRuntime::new();
+        let (motion, mut state) = binding.create_motion(&mut runtime);
+        motion.remove(&mut runtime).unwrap();
+
+        let error = binding
+            .set_state(&mut state, State::Hovered, motion, &mut runtime)
+            .unwrap_err();
+
+        assert_eq!(
+            error,
+            MotionBindingError::Motion(crate::MotionError::Removed { slot: 0 })
+        );
+        assert_eq!(state.current(), &State::Idle);
     }
 
     #[test]
@@ -417,12 +411,12 @@ mod tests {
             .set_state(&mut state, State::Hovered, motion, &mut runtime)
             .unwrap();
         runtime.tick(Duration::from_millis(100.0));
-        assert_approx_eq!(f32, motion.value(&runtime), 10.0);
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 10.0);
 
         binding
             .set_state(&mut state, State::Pressed, motion, &mut runtime)
             .unwrap();
         runtime.tick(Duration::from_millis(100.0));
-        assert_approx_eq!(f32, motion.value(&runtime), 20.0);
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 20.0);
     }
 }

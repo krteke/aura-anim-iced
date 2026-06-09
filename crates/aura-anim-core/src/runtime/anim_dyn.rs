@@ -9,5 +9,6 @@ pub(super) trait AnimationDyn {
     fn is_active(&self) -> bool;
     fn state(&self) -> AnimationState;
     fn value_any(&self) -> &dyn Any;
+    fn value_type_name(&self) -> &'static str;
     fn retarget_any(&mut self, target: &dyn Any) -> bool;
 }

@@ -75,14 +75,17 @@ button.transition_to(
         scale: 1.0,
     },
     &mut runtime,
-);
+)
+.unwrap();
 
 runtime.tick(std::time::Duration::from_millis(80));
-let visual = button.value(&runtime);
+let visual = button.value(&runtime).unwrap();
 ```
 
 `transition_to` retargets from the currently sampled value, so interrupted
 hover, press, menu and route animations do not jump back to a stale origin.
+Motion access and mutation return `Result<_, MotionError>` so removed, stale,
+out-of-bounds, and type-mismatched handles remain distinguishable.
 
 ## Iced Integration
 
@@ -116,13 +119,15 @@ impl App {
         match message {
             Message::Frame(now) => aura_anim::iced::frame(&mut self.runtime, now),
             Message::Open => {
-                self.panel.transition_to(
+                if let Err(error) = self.panel.transition_to(
                     PanelMotion {
                         opacity: 1.0,
                         offset: Vector::ZERO,
                     },
                     &mut self.runtime,
-                );
+                ) {
+                    eprintln!("panel transition failed: {error}");
+                }
             }
         }
     }

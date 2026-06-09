@@ -80,10 +80,10 @@ impl MenuExample {
         match message {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
-                self.menu.sync(&self.runtime);
+                self.menu.sync(&self.runtime).unwrap();
             }
             Message::Toggle => {
-                let current = self.menu.value(&self.runtime).clone();
+                let current = self.menu.value(&self.runtime).unwrap().clone();
                 let target = if self.menu.is_visible() {
                     hidden()
                 } else {
@@ -100,9 +100,9 @@ impl MenuExample {
                 );
 
                 if self.menu.is_visible() {
-                    self.menu.hide_with(spring, &mut self.runtime);
+                    self.menu.hide_with(spring, &mut self.runtime).unwrap();
                 } else {
-                    self.menu.show_with(spring, &mut self.runtime);
+                    self.menu.show_with(spring, &mut self.runtime).unwrap();
                 }
             }
             Message::Select(section) => self.selected = section,
@@ -150,7 +150,7 @@ impl MenuExample {
         .height(Fill);
 
         let menu: Element<'_, Message> = if self.menu.is_mounted() {
-            let motion = self.menu.value(&self.runtime);
+            let motion = self.menu.value(&self.runtime).unwrap();
             let entries = column(Section::ALL.map(|section| {
                 let selected = section == self.selected;
                 button(text(section.label()).size(15))
