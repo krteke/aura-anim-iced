@@ -55,6 +55,19 @@ impl Duration {
         self.0.checked_sub(rhs.0).map(Self)
     }
 
+    pub(crate) fn divided_by(self, divisor: f64) -> Self {
+        if divisor.is_finite() && divisor > 0.0 {
+            let seconds = self.0.as_secs_f64() / divisor;
+            if seconds.is_infinite() {
+                Self(StdDuration::MAX)
+            } else {
+                Self(std_duration_from_secs(seconds))
+            }
+        } else {
+            self
+        }
+    }
+
     pub(crate) fn saturating_sub(self, rhs: Self) -> Self {
         Self(self.0.saturating_sub(rhs.0))
     }
@@ -163,5 +176,13 @@ mod tests {
             Some(Duration::from_millis(75.0))
         );
         assert_eq!(short.checked_sub_delay(Delay::from_millis(50.0)), None);
+        assert_eq!(long.divided_by(2.0), Duration::from_millis(50.0));
+        assert_eq!(long.divided_by(0.5), Duration::from_millis(200.0));
+        assert_eq!(long.divided_by(0.0), long);
+        assert_eq!(long.divided_by(f64::NAN), long);
+        assert_eq!(
+            long.divided_by(f64::MIN_POSITIVE),
+            Duration(std::time::Duration::MAX)
+        );
     }
 }

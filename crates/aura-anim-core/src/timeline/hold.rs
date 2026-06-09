@@ -85,6 +85,10 @@ impl<T: Animatable> Animation<T> for Hold<T> {
         self.state = AnimationState::Completed;
     }
 
+    fn set_rate(&mut self, rate: f64) {
+        self.duration = self.duration.divided_by(rate);
+    }
+
     fn into_value(self: Box<Self>) -> T {
         self.value
     }
@@ -128,5 +132,12 @@ mod tests {
         assert_eq!(hold.state(), AnimationState::Running);
         hold.seek(2.0);
         assert_eq!(hold.state(), AnimationState::Completed);
+    }
+
+    #[test]
+    fn rate_scales_hold_duration() {
+        let hold = Hold::new(4_i32, Duration::from_millis(100.0)).rate(2.0);
+
+        assert_eq!(hold.duration(), Some(Duration::from_millis(50.0)));
     }
 }

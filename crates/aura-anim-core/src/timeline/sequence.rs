@@ -209,6 +209,12 @@ impl<T: Animatable> Animation<T> for Sequence<T> {
         self.state = AnimationState::Completed;
     }
 
+    fn set_rate(&mut self, rate: f64) {
+        for child in &mut self.children {
+            child.set_rate(rate);
+        }
+    }
+
     fn into_value(self: Box<Self>) -> T {
         self.current
     }
@@ -253,5 +259,18 @@ mod tests {
 
         assert_eq!(sequence.state(), AnimationState::Completed);
         assert_approx_eq!(f32, *sequence.value(), 20.0);
+    }
+
+    #[test]
+    fn rate_scales_every_child_duration() {
+        let sequence = Sequence::new(0.0_f32)
+            .then(Tween::between(0.0, 10.0, Timing::new(100.0)))
+            .then(Tween::between(10.0, 20.0, Timing::new(200.0)))
+            .rate(2.0);
+
+        assert_eq!(
+            sequence.duration(),
+            Some(crate::timing::Duration::from_millis(150.0))
+        );
     }
 }

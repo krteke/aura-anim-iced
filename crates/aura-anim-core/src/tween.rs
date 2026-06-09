@@ -279,6 +279,10 @@ impl<T: Animatable> Animation<T> for Tween<T> {
         true
     }
 
+    fn set_rate(&mut self, rate: f64) {
+        self.timing = self.timing.with_rate(rate);
+    }
+
     fn into_value(self: Box<Self>) -> T {
         self.current
     }
@@ -313,6 +317,20 @@ mod tests {
         assert_approx_eq!(f32, *tween.from(), 4.0);
         assert_approx_eq!(f32, *tween.value(), 4.0);
         assert_approx_eq!(f32, *tween.target(), 20.0);
+    }
+
+    #[test]
+    fn rate_changes_tween_playback_duration() {
+        let mut faster = Tween::between(0.0_f32, 10.0, Timing::new(100.0)).rate(2.0);
+        let mut slower = Tween::between(0.0_f32, 10.0, Timing::new(100.0)).rate(0.5);
+
+        faster.tick(Duration::from_millis(50.0));
+        slower.tick(Duration::from_millis(50.0));
+
+        assert_eq!(faster.state(), AnimationState::Completed);
+        assert_approx_eq!(f32, *faster.value(), 10.0);
+        assert_eq!(slower.state(), AnimationState::Running);
+        assert_approx_eq!(f32, *slower.value(), 2.5);
     }
 
     #[test]

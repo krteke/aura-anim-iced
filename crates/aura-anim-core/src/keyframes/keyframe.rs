@@ -47,6 +47,13 @@ impl<T: Animatable> Keyframe<T> {
         self.easing = easing;
         self
     }
+
+    pub(crate) fn set_rate(&mut self, rate: f64) {
+        if rate.is_finite() && rate > 0.0 {
+            let scaled = self.time / rate;
+            self.time = if scaled.is_finite() { scaled } else { f64::MAX };
+        }
+    }
 }
 
 #[cfg(test)]

@@ -355,6 +355,25 @@ fn timing_builders_and_duration_accessors_are_consistent() {
 }
 
 #[test]
+fn animation_rate_scales_duration_based_sources_and_ignores_springs() {
+    let tween = Tween::between(0.0_f32, 1.0, Timing::new(100.0)).rate(2.0);
+    let keyframes = Keyframes::new(0.0_f32)
+        .push(100.0, 1.0)
+        .push(200.0, 2.0)
+        .rate(2.0);
+    let timeline = Sequence::new(0.0_f32)
+        .then(Tween::between(0.0, 1.0, Timing::new(100.0)))
+        .then(Hold::new(1.0, Duration::from_millis(100.0)))
+        .rate(2.0);
+    let spring = Spring::new(0.0_f32, 1.0, SpringConfig::default()).rate(2.0);
+
+    assert_eq!(tween.duration(), Some(Duration::from_millis(50.0)));
+    assert_eq!(keyframes.duration(), Some(Duration::from_millis(100.0)));
+    assert_eq!(timeline.duration(), Some(Duration::from_millis(100.0)));
+    assert_eq!(spring.duration(), None);
+}
+
+#[test]
 fn infinite_timing_has_no_total_duration() {
     let timing = Timing::new(100.0).with_iterations(IterationCount::infinite());
 

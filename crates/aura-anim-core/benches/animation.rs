@@ -143,6 +143,12 @@ fn benchmark_animation_sources(criterion: &mut Criterion) {
         );
     });
 
+    group.bench_function("tween_rate", |bencher| {
+        bencher.iter(|| {
+            black_box(Tween::between(0.0_f32, 1.0, Timing::new(1_000.0)).rate(black_box(1.5)))
+        });
+    });
+
     group.bench_function("tween_seek", |bencher| {
         bencher.iter_batched(
             || {

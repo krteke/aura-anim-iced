@@ -166,6 +166,12 @@ impl<T: Animatable> Animation<T> for Parallel<T> {
         self.state = AnimationState::Completed;
     }
 
+    fn set_rate(&mut self, rate: f64) {
+        for child in &mut self.children {
+            child.set_rate(rate);
+        }
+    }
+
     fn into_value(self: Box<Self>) -> T {
         self.current
     }
@@ -211,5 +217,18 @@ mod tests {
 
         assert_eq!(parallel.state(), AnimationState::Canceled);
         assert_approx_eq!(f32, *parallel.value(), 0.0);
+    }
+
+    #[test]
+    fn rate_scales_every_child_duration() {
+        let parallel = Parallel::new(0.0_f32, |values| values.iter().sum())
+            .with(Tween::between(0.0, 10.0, Timing::new(100.0)))
+            .with(Tween::between(0.0, 20.0, Timing::new(200.0)))
+            .rate(2.0);
+
+        assert_eq!(
+            parallel.duration(),
+            Some(crate::timing::Duration::from_millis(100.0))
+        );
     }
 }

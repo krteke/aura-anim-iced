@@ -271,13 +271,15 @@ Per-tick diagnostics use the `TRACE` level; lifecycle and error diagnostics use
 
 ```rust
 motion.play(
-    Tween::between(current, target, Timing::new(180.0)),
+    Tween::between(current, target, Timing::new(180.0)).rate(2.0),
     &mut runtime,
 );
 ```
 
 Timing supports delay, easing, finite or infinite iterations, and playback
-direction.
+direction. `Animation::rate` directly scales stored durations: `2.0` halves
+duration and `0.5` doubles it. It recursively updates existing Timeline
+children, while Spring ignores rate because its motion is physics-based.
 
 ### Keyframes
 

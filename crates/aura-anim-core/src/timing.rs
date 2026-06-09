@@ -129,6 +129,11 @@ impl Timing {
         self.duration = duration;
         self
     }
+
+    pub(crate) fn with_rate(mut self, rate: f64) -> Self {
+        self.duration = self.duration.divided_by(rate);
+        self
+    }
 }
 
 impl Default for Timing {
@@ -140,5 +145,38 @@ impl Default for Timing {
             easing: Easing::Linear,
             iterations: IterationCount::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Delay, Timing};
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn rate_scales_active_duration_without_changing_delay() {
+        let faster = Timing::new(200.0)
+            .with_delay(Delay::from_millis(40.0))
+            .with_iterations(3)
+            .with_rate(2.0);
+        let slower = Timing::new(200.0).with_rate(0.5);
+
+        assert_approx_eq!(f64, faster.duration().as_millis(), 100.0);
+        assert_approx_eq!(f64, faster.delay().as_millis(), 40.0);
+        assert_approx_eq!(f64, faster.total_duration().unwrap().as_millis(), 340.0);
+        assert_approx_eq!(f64, slower.duration().as_millis(), 400.0);
+    }
+
+    #[test]
+    fn invalid_rate_leaves_duration_unchanged() {
+        let timing = Timing::new(200.0);
+
+        assert_eq!(timing.with_rate(0.0).duration(), timing.duration());
+        assert_eq!(timing.with_rate(-1.0).duration(), timing.duration());
+        assert_eq!(timing.with_rate(f64::NAN).duration(), timing.duration());
+        assert_eq!(
+            timing.with_rate(f64::INFINITY).duration(),
+            timing.duration()
+        );
     }
 }

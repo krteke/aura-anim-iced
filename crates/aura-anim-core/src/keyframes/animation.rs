@@ -242,7 +242,37 @@ impl<T: Animatable> Animation<T> for Keyframes<T> {
         self.state = AnimationState::Completed;
     }
 
+    fn set_rate(&mut self, rate: f64) {
+        for frame in &mut self.frames {
+            frame.set_rate(rate);
+        }
+        self.timing = self.timing.with_duration(self.duration());
+    }
+
     fn into_value(self: Box<Self>) -> T {
         self.current
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Keyframes;
+    use crate::{Animation, timing::Duration};
+    use float_cmp::assert_approx_eq;
+
+    #[test]
+    fn rate_scales_keyframe_times_and_duration() {
+        let mut animation = Keyframes::new(0.0_f32)
+            .push(100.0, 10.0)
+            .push(200.0, 20.0)
+            .rate(2.0);
+
+        assert_eq!(
+            Animation::duration(&animation),
+            Some(Duration::from_millis(100.0))
+        );
+
+        animation.tick(Duration::from_millis(50.0));
+        assert_approx_eq!(f32, *animation.value(), 10.0);
     }
 }

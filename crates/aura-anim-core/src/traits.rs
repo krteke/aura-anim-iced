@@ -101,6 +101,26 @@ pub trait Animation<T: Animatable>: 'static {
         self.state() == AnimationState::Running
     }
 
+    /// Updates playback rate by adjusting the animation's stored durations.
+    ///
+    /// The default implementation does nothing, which is appropriate for
+    /// animations such as springs that are not duration-based.
+    fn set_rate(&mut self, _rate: f64) {}
+
+    /// Returns this animation with its playback rate adjusted.
+    ///
+    /// A rate of `2.0` halves duration, while `0.5` doubles it. Repeated calls
+    /// compound because implementations update duration directly instead of
+    /// storing a separate rate value.
+    #[must_use]
+    fn rate(mut self, rate: f64) -> Self
+    where
+        Self: Sized,
+    {
+        self.set_rate(rate);
+        self
+    }
+
     /// Consumes the animation and returns its current value.
     ///
     /// The default implementation clones the sampled value so custom
@@ -176,6 +196,10 @@ where
 
     fn is_active(&self) -> bool {
         (**self).is_active()
+    }
+
+    fn set_rate(&mut self, rate: f64) {
+        (**self).set_rate(rate);
     }
 
     fn into_value(self: Box<Self>) -> T {
