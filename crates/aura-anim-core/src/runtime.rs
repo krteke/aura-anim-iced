@@ -3,9 +3,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    runtime::{
-        anim_dyn::AnimationDyn, motion::RawMotionId, settled::Settled, typed::TypedAnimation,
-    },
+    runtime::{anim_dyn::AnimationDyn, motion::RawMotionId, typed::TypedAnimation},
     timing::{Duration, Timing},
     traits::{Animatable, Animation, AnimationState},
     tween::Tween,
@@ -15,7 +13,6 @@ mod anim_dyn;
 mod command;
 mod error;
 mod motion;
-mod settled;
 mod typed;
 
 pub use command::AnimationCommand;

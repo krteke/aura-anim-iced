@@ -84,6 +84,10 @@ impl<T: Animatable> Animation<T> for Hold<T> {
         self.elapsed = self.duration;
         self.state = AnimationState::Completed;
     }
+
+    fn into_value(self: Box<Self>) -> T {
+        self.value
+    }
 }
 
 #[cfg(test)]

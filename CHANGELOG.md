@@ -32,6 +32,9 @@
 
 ### Changed
 
+- Completed retained animations now move their sampled value into inline
+  runtime storage, avoiding the previous `Box<Settled<T>>` allocation and
+  value clone for built-in animation sources.
 - Slot generations now advance when storage is reused rather than when an
   animation is removed. Removed handles report `Removed` until reuse and
   `StaleHandle` afterward.

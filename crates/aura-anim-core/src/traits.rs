@@ -100,6 +100,16 @@ pub trait Animation<T: Animatable>: 'static {
     fn is_active(&self) -> bool {
         self.state() == AnimationState::Running
     }
+
+    /// Consumes the animation and returns its current value.
+    ///
+    /// The default implementation clones the sampled value so custom
+    /// animations remain source-compatible. Implementations that own their
+    /// sampled value should override this method to move it without cloning.
+    #[must_use]
+    fn into_value(self: Box<Self>) -> T {
+        self.value().clone()
+    }
 }
 
 /// A type-erased animation source.
@@ -166,5 +176,9 @@ where
 
     fn is_active(&self) -> bool {
         (**self).is_active()
+    }
+
+    fn into_value(self: Box<Self>) -> T {
+        (*self).into_value()
     }
 }

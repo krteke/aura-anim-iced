@@ -165,6 +165,10 @@ impl<T: Animatable> Animation<T> for Parallel<T> {
         self.compose_outputs();
         self.state = AnimationState::Completed;
     }
+
+    fn into_value(self: Box<Self>) -> T {
+        self.current
+    }
 }
 
 #[cfg(test)]

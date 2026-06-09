@@ -208,6 +208,10 @@ impl<T: Animatable> Animation<T> for Sequence<T> {
         self.index = self.children.len();
         self.state = AnimationState::Completed;
     }
+
+    fn into_value(self: Box<Self>) -> T {
+        self.current
+    }
 }
 
 #[cfg(test)]

@@ -241,4 +241,8 @@ impl<T: Animatable> Animation<T> for Keyframes<T> {
         self.current = self.value_at(self.duration().as_millis() * progress);
         self.state = AnimationState::Completed;
     }
+
+    fn into_value(self: Box<Self>) -> T {
+        self.current
+    }
 }

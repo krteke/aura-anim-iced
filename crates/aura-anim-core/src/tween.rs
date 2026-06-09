@@ -282,6 +282,10 @@ impl<T: Animatable> Animation<T> for Tween<T> {
         self.transition_to(target.clone());
         true
     }
+
+    fn into_value(self: Box<Self>) -> T {
+        self.current
+    }
 }
 
 #[cfg(test)]

@@ -333,6 +333,10 @@ impl<T: Animatable> Animation<T> for Spring<T> {
         self.retarget(target.clone());
         true
     }
+
+    fn into_value(self: Box<Self>) -> T {
+        self.current
+    }
 }
 
 fn finite_non_negative(value: f32) -> f32 {

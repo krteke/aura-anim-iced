@@ -392,6 +392,19 @@ fn runtime_with_motions(count: usize) -> (MotionRuntime, Vec<Motion<f32>>) {
     (runtime, motions)
 }
 
+fn runtime_with_large_motions(count: usize) -> (MotionRuntime, Vec<Motion<[f32; 64]>>) {
+    let mut runtime = MotionRuntime::new();
+    let motions = (0..count)
+        .map(|_| {
+            let motion = runtime.motion_with([0.0_f32; 64], Timing::new(1_000.0));
+            assert!(motion.transition_to([1.0; 64], &mut runtime).is_ok());
+            motion
+        })
+        .collect();
+
+    (runtime, motions)
+}
+
 #[allow(clippy::too_many_lines)]
 fn benchmark_runtime(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("runtime");
@@ -491,6 +504,25 @@ fn benchmark_runtime(criterion: &mut Criterion) {
             |bencher, &count| {
                 bencher.iter_batched(
                     || runtime_with_motions(count),
+                    |(mut runtime, motions)| {
+                        for motion in &motions {
+                            let _ = black_box(motion.finish(&mut runtime));
+                        }
+                        black_box(runtime.active_count())
+                    },
+                    BatchSize::SmallInput,
+                );
+            },
+        );
+    }
+
+    for count in [1, 100, 1_000] {
+        group.bench_with_input(
+            BenchmarkId::new("finish_active_large_value", count),
+            &count,
+            |bencher, &count| {
+                bencher.iter_batched(
+                    || runtime_with_large_motions(count),
                     |(mut runtime, motions)| {
                         for motion in &motions {
                             let _ = black_box(motion.finish(&mut runtime));
