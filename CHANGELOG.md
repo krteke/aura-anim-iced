@@ -5,6 +5,35 @@
 ### Added
 
 - Spring channels for independent value interpolation on struct fields.
+- Added reusable `MotionBinding<S, T>` configuration for mapping business
+  states to target values and transition factories.
+- Added per-consumer `MotionBindingState<S>` tracking so one binding
+  configuration can drive multiple independent controls.
+- Added `TransitionContext<S, T>` with the previous and next business states,
+  current sampled value, and resolved target value.
+- Added exact state-pair transition factories and fallback factories supporting
+  Tween, Spring, Keyframes, Timeline, and custom animation sources.
+- Added `BoxAnimation<T>` and `AnimationExt::boxed()` for type-erased
+  transition factory results.
+- Added `SpringConfig::snappy()` as a responsive control-animation preset.
+
+### Changed
+
+- Motion bindings now resolve targets, sample the current motion value,
+  construct the configured animation, and call `motion.play(...)`
+  automatically when business state changes.
+- Binding state is committed only after playback succeeds; missing targets,
+  missing transition factories, and stale motion handles return explicit
+  `MotionBindingError` values.
+- Updated the interactive button example to use a shared `MotionBinding`
+  configuration for Tween hover and Spring press transitions.
+
+### Testing
+
+- Added unit and public API coverage for exact and fallback transitions,
+  interrupted sampled values, reusable binding configurations, error handling,
+  boxed Keyframes and Timeline factories, facade exports, and the snappy spring
+  preset.
 
 ## v0.2.2 - 2026-06-08
 

@@ -101,3 +101,70 @@ pub trait Animation<T: Animatable>: 'static {
         self.state() == AnimationState::Running
     }
 }
+
+/// A type-erased animation source.
+pub type BoxAnimation<T> = Box<dyn Animation<T>>;
+
+/// Convenience methods for concrete animation sources.
+pub trait AnimationExt<T: Animatable>: Animation<T> + Sized {
+    /// Type-erases this animation for use in transition factories.
+    #[must_use]
+    fn boxed(self) -> BoxAnimation<T> {
+        Box::new(self)
+    }
+}
+
+impl<T: Animatable, A: Animation<T> + Sized> AnimationExt<T> for A {}
+
+impl<Source: ?Sized, T: Animatable> Animation<T> for Box<Source>
+where
+    Source: Animation<T>,
+{
+    fn value(&self) -> &T {
+        (**self).value()
+    }
+
+    fn state(&self) -> AnimationState {
+        (**self).state()
+    }
+
+    fn duration(&self) -> Option<Duration> {
+        (**self).duration()
+    }
+
+    fn tick(&mut self, delta: Duration) {
+        (**self).tick(delta);
+    }
+
+    fn advance(&mut self, delta: Duration) -> Duration {
+        (**self).advance(delta)
+    }
+
+    fn pause(&mut self) {
+        (**self).pause();
+    }
+
+    fn resume(&mut self) {
+        (**self).resume();
+    }
+
+    fn cancel(&mut self) {
+        (**self).cancel();
+    }
+
+    fn seek(&mut self, progress: f32) {
+        (**self).seek(progress);
+    }
+
+    fn finish(&mut self) {
+        (**self).finish();
+    }
+
+    fn retarget(&mut self, target: &T) -> bool {
+        (**self).retarget(target)
+    }
+
+    fn is_active(&self) -> bool {
+        (**self).is_active()
+    }
+}

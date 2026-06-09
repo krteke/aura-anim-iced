@@ -25,6 +25,17 @@ pub struct SpringConfig {
 }
 
 impl SpringConfig {
+    /// Returns a responsive preset suited to direct manipulation and controls.
+    #[must_use]
+    pub const fn snappy() -> Self {
+        Self {
+            stiffness: 420.0,
+            damping: 28.0,
+            mass: 1.0,
+            epsilon: 0.001,
+        }
+    }
+
     fn sanitized(self) -> Self {
         let defaults = Self::default();
         Self {
@@ -487,6 +498,17 @@ mod tests {
         spring.tick(Duration::from_millis(16.0));
 
         assert!(spring.value().is_finite());
+    }
+
+    #[test]
+    fn snappy_preset_is_stiffer_than_default() {
+        let default = SpringConfig::default();
+        let snappy = SpringConfig::snappy();
+
+        assert!(snappy.stiffness > default.stiffness);
+        assert!(snappy.damping > default.damping);
+        assert_approx_eq!(f32, snappy.mass, default.mass);
+        assert_approx_eq!(f32, snappy.epsilon, default.epsilon);
     }
 
     #[test]

@@ -53,6 +53,28 @@ fn prelude_exports_composition_types() {
 }
 
 #[test]
+fn prelude_exports_motion_binding_and_boxed_factories() {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum State {
+        Idle,
+        Active,
+    }
+
+    let binding = MotionBinding::new(State::Idle, 0.0_f32)
+        .when(State::Active, 1.0)
+        .fallback(|context| Tween::between(context.from, context.to, Timing::new(20.0)).boxed());
+    let mut runtime = MotionRuntime::new();
+    let (motion, mut state) = binding.create_motion(&mut runtime);
+
+    binding
+        .set_state(&mut state, State::Active, motion, &mut runtime)
+        .unwrap();
+    runtime.tick(Duration::from_millis(20.0));
+
+    assert_approx_eq!(f32, motion.value(&runtime), 1.0);
+}
+
+#[test]
 fn derive_macro_supports_tuple_structs() {
     let midpoint = Offset::interpolate(&Offset(0.0, 10.0), &Offset(10.0, 30.0), 0.5);
 

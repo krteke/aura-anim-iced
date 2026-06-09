@@ -3,8 +3,8 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Motion, MotionRuntime, Spring, SpringConfig,
-    timing::{Easing, Timing},
+    Animatable, AnimationExt, Motion, MotionBinding, MotionBindingState, MotionRuntime, Spring,
+    SpringConfig, Tween, timing::Timing,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
@@ -20,8 +20,17 @@ struct ButtonMotion {
     color: Color,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ButtonState {
+    Idle,
+    Hovered,
+    Pressed,
+}
+
 struct ButtonExample {
     runtime: MotionRuntime,
+    binding: MotionBinding<ButtonState, ButtonMotion>,
+    binding_state: MotionBindingState<ButtonState>,
     button: Motion<ButtonMotion>,
     hovered: bool,
     clicks: u32,
@@ -52,15 +61,28 @@ fn main() -> iced::Result {
 impl ButtonExample {
     fn new() -> Self {
         let mut runtime = MotionRuntime::new();
-        let button =
-            runtime.motion_with(resting(), Timing::new(170.0).with_easing(Easing::EaseOut));
+        let binding = button_binding();
+        let (button, binding_state) = binding.create_motion(&mut runtime);
 
         Self {
             runtime,
+            binding,
+            binding_state,
             button,
             hovered: false,
             clicks: 0,
         }
+    }
+
+    fn set_button_state(&mut self, state: ButtonState) {
+        self.binding
+            .set_state(
+                &mut self.binding_state,
+                state,
+                self.button,
+                &mut self.runtime,
+            )
+            .expect("the example keeps its motion handle and binding states valid");
     }
 
     fn update(&mut self, message: Message) {
@@ -68,31 +90,21 @@ impl ButtonExample {
             Message::Frame(now) => aura_anim_iced::frame(&mut self.runtime, now),
             Message::Enter => {
                 self.hovered = true;
-                self.button.transition_to(hovered(), &mut self.runtime);
+                self.set_button_state(ButtonState::Hovered);
             }
             Message::Exit => {
                 self.hovered = false;
-                self.button.transition_to(resting(), &mut self.runtime);
+                self.set_button_state(ButtonState::Idle);
             }
-            Message::Press => {
-                let current = self.button.value(&self.runtime);
-                self.button.play(
-                    Spring::new(
-                        current,
-                        pressed(),
-                        SpringConfig {
-                            stiffness: 380.0,
-                            damping: 22.0,
-                            ..SpringConfig::default()
-                        },
-                    ),
-                    &mut self.runtime,
-                );
-            }
+            Message::Press => self.set_button_state(ButtonState::Pressed),
             Message::Release => {
                 self.clicks += 1;
-                let target = if self.hovered { hovered() } else { resting() };
-                self.button.transition_to(target, &mut self.runtime);
+                let state = if self.hovered {
+                    ButtonState::Hovered
+                } else {
+                    ButtonState::Idle
+                };
+                self.set_button_state(state);
             }
         }
     }
@@ -136,7 +148,7 @@ impl ButtonExample {
         container(
             column![
                 text("Interactive button").size(32).color(Color::WHITE),
-                text("Hover uses transition_to. Press replaces it with a spring from the current value.")
+                text("MotionBinding maps button states to targets and chooses Tween or Spring automatically.")
                     .size(14)
                     .color(Color::from_rgb8(169, 178, 207)),
                 container(interactive)
@@ -160,6 +172,19 @@ impl ButtonExample {
         .style(|_| page_style())
         .into()
     }
+}
+
+fn button_binding() -> MotionBinding<ButtonState, ButtonMotion> {
+    MotionBinding::new(ButtonState::Idle, resting())
+        .when(ButtonState::Hovered, hovered())
+        .when(ButtonState::Pressed, pressed())
+        .transition(ButtonState::Idle, ButtonState::Hovered, |context| {
+            Tween::between(context.from, context.to, Timing::new(170.0)).boxed()
+        })
+        .transition(ButtonState::Hovered, ButtonState::Pressed, |context| {
+            Spring::new(context.from, context.to, SpringConfig::snappy()).boxed()
+        })
+        .fallback(|context| Tween::between(context.from, context.to, Timing::new(120.0)).boxed())
 }
 
 fn resting() -> ButtonMotion {

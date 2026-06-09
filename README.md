@@ -148,6 +148,54 @@ TickPolicy::fps(60)
 TickPolicy::interval(std::time::Duration::from_millis(32))
 ```
 
+## Motion Binding
+
+`MotionBinding<S, T>` maps reusable business states to visual targets and
+transition factories. The binding is immutable configuration; each button,
+menu item, or route owns a small `MotionBindingState<S>` that records its last
+successfully applied state.
+
+```rust
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ButtonState {
+    Idle,
+    Hovered,
+    Pressed,
+}
+
+let button_binding = MotionBinding::new(ButtonState::Idle, idle)
+    .when(ButtonState::Hovered, hovered)
+    .when(ButtonState::Pressed, pressed)
+    .transition(ButtonState::Idle, ButtonState::Hovered, |ctx| {
+        Tween::between(ctx.from, ctx.to, Timing::new(120.0)).boxed()
+    })
+    .transition(ButtonState::Hovered, ButtonState::Pressed, |ctx| {
+        Spring::new(ctx.from, ctx.to, SpringConfig::snappy()).boxed()
+    })
+    .fallback(|ctx| {
+        Tween::between(ctx.from, ctx.to, Timing::new(100.0)).boxed()
+    });
+
+let motion = runtime.motion(idle);
+let mut binding_state = button_binding.state();
+
+button_binding.set_state(
+    &mut binding_state,
+    ButtonState::Hovered,
+    motion,
+    &mut runtime,
+)?;
+```
+
+On each state change the binding resolves the target, samples the motion's
+current value, selects the exact transition or fallback factory, constructs
+the boxed animation, calls `motion.play(...)`, and records the new business
+state only after playback succeeds. Factories can return Tween, Spring,
+Keyframes, Timeline, or any custom `Animation<T>`.
+
+One binding configuration can be cloned or shared and reused with independent
+`MotionBindingState` values.
+
 ## Iced Animatable Types
 
 With the core `iced` integration enabled, these types can be fields in an

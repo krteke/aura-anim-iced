@@ -1,8 +1,9 @@
 //! Integration tests for the public aura-anim-core API.
 
 use aura_anim_core::{
-    Animatable, Animation, AnimationCommand, AnimationState, Hold, Interpolate, MotionRuntime,
-    Parallel, Presence, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween,
+    Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
+    MotionBinding, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence, Spring, SpringConfig,
+    Timeline, Tween,
     keyframes::{Keyframe, Keyframes},
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
 };
@@ -115,6 +116,45 @@ fn runtime_manages_motion_lifecycle_and_retargeting() {
     runtime.tick(Duration::from_millis(50.0));
     assert!(motion.is_completed(&runtime));
     assert_approx_eq!(f32, motion.value(&runtime), 14.0);
+}
+
+#[test]
+fn motion_binding_drives_existing_motion_from_business_state() {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum State {
+        Idle,
+        Hovered,
+        Pressed,
+    }
+
+    let binding = MotionBinding::new(State::Idle, 0.0_f32)
+        .when(State::Hovered, 10.0)
+        .when(State::Pressed, 20.0)
+        .transition(State::Idle, State::Hovered, |context| {
+            Tween::between(context.from, context.to, Timing::new(100.0)).boxed()
+        })
+        .fallback(|context| Tween::between(context.from, context.to, Timing::new(50.0)).boxed());
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(-10.0_f32);
+    let mut state = binding.state();
+
+    assert!(
+        binding
+            .set_state(&mut state, State::Hovered, motion, &mut runtime)
+            .unwrap()
+    );
+    runtime.tick(Duration::from_millis(40.0));
+    assert_approx_eq!(f32, motion.value(&runtime), -2.0);
+
+    assert!(
+        binding
+            .set_state(&mut state, State::Pressed, motion, &mut runtime)
+            .unwrap()
+    );
+    runtime.tick(Duration::from_millis(50.0));
+
+    assert_approx_eq!(f32, motion.value(&runtime), 20.0);
+    assert_eq!(state.current(), &State::Pressed);
 }
 
 #[test]

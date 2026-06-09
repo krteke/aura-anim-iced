@@ -69,7 +69,7 @@ impl<T: Animatable> Animation<T> for Parallel<T> {
     fn duration(&self) -> Option<Duration> {
         self.children
             .iter()
-            .map(|child| child.duration())
+            .map(Animation::duration)
             .try_fold(Duration::ZERO, |longest, duration| {
                 duration.map(|duration| longest.max(duration))
             })
