@@ -431,18 +431,15 @@ impl MotionRuntime {
         self.motion_count = self.motion_count.saturating_sub(1);
         self.free.push(motion.id().slot());
 
-        let slot_idx = motion.id().slot();
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::runtime",
-            slot = slot_idx,
+            slot = motion.id().slot(),
             generation = motion.id().generation(),
             was_active,
             motion_count = self.motion_count,
             "removed motion"
         );
-        self.active.retain(|id| id.slot() != slot_idx);
-        self.next_active.retain(|id| id.slot() != slot_idx);
 
         if self.active_count == 0 {
             self.active.clear();
@@ -582,4 +579,49 @@ fn trace_motion_error(id: RawMotionId, error: &MotionError) {
         error = %error,
         "motion lookup failed"
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MotionRuntime;
+    use crate::{
+        Tween,
+        timing::{Duration, Timing},
+    };
+
+    #[test]
+    fn remove_lazily_invalidates_queued_ids() {
+        let mut runtime = MotionRuntime::new();
+        let first = runtime.insert(
+            Tween::between(0.0_f32, 1.0, Timing::new(100.0)),
+            Timing::default(),
+        );
+        let second = runtime.insert(
+            Tween::between(0.0_f32, 1.0, Timing::new(100.0)),
+            Timing::default(),
+        );
+
+        runtime.tick(Duration::ZERO);
+        assert_eq!(runtime.active.len(), 2);
+        assert_eq!(runtime.next_active.len(), 2);
+
+        first.remove(&mut runtime).unwrap();
+        assert_eq!(runtime.active_count(), 1);
+        assert_eq!(runtime.active.len(), 2);
+        assert_eq!(runtime.next_active.len(), 2);
+
+        let replacement = runtime.insert(
+            Tween::between(0.0_f32, 1.0, Timing::new(100.0)),
+            Timing::default(),
+        );
+        assert_eq!(runtime.active_count(), 2);
+        assert_eq!(runtime.active.len(), 3);
+
+        runtime.tick(Duration::ZERO);
+
+        assert_eq!(runtime.active_count(), 2);
+        assert_eq!(runtime.active.len(), 2);
+        assert!(second.is_active(&runtime).unwrap());
+        assert!(replacement.is_active(&runtime).unwrap());
+    }
 }
