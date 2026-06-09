@@ -246,6 +246,25 @@ Iced sRGB
 → display sRGB
 ```
 
+## Tracing
+
+Enable the optional `tracing` feature to emit runtime diagnostics without
+installing or configuring a subscriber inside the library:
+
+```toml
+aura-anim = {
+    version = "0.2.2",
+    features = ["tracing"]
+}
+```
+
+The `aura_anim::runtime`, `aura_anim::binding`, and `aura_anim::presence`
+targets report motion allocation and reuse, playback commands, lifecycle
+changes, invalid handles, binding transition selection, and presence mounting.
+Per-tick diagnostics use the `TRACE` level; lifecycle and error diagnostics use
+`DEBUG`. Applications remain responsible for installing a compatible
+`tracing` subscriber.
+
 ## Animation Sources
 
 ### Tween

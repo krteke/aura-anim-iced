@@ -42,6 +42,9 @@ jobs:
       - name: Check RGBA features
         run: cargo check -p aura-anim-core --all-targets --features iced,rgba
 
+      - name: Check tracing features
+        run: cargo check -p aura-anim-core --all-targets --features iced,tracing
+
       - name: Check Oklaba features
         run: |
           cargo check -p aura-anim-core --all-targets --features iced,oklaba
@@ -57,11 +60,17 @@ jobs:
       - name: Test Oklaba features
         run: cargo test -p aura-anim-core --all-targets --features iced,oklaba
 
+      - name: Test tracing features
+        run: cargo test -p aura-anim-core --all-targets --features iced,tracing
+
       - name: Clippy default features
         run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Clippy Oklaba features
         run: cargo clippy -p aura-anim-core --all-targets --features iced,oklaba -- -D warnings
+
+      - name: Clippy tracing features
+        run: cargo clippy -p aura-anim-core --all-targets --features iced,tracing -- -D warnings
 
       - name: Docs
         env:

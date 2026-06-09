@@ -297,6 +297,7 @@ dependencies = [
  "lilt",
  "palette",
  "thiserror 2.0.18",
+ "tracing",
 ]
 
 [[package]]

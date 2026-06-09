@@ -75,6 +75,14 @@ impl<T: Animatable> Presence<T> {
         self.motion.transition_to(self.visible.clone(), runtime)?;
         self.mounted = true;
         self.shown = true;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::presence",
+            value_type = std::any::type_name::<T>(),
+            mounted = self.mounted,
+            shown = self.shown,
+            "showing presence"
+        );
         Ok(())
     }
 
@@ -82,6 +90,14 @@ impl<T: Animatable> Presence<T> {
     pub fn hide(&mut self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         self.motion.transition_to(self.hidden.clone(), runtime)?;
         self.shown = false;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::presence",
+            value_type = std::any::type_name::<T>(),
+            mounted = self.mounted,
+            shown = self.shown,
+            "hiding presence"
+        );
         Ok(())
     }
 
@@ -94,6 +110,14 @@ impl<T: Animatable> Presence<T> {
         self.motion.play(animation, runtime)?;
         self.mounted = true;
         self.shown = true;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::presence",
+            value_type = std::any::type_name::<T>(),
+            mounted = self.mounted,
+            shown = self.shown,
+            "showing presence with custom animation"
+        );
         Ok(())
     }
 
@@ -105,6 +129,14 @@ impl<T: Animatable> Presence<T> {
     ) -> Result<(), MotionError> {
         self.motion.play(animation, runtime)?;
         self.shown = false;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::presence",
+            value_type = std::any::type_name::<T>(),
+            mounted = self.mounted,
+            shown = self.shown,
+            "hiding presence with custom animation"
+        );
         Ok(())
     }
 
@@ -112,6 +144,12 @@ impl<T: Animatable> Presence<T> {
     pub fn sync(&mut self, runtime: &MotionRuntime) -> Result<(), MotionError> {
         if !self.shown && self.motion.is_completed(runtime)? {
             self.mounted = false;
+            #[cfg(feature = "tracing")]
+            tracing::debug!(
+                target: "aura_anim::presence",
+                value_type = std::any::type_name::<T>(),
+                "unmounted completed hidden presence"
+            );
         }
         Ok(())
     }

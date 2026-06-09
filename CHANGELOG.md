@@ -16,6 +16,9 @@
 - Added `BoxAnimation<T>` and `AnimationExt::boxed()` for type-erased
   transition factory results.
 - Added `SpringConfig::snappy()` as a responsive control-animation preset.
+- Added an optional `tracing` feature, forwarded by the core, Iced, and facade
+  crates, with diagnostics for runtime lifecycle operations, invalid handles,
+  motion bindings, and Presence state changes.
 
 ### Breaking Changes
 

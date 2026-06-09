@@ -37,6 +37,9 @@ jobs:
       - name: Verify Oklaba features
         run: cargo test -p aura-anim-core --all-targets --features iced,oklaba --locked
 
+      - name: Verify tracing features
+        run: cargo test -p aura-anim-core --all-targets --features iced,tracing --locked
+
       - name: Verify packages
         run: cargo package --workspace --locked
 

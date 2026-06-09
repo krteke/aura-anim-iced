@@ -16,6 +16,7 @@ documentation = "https://docs.rs/aura-anim"
 default = ["rgba"]
 rgba = ["aura-anim-iced/rgba"]
 oklaba = ["aura-anim-iced/oklaba"]
+tracing = ["aura-anim-core/tracing", "aura-anim-iced/tracing"]
 
 [dependencies]
 aura-anim-core.workspace = true
@@ -28,5 +29,5 @@ float-cmp.workspace = true
 workspace = true
 
 [package.metadata.docs.rs]
-features = ["rgba"]
+features = ["rgba", "tracing"]
 rustdoc-args = ["--cfg", "docsrs"]

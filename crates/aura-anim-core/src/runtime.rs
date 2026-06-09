@@ -110,7 +110,7 @@ impl MotionRuntime {
         let mut animation = TypedAnimation::new(animation);
         animation.compact();
         let animation: Box<dyn AnimationDyn> = Box::new(animation);
-        let id = if let Some(slot_index) = self.free.pop() {
+        let (id, reused_slot) = if let Some(slot_index) = self.free.pop() {
             let slot = &mut self.slots[slot_index];
             slot.generation = slot.generation.wrapping_add(1);
             slot.transition = transition;
@@ -118,7 +118,7 @@ impl MotionRuntime {
             slot.animation = Some(animation);
             slot.active = false;
             slot.queued = false;
-            RawMotionId::new(slot_index, slot.generation)
+            (RawMotionId::new(slot_index, slot.generation), true)
         } else {
             let slot = self.slots.len();
             self.slots.push(AnimationSlot {
@@ -129,10 +129,23 @@ impl MotionRuntime {
                 active: false,
                 queued: false,
             });
-            RawMotionId::new(slot, 0)
+            (RawMotionId::new(slot, 0), false)
         };
 
         self.motion_count += 1;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = id.slot(),
+            generation = id.generation(),
+            value_type = std::any::type_name::<T>(),
+            ?retain_policy,
+            reused_slot,
+            motion_count = self.motion_count,
+            "inserted motion"
+        );
+        #[cfg(not(feature = "tracing"))]
+        let _ = reused_slot;
         let motion = Motion::new(id, PhantomData);
         if self.animation(id).is_ok_and(AnimationDyn::is_active) {
             self.activate(id);
@@ -152,6 +165,14 @@ impl MotionRuntime {
     /// Advances every active animation by `delta`.
     pub fn tick(&mut self, delta: impl Into<Duration>) {
         let delta = delta.into();
+        #[cfg(feature = "tracing")]
+        tracing::trace!(
+            target: "aura_anim::runtime",
+            delta_ms = delta.as_millis(),
+            active_count = self.active_count,
+            queued_count = self.active.len(),
+            "ticking motions"
+        );
         self.next_active.clear();
 
         for index in 0..self.active.len() {
@@ -183,10 +204,26 @@ impl MotionRuntime {
                         AnimationState::Completed | AnimationState::Canceled
                     )
                 {
+                    #[cfg(feature = "tracing")]
+                    tracing::debug!(
+                        target: "aura_anim::runtime",
+                        slot = id.slot(),
+                        generation = id.generation(),
+                        state = ?animation.state(),
+                        "dropping settled transient motion"
+                    );
                     slot.animation = None;
                     self.motion_count = self.motion_count.saturating_sub(1);
                     self.free.push(id.slot());
                 } else {
+                    #[cfg(feature = "tracing")]
+                    tracing::debug!(
+                        target: "aura_anim::runtime",
+                        slot = id.slot(),
+                        generation = id.generation(),
+                        state = ?animation.state(),
+                        "motion settled"
+                    );
                     animation.compact();
                 }
             }
@@ -198,6 +235,13 @@ impl MotionRuntime {
             self.next_active.clear();
             self.last_tick = None;
         }
+        #[cfg(feature = "tracing")]
+        tracing::trace!(
+            target: "aura_anim::runtime",
+            active_count = self.active_count,
+            motion_count = self.motion_count,
+            "finished ticking motions"
+        );
     }
 
     /// Advances active animations using elapsed wall-clock time.
@@ -254,13 +298,15 @@ impl MotionRuntime {
     /// Returns the current value for `motion`.
     pub fn value<T: Animatable>(&self, motion: Motion<T>) -> Result<&T, MotionError> {
         let animation = self.animation(motion.id())?;
-        animation
-            .value_any()
-            .downcast_ref::<T>()
-            .ok_or(MotionError::TypeMismatch {
+        animation.value_any().downcast_ref::<T>().ok_or_else(|| {
+            let error = MotionError::TypeMismatch {
                 expected: std::any::type_name::<T>(),
                 actual: animation.value_type_name(),
-            })
+            };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(motion.id(), &error);
+            error
+        })
     }
 
     /// Returns the lifecycle state for `motion`.
@@ -280,12 +326,28 @@ impl MotionRuntime {
         target: T,
     ) -> Result<(), MotionError> {
         if self.animation_mut(motion.id())?.retarget_any(&target) {
+            #[cfg(feature = "tracing")]
+            tracing::debug!(
+                target: "aura_anim::runtime",
+                slot = motion.id().slot(),
+                generation = motion.id().generation(),
+                value_type = std::any::type_name::<T>(),
+                "retargeted motion in place"
+            );
             self.activate(motion.id());
             return Ok(());
         }
 
         let current = self.value(motion)?.clone();
         let transition = self.slots[motion.id().slot()].transition;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = motion.id().slot(),
+            generation = motion.id().generation(),
+            value_type = std::any::type_name::<T>(),
+            "replacing motion with transition tween"
+        );
         self.replace(
             motion.id(),
             TypedAnimation::new(Tween::between(current, target, transition)),
@@ -299,6 +361,14 @@ impl MotionRuntime {
         animation: impl Animation<T>,
     ) -> Result<(), MotionError> {
         self.value(motion)?;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = motion.id().slot(),
+            generation = motion.id().generation(),
+            value_type = std::any::type_name::<T>(),
+            "playing replacement animation"
+        );
         self.replace(motion.id(), TypedAnimation::new(animation))
     }
 
@@ -308,6 +378,14 @@ impl MotionRuntime {
         motion: Motion<T>,
         command: AnimationCommand,
     ) -> Result<(), MotionError> {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = motion.id().slot(),
+            generation = motion.id().generation(),
+            ?command,
+            "applying motion command"
+        );
         let (active, state) = {
             let animation = self.animation_mut(motion.id())?;
             animation.command(command);
@@ -326,6 +404,15 @@ impl MotionRuntime {
                 self.animation_mut(motion.id())?.compact();
             }
         }
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = motion.id().slot(),
+            generation = motion.id().generation(),
+            ?state,
+            active,
+            "applied motion command"
+        );
         Ok(())
     }
 
@@ -345,6 +432,15 @@ impl MotionRuntime {
         self.free.push(motion.id().slot());
 
         let slot_idx = motion.id().slot();
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = slot_idx,
+            generation = motion.id().generation(),
+            was_active,
+            motion_count = self.motion_count,
+            "removed motion"
+        );
         self.active.retain(|id| id.slot() != slot_idx);
         self.next_active.retain(|id| id.slot() != slot_idx);
 
@@ -357,40 +453,57 @@ impl MotionRuntime {
     }
 
     fn animation(&self, id: RawMotionId) -> Result<&dyn AnimationDyn, MotionError> {
-        let slot = self
-            .slots
-            .get(id.slot())
-            .ok_or(MotionError::SlotOutOfBounds { slot: id.slot() })?;
+        let Some(slot) = self.slots.get(id.slot()) else {
+            let error = MotionError::SlotOutOfBounds { slot: id.slot() };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(id, &error);
+            return Err(error);
+        };
         if slot.generation != id.generation() {
-            return Err(MotionError::StaleHandle {
+            let error = MotionError::StaleHandle {
                 slot: id.slot(),
                 handle_generation: id.generation(),
                 actual_generation: slot.generation,
-            });
+            };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(id, &error);
+            return Err(error);
         }
-        slot.animation
-            .as_deref()
-            .ok_or(MotionError::Removed { slot: id.slot() })
+        slot.animation.as_deref().ok_or_else(|| {
+            let error = MotionError::Removed { slot: id.slot() };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(id, &error);
+            error
+        })
     }
 
     fn animation_mut(
         &mut self,
         id: RawMotionId,
     ) -> Result<&mut (dyn AnimationDyn + '_), MotionError> {
-        let slot = self
-            .slots
-            .get_mut(id.slot())
-            .ok_or(MotionError::SlotOutOfBounds { slot: id.slot() })?;
+        let Some(slot) = self.slots.get_mut(id.slot()) else {
+            let error = MotionError::SlotOutOfBounds { slot: id.slot() };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(id, &error);
+            return Err(error);
+        };
         if slot.generation != id.generation() {
-            return Err(MotionError::StaleHandle {
+            let error = MotionError::StaleHandle {
                 slot: id.slot(),
                 handle_generation: id.generation(),
                 actual_generation: slot.generation,
-            });
+            };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(id, &error);
+            return Err(error);
         }
-        match slot.animation.as_mut() {
-            Some(animation) => Ok(animation.as_mut()),
-            None => Err(MotionError::Removed { slot: id.slot() }),
+        if let Some(animation) = slot.animation.as_mut() {
+            Ok(animation.as_mut())
+        } else {
+            let error = MotionError::Removed { slot: id.slot() };
+            #[cfg(feature = "tracing")]
+            trace_motion_error(id, &error);
+            Err(error)
         }
     }
 
@@ -458,4 +571,15 @@ impl MotionRuntime {
             self.last_tick = None;
         }
     }
+}
+
+#[cfg(feature = "tracing")]
+fn trace_motion_error(id: RawMotionId, error: &MotionError) {
+    tracing::debug!(
+        target: "aura_anim::runtime",
+        slot = id.slot(),
+        generation = id.generation(),
+        error = %error,
+        "motion lookup failed"
+    );
 }

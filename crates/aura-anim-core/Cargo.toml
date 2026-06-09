@@ -17,6 +17,7 @@ default = []
 iced = ["dep:iced_core"]
 rgba = ["iced"]
 oklaba = ["iced", "dep:palette"]
+tracing = ["dep:tracing"]
 
 [dependencies]
 aura-anim-macros.workspace = true
@@ -24,6 +25,7 @@ iced_core = { workspace = true, optional = true }
 lilt.workspace = true
 palette = { workspace = true, optional = true }
 thiserror.workspace = true
+tracing = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion.workspace = true
@@ -37,5 +39,5 @@ harness = false
 workspace = true
 
 [package.metadata.docs.rs]
-features = ["iced", "rgba"]
+features = ["iced", "rgba", "tracing"]
 rustdoc-args = ["--cfg", "docsrs"]

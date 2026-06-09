@@ -2,7 +2,11 @@
 
 use std::sync::Arc;
 
-use crate::{Animatable, BoxAnimation, Motion, MotionError, MotionRuntime};
+mod error;
+
+pub use error::MotionBindingError;
+
+use crate::{Animatable, BoxAnimation, Motion, MotionRuntime};
 
 /// Owned values supplied to a [`MotionBinding`] transition factory.
 ///
@@ -42,25 +46,6 @@ impl<S> MotionBindingState<S> {
     pub const fn current(&self) -> &S {
         &self.previous
     }
-}
-
-/// Failure returned while applying a motion binding.
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
-pub enum MotionBindingError<S> {
-    /// The requested business state has no target value.
-    #[error("motion binding has no target for state {0:?}")]
-    MissingTarget(S),
-    /// Neither an exact transition nor a fallback factory was configured.
-    #[error("motion binding has no transition from {from:?} to {to:?}")]
-    MissingTransition {
-        /// Previously applied state.
-        from: S,
-        /// Requested state.
-        to: S,
-    },
-    /// The runtime rejected the supplied motion handle.
-    #[error(transparent)]
-    Motion(#[from] MotionError),
 }
 
 type TransitionFactory<S, T> = Arc<dyn Fn(TransitionContext<S, T>) -> BoxAnimation<T> + 'static>;
@@ -198,10 +183,21 @@ where
 
     /// Returns the target associated with `state`.
     pub fn target(&self, state: &S) -> Result<&T, MotionBindingError<S>> {
-        self.targets
+        let target = self
+            .targets
             .iter()
-            .find_map(|(candidate, target)| (candidate == state).then_some(target))
-            .ok_or_else(|| MotionBindingError::MissingTarget(state.clone()))
+            .find_map(|(candidate, target)| (candidate == state).then_some(target));
+
+        #[cfg(feature = "tracing")]
+        if target.is_none() {
+            tracing::debug!(
+                target: "aura_anim::binding",
+                state_type = std::any::type_name::<S>(),
+                value_type = std::any::type_name::<T>(),
+                "motion binding target lookup failed"
+            );
+        }
+        target.ok_or_else(|| MotionBindingError::MissingTarget(state.clone()))
     }
 
     /// Creates independent state tracking for one consumer.
@@ -228,22 +224,49 @@ where
         runtime: &mut MotionRuntime,
     ) -> Result<bool, MotionBindingError<S>> {
         if binding_state.previous == next_state {
+            #[cfg(feature = "tracing")]
+            tracing::trace!(
+                target: "aura_anim::binding",
+                state_type = std::any::type_name::<S>(),
+                value_type = std::any::type_name::<T>(),
+                "motion binding state is unchanged"
+            );
             return Ok(false);
         }
 
         let target = self.target(&next_state).cloned()?;
         let previous = binding_state.previous.clone();
-        let factory = self
+        let exact_factory = self
             .transitions
             .iter()
             .find(|transition| transition.from == previous && transition.to == next_state)
-            .map(|transition| &transition.factory)
-            .or(self.fallback.as_ref())
-            .ok_or_else(|| MotionBindingError::MissingTransition {
+            .map(|transition| &transition.factory);
+        let Some(factory) = exact_factory.or(self.fallback.as_ref()) else {
+            #[cfg(feature = "tracing")]
+            tracing::debug!(
+                target: "aura_anim::binding",
+                state_type = std::any::type_name::<S>(),
+                value_type = std::any::type_name::<T>(),
+                "motion binding transition lookup failed"
+            );
+            return Err(MotionBindingError::MissingTransition {
                 from: previous.clone(),
                 to: next_state.clone(),
-            })?;
+            });
+        };
         let current = motion.value(runtime)?;
+        #[cfg(feature = "tracing")]
+        {
+            let uses_fallback = exact_factory.is_none();
+            tracing::debug!(
+                target: "aura_anim::binding",
+                state_type = std::any::type_name::<S>(),
+                value_type = std::any::type_name::<T>(),
+                uses_fallback,
+                "applying motion binding transition"
+            );
+            let _ = uses_fallback;
+        }
         let animation = factory(TransitionContext {
             from_state: previous,
             to_state: next_state.clone(),
@@ -254,6 +277,13 @@ where
         motion.play(animation, runtime)?;
 
         binding_state.previous = next_state;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::binding",
+            state_type = std::any::type_name::<S>(),
+            value_type = std::any::type_name::<T>(),
+            "committed motion binding state"
+        );
         Ok(true)
     }
 }
