@@ -446,43 +446,94 @@ impl MotionRuntime {
         motion: Motion<T>,
         command: AnimationCommand,
     ) -> Result<(), MotionError> {
+        self.animation(motion.id())?;
+        self.apply_command(motion.id(), command);
+        Ok(())
+    }
+
+    /// Applies `command` to every stored motion.
+    ///
+    /// This includes idle, running, paused, and settled motions. Commands keep
+    /// their normal per-animation semantics, including terminal events and
+    /// [`RetainPolicy::DropWhenSettled`] removal.
+    pub fn command_all(&mut self, command: AnimationCommand) {
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::runtime",
-            slot = motion.id().slot(),
-            generation = motion.id().generation(),
+            ?command,
+            motion_count = self.motion_count,
+            "applying command to all motions"
+        );
+
+        for slot_index in 0..self.slots.len() {
+            let Some(slot) = self.slots.get(slot_index) else {
+                continue;
+            };
+            if slot.animation.is_none() {
+                continue;
+            }
+            let id = MotionId::new(slot_index, slot.generation);
+            self.apply_command(id, command);
+        }
+
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            ?command,
+            active_count = self.active_count,
+            motion_count = self.motion_count,
+            "applied command to all motions"
+        );
+    }
+
+    fn apply_command(&mut self, id: MotionId, command: AnimationCommand) {
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::runtime",
+            slot = id.slot(),
+            generation = id.generation(),
             ?command,
             "applying motion command"
         );
         let (active, state) = {
-            let animation = self.animation_mut(motion.id())?;
+            let Some(slot) = self.slots.get_mut(id.slot()) else {
+                return;
+            };
+            if slot.generation != id.generation() {
+                return;
+            }
+            let Some(animation) = slot.animation.as_mut() else {
+                return;
+            };
             animation.command(command);
             (animation.is_active(), animation.state())
         };
 
         if active {
-            self.activate(motion.id());
+            self.activate(id);
         } else {
-            self.deactivate(motion.id());
-            self.record_terminal(motion.id(), state);
-            if self.slots[motion.id().slot()].retain_policy == RetainPolicy::DropWhenSettled
+            self.deactivate(id);
+            self.record_terminal(id, state);
+            if self.slots[id.slot()].retain_policy == RetainPolicy::DropWhenSettled
                 && matches!(state, AnimationState::Completed | AnimationState::Canceled)
             {
-                self.remove_slot(motion.id(), RemovalReason::Settled);
+                self.remove_slot(id, RemovalReason::Settled);
             } else {
-                self.animation_mut(motion.id())?.compact();
+                let Some(animation) = self.slots[id.slot()].animation.as_mut() else {
+                    return;
+                };
+                animation.compact();
             }
         }
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::runtime",
-            slot = motion.id().slot(),
-            generation = motion.id().generation(),
+            slot = id.slot(),
+            generation = id.generation(),
             ?state,
             active,
             "applied motion command"
         );
-        Ok(())
     }
 
     /// Removes the animation referenced by `motion`.

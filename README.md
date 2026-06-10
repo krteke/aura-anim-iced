@@ -16,7 +16,7 @@ Application
 MotionRuntime
 ├── owns type-erased animation slots
 ├── ticks active slots only
-├── pause / resume / seek / cancel / finish
+├── per-motion and batch pause / resume / seek / cancel / finish
 ├── generation-checked handle reuse
 └── completion compaction and optional auto-removal
 
@@ -110,6 +110,19 @@ button.play(
 
 `tween_to` and `spring_to` sample the motion's current value when playback
 starts, so callers do not need to read or clone it manually.
+
+Runtime-wide commands are available for application lifecycle and accessibility
+policies:
+
+```rust
+runtime.command_all(AnimationCommand::Pause);
+runtime.command_all(AnimationCommand::Resume);
+runtime.command_all(AnimationCommand::Finish);
+```
+
+`command_all` applies to every stored motion, including paused and idle
+motions. Completion, cancellation, and `DropWhenSettled` removal events use the
+same semantics as commands sent through an individual `Motion<T>`.
 
 ## Independent Field Animations
 

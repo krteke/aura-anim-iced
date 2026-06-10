@@ -775,6 +775,78 @@ fn runtime_supports_direct_insert_play_and_commands() {
 }
 
 #[test]
+fn runtime_batch_commands_control_all_stored_motions() {
+    let mut runtime = MotionRuntime::new();
+    let first = runtime.insert(
+        Tween::between(0.0_f32, 10.0, Timing::new(100.0)),
+        Timing::default(),
+    );
+    let second = runtime.insert(
+        Tween::between(10.0_f32, 20.0, Timing::new(200.0)),
+        Timing::default(),
+    );
+    let first_playback = first.playback(&runtime).unwrap();
+    let second_playback = second.playback(&runtime).unwrap();
+
+    runtime.command_all(AnimationCommand::Pause);
+    assert_eq!(first.state(&runtime), Ok(AnimationState::Paused));
+    assert_eq!(second.state(&runtime), Ok(AnimationState::Paused));
+    assert_eq!(runtime.active_count(), 0);
+
+    runtime.tick(Duration::from_millis(50.0));
+    assert_approx_eq!(f32, first.value(&runtime).unwrap(), 0.0);
+    assert_approx_eq!(f32, second.value(&runtime).unwrap(), 10.0);
+
+    runtime.command_all(AnimationCommand::Resume);
+    assert_eq!(runtime.active_count(), 2);
+    runtime.command_all(AnimationCommand::Seek(0.5));
+    assert_approx_eq!(f32, first.value(&runtime).unwrap(), 5.0);
+    assert_approx_eq!(f32, second.value(&runtime).unwrap(), 15.0);
+
+    runtime.command_all(AnimationCommand::Finish);
+    assert_eq!(runtime.active_count(), 0);
+    assert_eq!(first.state(&runtime), Ok(AnimationState::Completed));
+    assert_eq!(second.state(&runtime), Ok(AnimationState::Completed));
+
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 2);
+    assert!(events[0].is_completed_for(first_playback));
+    assert!(events[1].is_completed_for(second_playback));
+}
+
+#[test]
+fn batch_terminal_commands_remove_transient_motions() {
+    let mut runtime = MotionRuntime::new();
+    let retained = runtime.insert(
+        Tween::between(0.0_f32, 1.0, Timing::new(100.0)),
+        Timing::default(),
+    );
+    let transient = runtime.play_once(Tween::between(0.0_f32, 1.0, Timing::new(100.0)));
+    let retained_playback = retained.playback(&runtime).unwrap();
+    let transient_playback = transient.playback(&runtime).unwrap();
+
+    runtime.command_all(AnimationCommand::Cancel);
+
+    assert_eq!(retained.state(&runtime), Ok(AnimationState::Canceled));
+    assert_eq!(
+        transient.state(&runtime),
+        Err(MotionError::Removed { slot: 1 })
+    );
+    assert_eq!(runtime.motion_count(), 1);
+    assert_eq!(runtime.active_count(), 0);
+
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 3);
+    assert!(events[0].is_canceled_for(retained_playback));
+    assert!(events[1].is_canceled_for(transient_playback));
+    assert_eq!(
+        events[2].kind(),
+        MotionEventKind::Removed(RemovalReason::Settled)
+    );
+    assert!(events[2].is_for(transient_playback));
+}
+
+#[test]
 fn runtime_finish_cancel_and_remove_commands_update_storage() {
     let mut runtime = MotionRuntime::new();
     let finished = runtime.motion(0.0_f32);

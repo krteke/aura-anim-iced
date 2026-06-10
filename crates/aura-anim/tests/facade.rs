@@ -99,6 +99,24 @@ fn prelude_exports_composition_types() {
 }
 
 #[test]
+fn prelude_exports_runtime_batch_commands() {
+    let mut runtime = MotionRuntime::new();
+    let first = runtime.insert(
+        Tween::between(0.0_f32, 1.0, Timing::new(25.0)),
+        Timing::default(),
+    );
+    let second = runtime.insert(
+        Tween::between(1.0_f32, 2.0, Timing::new(25.0)),
+        Timing::default(),
+    );
+
+    runtime.command_all(AnimationCommand::Finish);
+
+    assert_eq!(first.state(&runtime), Ok(AnimationState::Completed));
+    assert_eq!(second.state(&runtime), Ok(AnimationState::Completed));
+}
+
+#[test]
 fn prelude_exports_motion_binding_and_transition_helpers() {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum State {
