@@ -4,19 +4,21 @@ pub use aura_anim_core as core;
 pub use aura_anim_iced as iced;
 
 pub use aura_anim_core::{
-    Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Hold,
-    Interpolate, InterpolationProgress, Motion, MotionBinding, MotionBindingError,
-    MotionBindingState, MotionError, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence,
-    Spring, SpringConfig, Timeline, TransitionContext, Tween, TweenState, keyframes::Keyframes,
+    Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Field,
+    Fields, FieldsAnimation, Hold, Interpolate, InterpolationProgress, IntoMotionAnimation, Motion,
+    MotionBinding, MotionBindingError, MotionBindingState, MotionError, MotionRuntime, Parallel,
+    Presence, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, TransitionContext, Tween,
+    TweenState, field, fields, keyframes::Keyframes,
 };
 
 /// Common animation and Iced integration imports.
 pub mod prelude {
     pub use aura_anim_core::{
-        Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Hold,
-        Interpolate, InterpolationProgress, Motion, MotionBinding, MotionBindingError,
-        MotionBindingState, MotionError, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence,
-        Spring, SpringConfig, Timeline, TransitionContext, Tween, TweenState,
+        Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Field,
+        Fields, FieldsAnimation, Hold, Interpolate, InterpolationProgress, IntoMotionAnimation,
+        Motion, MotionBinding, MotionBindingError, MotionBindingState, MotionError, MotionRuntime,
+        Parallel, Presence, RetainPolicy, Sequence, Spring, SpringConfig, Timeline,
+        TransitionContext, Tween, TweenState, field, fields,
         keyframes::Keyframes,
         timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
     };

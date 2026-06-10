@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use crate::{
     runtime::{anim_dyn::AnimationDyn, motion::RawMotionId, typed::TypedAnimation},
     timing::{Duration, Timing},
-    traits::{Animatable, Animation, AnimationState},
+    traits::{Animatable, Animation, AnimationState, IntoMotionAnimation},
     tween::Tween,
 };
 
@@ -352,12 +352,12 @@ impl MotionRuntime {
     }
 
     /// Replaces the animation associated with `motion`.
-    pub fn play<T: Animatable>(
-        &mut self,
-        motion: Motion<T>,
-        animation: impl Animation<T>,
-    ) -> Result<(), MotionError> {
-        self.value(motion)?;
+    pub fn play<T, P, Kind>(&mut self, motion: Motion<T>, playback: P) -> Result<(), MotionError>
+    where
+        T: Animatable,
+        P: IntoMotionAnimation<T, Kind>,
+    {
+        let animation = playback.into_motion_animation(self.value(motion)?);
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::runtime",

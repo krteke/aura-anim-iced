@@ -45,6 +45,29 @@ fn prelude_exports_core_runtime_and_derive_macro() {
 }
 
 #[test]
+fn prelude_exports_field_animation_api() {
+    let mut runtime = MotionRuntime::new();
+    let panel = runtime.motion(PanelMotion {
+        opacity: 0.0,
+        scale: 0.8,
+    });
+
+    panel
+        .play(
+            fields().animate(field!(PanelMotion::opacity), |from| {
+                Tween::between(from, 1.0, Timing::new(100.0))
+            }),
+            &mut runtime,
+        )
+        .unwrap();
+    runtime.tick(Duration::from_millis(50.0));
+
+    let value = panel.value(&runtime).unwrap();
+    assert_approx_eq!(f32, value.opacity, 0.5, epsilon = 0.000_1);
+    assert_approx_eq!(f32, value.scale, 0.8, epsilon = 0.000_1);
+}
+
+#[test]
 fn prelude_exports_composition_types() {
     let mut sequence = Sequence::new(0.0_f32)
         .then(Tween::between(0.0, 1.0, Timing::new(25.0)))

@@ -3,7 +3,7 @@
 use aura_anim_core::{
     Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
     MotionBinding, MotionError, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence, Spring,
-    SpringConfig, Timeline, Tween,
+    SpringConfig, Timeline, Tween, field, fields,
     keyframes::{Keyframe, Keyframes},
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
 };
@@ -15,9 +15,124 @@ struct Position {
     y: f32,
 }
 
+#[derive(Clone, Debug, Animatable)]
+struct Offset(f32, f32);
+
+#[derive(Clone, Debug, Animatable)]
+struct GenericValue<T> {
+    value: T,
+}
+
+#[derive(Clone, Debug, Animatable)]
+#[animatable(fields = CustomPositionFields)]
+struct CustomPosition {
+    value: f32,
+}
+
 fn assert_position(value: &Position, x: f32, y: f32) {
     assert_approx_eq!(f32, value.x, x, epsilon = 0.000_1);
     assert_approx_eq!(f32, value.y, y, epsilon = 0.000_1);
+}
+
+#[test]
+fn derive_generates_named_tuple_generic_and_custom_field_descriptors() {
+    let named = PositionFields::x;
+    let named_macro = field!(Position::y);
+    let tuple = OffsetFields::_0;
+    let tuple_macro = field!(Offset::1);
+    let generic = GenericValueFields::<f32>::value;
+    let generic_macro = field!(GenericValue<f32>::value);
+    let custom = CustomPositionFields::value;
+
+    assert_eq!(named.name(), "x");
+    assert_eq!(named_macro.name(), "y");
+    assert_eq!(tuple.name(), "0");
+    assert_eq!(tuple_macro.name(), "1");
+    assert_eq!(generic.name(), "value");
+    assert_eq!(generic_macro.name(), "value");
+    assert_eq!(custom.name(), "value");
+}
+
+#[test]
+fn motion_plays_fields_with_independent_timings() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(Position { x: 0.0, y: 0.0 });
+
+    motion
+        .play(
+            fields()
+                .animate(PositionFields::x, |from| {
+                    Tween::between(from, 100.0, Timing::new(100.0).with_easing(Easing::EaseIn))
+                })
+                .animate(field!(Position::y), |from| {
+                    Tween::between(from, 200.0, Timing::new(200.0).with_easing(Easing::EaseOut))
+                }),
+            &mut runtime,
+        )
+        .unwrap();
+
+    runtime.tick(Duration::from_millis(100.0));
+    let halfway = motion.value(&runtime).unwrap();
+    assert_approx_eq!(f32, halfway.x, 100.0, epsilon = 0.000_1);
+    assert!(halfway.y > 100.0 && halfway.y < 200.0);
+    assert_eq!(motion.state(&runtime), Ok(AnimationState::Running));
+
+    runtime.tick(Duration::from_millis(100.0));
+    assert_position(&motion.value(&runtime).unwrap(), 100.0, 200.0);
+    assert_eq!(motion.state(&runtime), Ok(AnimationState::Completed));
+}
+
+#[test]
+fn interrupted_field_playback_starts_from_the_current_sample() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(Position { x: 0.0, y: 25.0 });
+
+    motion
+        .play(
+            fields().animate(field!(Position::x), |from| {
+                Tween::between(from, 100.0, Timing::new(100.0))
+            }),
+            &mut runtime,
+        )
+        .unwrap();
+    runtime.tick(Duration::from_millis(40.0));
+    assert_position(&motion.value(&runtime).unwrap(), 40.0, 25.0);
+
+    motion
+        .play(
+            fields().animate(PositionFields::x, |from| {
+                Tween::between(from, 200.0, Timing::new(100.0))
+            }),
+            &mut runtime,
+        )
+        .unwrap();
+    runtime.tick(Duration::from_millis(50.0));
+
+    assert_position(&motion.value(&runtime).unwrap(), 120.0, 25.0);
+}
+
+#[test]
+fn field_plan_accepts_different_animation_types() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(Position { x: 0.0, y: 0.0 });
+
+    motion
+        .play(
+            fields()
+                .animate(PositionFields::x, |from| {
+                    Tween::between(from, 100.0, Timing::new(100.0))
+                })
+                .animate(PositionFields::y, |from| {
+                    Spring::new(from, 200.0, SpringConfig::snappy())
+                }),
+            &mut runtime,
+        )
+        .unwrap();
+
+    motion.finish(&mut runtime).unwrap();
+
+    assert_position(&motion.value(&runtime).unwrap(), 100.0, 200.0);
+    assert_eq!(motion.state(&runtime), Ok(AnimationState::Completed));
 }
 
 #[derive(Clone)]

@@ -87,6 +87,57 @@ hover, press, menu and route animations do not jump back to a stale origin.
 Motion access and mutation return `Result<_, MotionError>` so removed, stale,
 out-of-bounds, and type-mismatched handles remain distinguishable.
 
+## Independent Field Animations
+
+`#[derive(Animatable)]` also generates typed field descriptors. A struct can
+remain one `Motion<T>` while each selected field uses a different animation:
+
+```rust
+#[derive(Clone, Debug, Animatable)]
+struct Position {
+    x: f32,
+    y: f32,
+}
+
+let mut runtime = MotionRuntime::new();
+let position = runtime.motion(Position { x: 0.0, y: 0.0 });
+
+position.play(
+    fields()
+        .animate(field!(Position::x), |from| {
+            Tween::between(
+                from,
+                100.0,
+                Timing::new(100.0).with_easing(Easing::EaseIn),
+            )
+        })
+        .animate(PositionFields::y, |from| {
+            Spring::new(from, 200.0, SpringConfig::snappy())
+        }),
+    &mut runtime,
+)?;
+# Ok::<(), MotionError>(())
+```
+
+The factory receives the field's current sampled value when `play` is called.
+Interrupted field animations therefore continue from the visible value.
+Fields not included in the plan retain their current values.
+
+For a named struct, the derive generates `PositionFields::x`,
+`PositionFields::y`, and equivalent `field!(Position::x)` descriptors. Tuple
+struct descriptors use `_0`, `_1`, and so on, while `field!(Offset::0)` uses
+the tuple index directly. A generated descriptor type can be renamed when
+necessary:
+
+```rust
+#[derive(Clone, Animatable)]
+#[animatable(fields = PositionAnimationFields)]
+struct Position {
+    x: f32,
+    y: f32,
+}
+```
+
 ## Iced Integration
 
 Store the runtime and typed handles in application state:

@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use crate::{Animatable, Animation, AnimationCommand, AnimationState, MotionError, MotionRuntime};
+use crate::{
+    Animatable, AnimationCommand, AnimationState, IntoMotionAnimation, MotionError, MotionRuntime,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct RawMotionId {
@@ -55,12 +57,11 @@ impl<T: Animatable> Motion<T> {
     }
 
     /// Replaces this motion's current animation.
-    pub fn play(
-        self,
-        animation: impl Animation<T>,
-        runtime: &mut MotionRuntime,
-    ) -> Result<(), MotionError> {
-        runtime.play(self, animation)
+    pub fn play<P, Kind>(self, playback: P, runtime: &mut MotionRuntime) -> Result<(), MotionError>
+    where
+        P: IntoMotionAnimation<T, Kind>,
+    {
+        runtime.play(self, playback)
     }
 
     /// Clones and returns the current value.

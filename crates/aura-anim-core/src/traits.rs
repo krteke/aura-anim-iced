@@ -1,6 +1,10 @@
 //! Core traits implemented by animatable values and animation sources.
 
-use crate::{interpolate::InterpolationProgress, timing::Duration};
+use crate::{
+    field::{Fields, FieldsAnimation},
+    interpolate::InterpolationProgress,
+    timing::Duration,
+};
 
 /// Interpolates values of the same type.
 pub trait Interpolate: Sized {
@@ -145,6 +149,64 @@ pub trait AnimationExt<T: Animatable>: Animation<T> + Sized {
 }
 
 impl<T: Animatable, A: Animation<T> + Sized> AnimationExt<T> for A {}
+
+/// Dispatch marker for playing an already constructed animation.
+#[doc(hidden)]
+pub enum DirectAnimation {}
+
+/// Dispatch marker for playing a deferred field animation plan.
+#[doc(hidden)]
+pub enum FieldAnimationPlan {}
+
+mod private {
+    use super::{Animatable, Animation, DirectAnimation, FieldAnimationPlan};
+    use crate::Fields;
+
+    pub trait Sealed<T: Animatable, Kind> {}
+
+    impl<T, A> Sealed<T, DirectAnimation> for A
+    where
+        T: Animatable,
+        A: Animation<T>,
+    {
+    }
+
+    impl<T: Animatable> Sealed<T, FieldAnimationPlan> for Fields<T> {}
+}
+
+/// Converts a playback value into an animation for an existing motion.
+///
+/// This trait is implemented for every [`Animation`] and for [`Fields`].
+/// It exists so [`crate::Motion::play`] can accept both already constructed
+/// animations and field plans that need the motion's current sampled value.
+pub trait IntoMotionAnimation<T: Animatable, Kind>: private::Sealed<T, Kind> {
+    /// The concrete animation stored by the runtime.
+    type Animation: Animation<T>;
+
+    /// Builds the animation from the motion's current sampled value.
+    #[doc(hidden)]
+    fn into_motion_animation(self, current: &T) -> Self::Animation;
+}
+
+impl<T, A> IntoMotionAnimation<T, DirectAnimation> for A
+where
+    T: Animatable,
+    A: Animation<T>,
+{
+    type Animation = A;
+
+    fn into_motion_animation(self, _current: &T) -> Self::Animation {
+        self
+    }
+}
+
+impl<T: Animatable> IntoMotionAnimation<T, FieldAnimationPlan> for Fields<T> {
+    type Animation = FieldsAnimation<T>;
+
+    fn into_motion_animation(self, current: &T) -> Self::Animation {
+        self.build(current)
+    }
+}
 
 impl<Source: ?Sized, T: Animatable> Animation<T> for Box<Source>
 where
