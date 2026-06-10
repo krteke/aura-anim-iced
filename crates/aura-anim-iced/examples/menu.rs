@@ -80,7 +80,9 @@ impl MenuExample {
         match message {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
-                self.menu.sync(&self.runtime).unwrap();
+                for event in self.runtime.take_events() {
+                    self.menu.handle_event(&event);
+                }
             }
             Message::Toggle => {
                 let current = self.menu.value(&self.runtime).unwrap().clone();

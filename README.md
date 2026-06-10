@@ -138,6 +138,71 @@ struct Position {
 }
 ```
 
+## Animation Events
+
+`MotionRuntime` queues structured lifecycle events when playbacks complete,
+cancel, are interrupted, or leave runtime storage. Events are emitted once per
+state transition and remain queued until the application takes or clears them:
+
+```rust
+aura_anim::iced::frame(&mut runtime, now);
+
+for event in runtime.take_events() {
+    if event.is_completed_for(motion) {
+        // Run one-time completion logic.
+    }
+}
+```
+
+Matching a `Motion<T>` is sufficient for simple cleanup. Multi-stage flows
+should track the exact playback so an older queued event cannot complete a
+newer animation on the same motion:
+
+```rust
+let exit = motion.play_tracked(
+    Tween::between(current, hidden, Timing::new(150.0)),
+    &mut runtime,
+)?;
+
+// In a later frame update:
+for event in runtime.take_events() {
+    if event.is_completed_for(exit) {
+        let enter = motion.play_tracked(
+            Tween::between(hidden, visible, Timing::new(220.0)),
+            &mut runtime,
+        )?;
+        # let _ = enter;
+    }
+}
+# Ok::<(), MotionError>(())
+```
+
+`play_tracked` and `transition_to_tracked` return a `PlaybackId`. Existing
+`play` and `transition_to` calls remain unchanged when playback identity is not
+needed.
+
+Event kinds include:
+
+- `Completed`
+- `Canceled`
+- `Interrupted(Replaced | Retargeted | Removed)`
+- `Removed(Explicit | Settled)`
+
+`DropWhenSettled` motions emit their terminal event before their removal event,
+so completion remains observable after the handle becomes invalid.
+
+`Presence::handle_event` uses the current exit playback ID to avoid stale exit
+events unmounting content that has already been shown again:
+
+```rust
+for event in runtime.take_events() {
+    menu.handle_event(&event);
+    toast.handle_event(&event);
+}
+```
+
+`Presence::sync` remains available for polling-based integrations.
+
 ## Iced Integration
 
 Store the runtime and typed handles in application state:

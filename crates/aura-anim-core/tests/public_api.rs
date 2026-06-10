@@ -2,8 +2,9 @@
 
 use aura_anim_core::{
     Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
-    MotionBinding, MotionError, MotionRuntime, Parallel, Presence, RetainPolicy, Sequence, Spring,
-    SpringConfig, Timeline, Tween, field, fields,
+    InterruptionReason, MotionBinding, MotionError, MotionEventKind, MotionRuntime, Parallel,
+    Presence, RemovalReason, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field,
+    fields,
     keyframes::{Keyframe, Keyframes},
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
 };
@@ -680,6 +681,179 @@ fn runtime_finish_cancel_and_remove_commands_update_storage() {
 }
 
 #[test]
+fn runtime_queues_completion_once_until_events_are_taken() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(0.0_f32);
+    let playback = motion.transition_to_tracked(10.0, &mut runtime).unwrap();
+
+    runtime.tick(Duration::from_millis(200.0));
+    runtime.tick(Duration::from_millis(200.0));
+
+    assert_eq!(runtime.pending_event_count(), 1);
+    let event = runtime.events()[0];
+    assert_eq!(event.kind(), MotionEventKind::Completed);
+    assert!(event.is_completed_for(motion));
+    assert!(event.is_completed_for(playback));
+    assert_eq!(event.motion(), motion.motion_id());
+    assert_eq!(event.playback(), playback);
+
+    assert_eq!(runtime.take_events(), vec![event]);
+    assert!(runtime.events().is_empty());
+}
+
+#[test]
+fn tracked_playbacks_distinguish_replacement_and_retarget_events() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(0.0_f32);
+    let first = motion
+        .play_tracked(Tween::between(0.0, 10.0, Timing::new(100.0)), &mut runtime)
+        .unwrap();
+    let second = motion
+        .play_tracked(Tween::between(0.0, 20.0, Timing::new(100.0)), &mut runtime)
+        .unwrap();
+    let third = motion.transition_to_tracked(30.0, &mut runtime).unwrap();
+
+    assert_ne!(first, second);
+    assert_ne!(second, third);
+    assert_eq!(motion.playback(&runtime), Ok(third));
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0].playback(), first);
+    assert_eq!(
+        events[0].kind(),
+        MotionEventKind::Interrupted(InterruptionReason::Replaced)
+    );
+    assert_eq!(events[1].playback(), second);
+    assert_eq!(
+        events[1].kind(),
+        MotionEventKind::Interrupted(InterruptionReason::Retargeted)
+    );
+}
+
+#[test]
+fn transition_reports_retargeting_when_source_cannot_retarget_in_place() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.insert(ProgressAnimation::new(), Timing::new(100.0));
+    let previous = motion.playback(&runtime).unwrap();
+
+    let next = motion.transition_to_tracked(10.0, &mut runtime).unwrap();
+
+    assert_ne!(previous, next);
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].playback(), previous);
+    assert_eq!(
+        events[0].kind(),
+        MotionEventKind::Interrupted(InterruptionReason::Retargeted)
+    );
+}
+
+#[test]
+fn finish_and_cancel_emit_one_terminal_event_per_playback() {
+    let mut runtime = MotionRuntime::new();
+    let finished = runtime.motion(0.0_f32);
+    let canceled = runtime.motion(0.0_f32);
+    let finished_playback = finished.transition_to_tracked(1.0, &mut runtime).unwrap();
+    let canceled_playback = canceled.transition_to_tracked(1.0, &mut runtime).unwrap();
+
+    finished.finish(&mut runtime).unwrap();
+    finished.finish(&mut runtime).unwrap();
+    canceled.cancel(&mut runtime).unwrap();
+    canceled.cancel(&mut runtime).unwrap();
+
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 2);
+    assert!(events[0].is_completed_for(finished_playback));
+    assert!(events[1].is_canceled_for(canceled_playback));
+}
+
+#[test]
+fn drop_when_settled_emits_terminal_then_removal_events() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.play_once(Tween::between(0.0_f32, 1.0, Timing::new(10.0)));
+    let playback = motion.playback(&runtime).unwrap();
+
+    runtime.tick(Duration::from_millis(10.0));
+
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0].kind(), MotionEventKind::Completed);
+    assert_eq!(
+        events[1].kind(),
+        MotionEventKind::Removed(RemovalReason::Settled)
+    );
+    assert!(events.iter().all(|event| event.is_for(playback)));
+    assert_eq!(
+        motion.value(&runtime),
+        Err(MotionError::Removed { slot: 0 })
+    );
+}
+
+#[test]
+fn removing_a_running_motion_emits_interruption_then_removal() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(0.0_f32);
+    let playback = motion.transition_to_tracked(1.0, &mut runtime).unwrap();
+
+    motion.remove(&mut runtime).unwrap();
+
+    let events = runtime.take_events();
+    assert_eq!(events.len(), 2);
+    assert_eq!(
+        events[0].kind(),
+        MotionEventKind::Interrupted(InterruptionReason::Removed)
+    );
+    assert_eq!(
+        events[1].kind(),
+        MotionEventKind::Removed(RemovalReason::Explicit)
+    );
+    assert!(events.iter().all(|event| event.is_for(playback)));
+}
+
+#[test]
+fn completion_events_can_start_follow_up_playback_after_take() {
+    let mut runtime = MotionRuntime::new();
+    let motion = runtime.motion(0.0_f32);
+    let exit = motion
+        .play_tracked(Tween::between(0.0, -1.0, Timing::new(100.0)), &mut runtime)
+        .unwrap();
+    runtime.tick(Duration::from_millis(100.0));
+
+    let events = runtime.take_events();
+    let enter = events
+        .iter()
+        .find(|event| event.is_completed_for(exit))
+        .map(|_| {
+            motion
+                .play_tracked(Tween::between(-1.0, 1.0, Timing::new(100.0)), &mut runtime)
+                .unwrap()
+        })
+        .unwrap();
+
+    runtime.tick(Duration::from_millis(100.0));
+    assert!(
+        runtime
+            .take_events()
+            .iter()
+            .any(|event| event.is_completed_for(enter))
+    );
+}
+
+#[test]
+fn events_from_reused_slots_do_not_match_new_motions() {
+    let mut runtime = MotionRuntime::new();
+    let old = runtime.motion(1.0_f32);
+    old.remove(&mut runtime).unwrap();
+    let old_event = runtime.take_events()[0];
+
+    let current = runtime.motion(2.0_f32);
+
+    assert_ne!(old.motion_id(), current.motion_id());
+    assert!(old_event.is_for(old));
+    assert!(!old_event.is_for(current));
+}
+
+#[test]
 fn stale_motion_handles_fail_without_affecting_reused_slots() {
     let mut runtime = MotionRuntime::new();
     let stale = runtime.motion(1.0_f32);
@@ -757,6 +931,17 @@ fn drop_when_settled_removes_precompleted_animation_immediately() {
         Err(MotionError::Removed { slot: 0 })
     );
     assert_eq!(runtime.motion_count(), 0);
+    assert_eq!(
+        runtime
+            .take_events()
+            .iter()
+            .map(|event| event.kind())
+            .collect::<Vec<_>>(),
+        vec![
+            MotionEventKind::Completed,
+            MotionEventKind::Removed(RemovalReason::Settled),
+        ]
+    );
 }
 
 #[test]
@@ -791,6 +976,57 @@ fn presence_accepts_custom_enter_and_exit_animations() {
 
     assert!(!presence.is_mounted());
     assert_approx_eq!(f32, *presence.value(&runtime).unwrap(), -1.0);
+}
+
+#[test]
+fn presence_only_unmounts_for_the_current_exit_playback() {
+    let mut runtime = MotionRuntime::new();
+    let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
+
+    presence.show(&mut runtime).unwrap();
+    runtime.tick(Duration::from_millis(100.0));
+    runtime.clear_events();
+
+    presence.hide(&mut runtime).unwrap();
+    runtime.tick(Duration::from_millis(100.0));
+    let old_exit_events = runtime.take_events();
+
+    presence.show(&mut runtime).unwrap();
+    assert!(presence.is_mounted());
+    assert!(
+        old_exit_events
+            .iter()
+            .all(|event| !presence.handle_event(event))
+    );
+    assert!(presence.is_mounted());
+
+    runtime.tick(Duration::from_millis(100.0));
+    runtime.clear_events();
+    presence.hide(&mut runtime).unwrap();
+    runtime.tick(Duration::from_millis(100.0));
+
+    let changed = runtime
+        .take_events()
+        .iter()
+        .any(|event| presence.handle_event(event));
+    assert!(changed);
+    assert!(!presence.is_mounted());
+}
+
+#[test]
+fn presence_event_reports_only_actual_mount_changes() {
+    let mut runtime = MotionRuntime::new();
+    let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
+
+    presence.hide(&mut runtime).unwrap();
+    runtime.tick(Duration::from_millis(100.0));
+
+    let changed = runtime
+        .take_events()
+        .iter()
+        .any(|event| presence.handle_event(event));
+    assert!(!changed);
+    assert!(!presence.is_mounted());
 }
 
 #[test]

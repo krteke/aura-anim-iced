@@ -4,25 +4,7 @@ use crate::{
     Animatable, AnimationCommand, AnimationState, IntoMotionAnimation, MotionError, MotionRuntime,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(super) struct RawMotionId {
-    slot: usize,
-    generation: u64,
-}
-
-impl RawMotionId {
-    pub(super) fn new(slot: usize, generation: u64) -> Self {
-        Self { slot, generation }
-    }
-
-    pub(super) fn generation(&self) -> u64 {
-        self.generation
-    }
-
-    pub(super) fn slot(&self) -> usize {
-        self.slot
-    }
-}
+use super::{MotionId, PlaybackId};
 
 /// A typed handle to an animation stored in a [`MotionRuntime`].
 ///
@@ -30,7 +12,7 @@ impl RawMotionId {
 #[must_use = "a motion handle is required to access the runtime-managed animation"]
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Motion<T> {
-    id: RawMotionId,
+    id: MotionId,
     marker: PhantomData<fn() -> T>,
 }
 
@@ -42,18 +24,35 @@ impl<T> Clone for Motion<T> {
     }
 }
 
-impl<T: Animatable> Motion<T> {
-    pub(super) fn new(id: RawMotionId, marker: PhantomData<fn() -> T>) -> Self {
+impl<T> Motion<T> {
+    pub(super) fn new(id: MotionId, marker: PhantomData<fn() -> T>) -> Self {
         Self { id, marker }
     }
 
-    pub(super) fn id(&self) -> RawMotionId {
+    pub(super) const fn id(self) -> MotionId {
         self.id
     }
 
+    /// Returns the untyped ID for this motion lifecycle.
+    #[must_use]
+    pub const fn motion_id(self) -> MotionId {
+        self.id
+    }
+}
+
+impl<T: Animatable> Motion<T> {
     /// Transitions this motion toward `target`.
     pub fn transition_to(self, target: T, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         runtime.transition_to(self, target)
+    }
+
+    /// Transitions this motion and returns the new playback ID.
+    pub fn transition_to_tracked(
+        self,
+        target: T,
+        runtime: &mut MotionRuntime,
+    ) -> Result<PlaybackId, MotionError> {
+        runtime.transition_to_tracked(self, target)
     }
 
     /// Replaces this motion's current animation.
@@ -62,6 +61,18 @@ impl<T: Animatable> Motion<T> {
         P: IntoMotionAnimation<T, Kind>,
     {
         runtime.play(self, playback)
+    }
+
+    /// Replaces this motion's current animation and returns its playback ID.
+    pub fn play_tracked<P, Kind>(
+        self,
+        playback: P,
+        runtime: &mut MotionRuntime,
+    ) -> Result<PlaybackId, MotionError>
+    where
+        P: IntoMotionAnimation<T, Kind>,
+    {
+        runtime.play_tracked(self, playback)
     }
 
     /// Clones and returns the current value.
@@ -77,6 +88,11 @@ impl<T: Animatable> Motion<T> {
     /// Returns the current lifecycle state.
     pub fn state(self, runtime: &MotionRuntime) -> Result<AnimationState, MotionError> {
         runtime.state(self)
+    }
+
+    /// Returns the ID of this motion's current playback.
+    pub fn playback(self, runtime: &MotionRuntime) -> Result<PlaybackId, MotionError> {
+        runtime.playback(self)
     }
 
     /// Returns whether the motion is active.

@@ -3,7 +3,7 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Motion, MotionRuntime, Tween,
+    Animatable, Motion, MotionRuntime, PlaybackId, Tween,
     timing::{Easing, Timing},
 };
 use iced::{
@@ -42,6 +42,7 @@ struct RouteExample {
     route: Route,
     pending: Option<Route>,
     entering: bool,
+    playback: Option<PlaybackId>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -69,6 +70,7 @@ impl RouteExample {
             route: Route::Overview,
             pending: None,
             entering: false,
+            playback: None,
         }
     }
 
@@ -77,26 +79,36 @@ impl RouteExample {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
 
-                if self.pending.is_some() && self.motion.is_completed(&self.runtime).unwrap() {
+                for event in self.runtime.take_events() {
+                    let Some(playback) = self.playback else {
+                        continue;
+                    };
+                    if !event.is_completed_for(playback) {
+                        continue;
+                    }
+
                     if self.entering {
                         self.pending = None;
                         self.entering = false;
+                        self.playback = None;
                     } else {
                         let Some(pending) = self.pending else {
-                            return;
+                            continue;
                         };
                         self.route = pending;
                         self.entering = true;
-                        self.motion
-                            .play(
-                                Tween::between(
-                                    hidden_right(),
-                                    visible(),
-                                    Timing::new(260.0).with_easing(Easing::EaseOut),
-                                ),
-                                &mut self.runtime,
-                            )
-                            .unwrap();
+                        self.playback = Some(
+                            self.motion
+                                .play_tracked(
+                                    Tween::between(
+                                        hidden_right(),
+                                        visible(),
+                                        Timing::new(260.0).with_easing(Easing::EaseOut),
+                                    ),
+                                    &mut self.runtime,
+                                )
+                                .unwrap(),
+                        );
                     }
                 }
             }
@@ -106,16 +118,18 @@ impl RouteExample {
                 }
 
                 let current = self.motion.value(&self.runtime).unwrap();
-                self.motion
-                    .play(
-                        Tween::between(
-                            current,
-                            hidden_left(),
-                            Timing::new(150.0).with_easing(Easing::EaseIn),
-                        ),
-                        &mut self.runtime,
-                    )
-                    .unwrap();
+                self.playback = Some(
+                    self.motion
+                        .play_tracked(
+                            Tween::between(
+                                current,
+                                hidden_left(),
+                                Timing::new(150.0).with_easing(Easing::EaseIn),
+                            ),
+                            &mut self.runtime,
+                        )
+                        .unwrap(),
+                );
                 self.pending = Some(route);
                 self.entering = false;
             }

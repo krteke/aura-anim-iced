@@ -3,8 +3,8 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Hold, Motion, MotionRuntime, Parallel, Presence, Sequence, Spring, SpringConfig,
-    Tween,
+    Animatable, Hold, Motion, MotionRuntime, Parallel, PlaybackId, Presence, Sequence, Spring,
+    SpringConfig, Tween,
     keyframes::Keyframes,
     timing::{Direction, Easing, IterationCount, Timing},
 };
@@ -73,6 +73,7 @@ struct Showcase {
     route: Route,
     pending_route: Option<Route>,
     route_swapped: bool,
+    route_playback: Option<PlaybackId>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -152,6 +153,7 @@ impl Showcase {
             route: Route::Dashboard,
             pending_route: None,
             route_swapped: false,
+            route_playback: None,
         }
     }
 
@@ -161,31 +163,41 @@ impl Showcase {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
 
-                self.menu.sync(&self.runtime).unwrap();
+                for event in self.runtime.take_events() {
+                    self.menu.handle_event(&event);
+                    let Some(playback) = self.route_playback else {
+                        continue;
+                    };
+                    if !event.is_completed_for(playback) {
+                        continue;
+                    }
 
-                if let Some(pending) = self.pending_route
-                    && self.route_motion.is_completed(&self.runtime).unwrap()
-                {
                     if self.route_swapped {
                         self.pending_route = None;
                         self.route_swapped = false;
+                        self.route_playback = None;
                     } else {
+                        let Some(pending) = self.pending_route else {
+                            continue;
+                        };
                         self.route = pending;
                         self.route_swapped = true;
                         let hidden = self.route_motion.value(&self.runtime).unwrap();
-                        self.route_motion
-                            .play(
-                                Tween::between(
-                                    hidden,
-                                    RouteMotion {
-                                        opacity: 1.0,
-                                        offset: Vector::new(0.0, 0.0),
-                                    },
-                                    Timing::new(210.0).with_easing(Easing::EaseOut),
-                                ),
-                                &mut self.runtime,
-                            )
-                            .unwrap();
+                        self.route_playback = Some(
+                            self.route_motion
+                                .play_tracked(
+                                    Tween::between(
+                                        hidden,
+                                        RouteMotion {
+                                            opacity: 1.0,
+                                            offset: Vector::new(0.0, 0.0),
+                                        },
+                                        Timing::new(210.0).with_easing(Easing::EaseOut),
+                                    ),
+                                    &mut self.runtime,
+                                )
+                                .unwrap(),
+                        );
                     }
                 }
             }
@@ -288,16 +300,18 @@ impl Showcase {
                     opacity: 0.0,
                     offset: Vector::new(-18.0, 0.0),
                 };
-                self.route_motion
-                    .play(
-                        Tween::between(
-                            current,
-                            hidden,
-                            Timing::new(130.0).with_easing(Easing::EaseIn),
-                        ),
-                        &mut self.runtime,
-                    )
-                    .unwrap();
+                self.route_playback = Some(
+                    self.route_motion
+                        .play_tracked(
+                            Tween::between(
+                                current,
+                                hidden,
+                                Timing::new(130.0).with_easing(Easing::EaseIn),
+                            ),
+                            &mut self.runtime,
+                        )
+                        .unwrap(),
+                );
                 self.pending_route = Some(route);
                 self.route_swapped = false;
             }

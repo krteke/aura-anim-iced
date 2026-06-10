@@ -19,7 +19,10 @@ pub use binding::{MotionBinding, MotionBindingError, MotionBindingState, Transit
 pub use field::{Field, Fields, FieldsAnimation, fields};
 pub use interpolate::InterpolationProgress;
 pub use presence::Presence;
-pub use runtime::{AnimationCommand, Motion, MotionError, MotionRuntime, RetainPolicy};
+pub use runtime::{
+    AnimationCommand, InterruptionReason, Motion, MotionError, MotionEvent, MotionEventKind,
+    MotionEventTarget, MotionId, MotionRuntime, PlaybackId, RemovalReason, RetainPolicy,
+};
 pub use spring::{Spring, SpringConfig};
 pub use timeline::{Hold, Parallel, Sequence, Timeline};
 pub use traits::{

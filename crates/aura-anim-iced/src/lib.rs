@@ -79,10 +79,11 @@ pub fn frame(runtime: &mut MotionRuntime, now: Instant) {
 pub mod prelude {
     pub use aura_anim_core::{
         Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Field,
-        Fields, FieldsAnimation, Hold, Interpolate, InterpolationProgress, IntoMotionAnimation,
-        Motion, MotionBinding, MotionBindingError, MotionBindingState, MotionError, MotionRuntime,
-        Parallel, Presence, RetainPolicy, Sequence, Spring, SpringConfig, Timeline,
-        TransitionContext, Tween, TweenState, field, fields,
+        Fields, FieldsAnimation, Hold, Interpolate, InterpolationProgress, InterruptionReason,
+        IntoMotionAnimation, Motion, MotionBinding, MotionBindingError, MotionBindingState,
+        MotionError, MotionEvent, MotionEventKind, MotionEventTarget, MotionId, MotionRuntime,
+        Parallel, PlaybackId, Presence, RemovalReason, RetainPolicy, Sequence, Spring,
+        SpringConfig, Timeline, TransitionContext, Tween, TweenState, field, fields,
         keyframes::Keyframes,
         timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
     };

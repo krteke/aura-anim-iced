@@ -1,7 +1,7 @@
 //! Animated visibility lifecycle management.
 
 use crate::{
-    runtime::{Motion, MotionError, MotionRuntime},
+    runtime::{Motion, MotionError, MotionEvent, MotionRuntime, PlaybackId},
     timing::Timing,
     traits::{Animatable, Animation},
 };
@@ -33,6 +33,7 @@ pub struct Presence<T: Animatable> {
     hidden: T,
     mounted: bool,
     shown: bool,
+    exit_playback: Option<PlaybackId>,
 }
 
 impl<T: Animatable> Presence<T> {
@@ -45,6 +46,7 @@ impl<T: Animatable> Presence<T> {
             hidden,
             mounted: false,
             shown: false,
+            exit_playback: None,
         }
     }
 
@@ -72,9 +74,11 @@ impl<T: Animatable> Presence<T> {
 
     /// Mounts the content and transitions toward the visible value.
     pub fn show(&mut self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
-        self.motion.transition_to(self.visible.clone(), runtime)?;
+        self.motion
+            .transition_to_tracked(self.visible.clone(), runtime)?;
         self.mounted = true;
         self.shown = true;
+        self.exit_playback = None;
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::presence",
@@ -88,8 +92,11 @@ impl<T: Animatable> Presence<T> {
 
     /// Transitions toward the hidden value.
     pub fn hide(&mut self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
-        self.motion.transition_to(self.hidden.clone(), runtime)?;
+        let playback = self
+            .motion
+            .transition_to_tracked(self.hidden.clone(), runtime)?;
         self.shown = false;
+        self.exit_playback = Some(playback);
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::presence",
@@ -107,9 +114,10 @@ impl<T: Animatable> Presence<T> {
         animation: impl Animation<T>,
         runtime: &mut MotionRuntime,
     ) -> Result<(), MotionError> {
-        self.motion.play(animation, runtime)?;
+        self.motion.play_tracked(animation, runtime)?;
         self.mounted = true;
         self.shown = true;
+        self.exit_playback = None;
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::presence",
@@ -127,8 +135,9 @@ impl<T: Animatable> Presence<T> {
         animation: impl Animation<T>,
         runtime: &mut MotionRuntime,
     ) -> Result<(), MotionError> {
-        self.motion.play(animation, runtime)?;
+        let playback = self.motion.play_tracked(animation, runtime)?;
         self.shown = false;
+        self.exit_playback = Some(playback);
         #[cfg(feature = "tracing")]
         tracing::debug!(
             target: "aura_anim::presence",
@@ -140,10 +149,35 @@ impl<T: Animatable> Presence<T> {
         Ok(())
     }
 
+    /// Applies one runtime event and returns whether mounted state changed.
+    ///
+    /// Only completion of the current exit playback unmounts content. Events
+    /// from interrupted or superseded exits are ignored.
+    pub fn handle_event(&mut self, event: &MotionEvent) -> bool {
+        let Some(exit_playback) = self.exit_playback else {
+            return false;
+        };
+        if self.shown || !event.is_completed_for(exit_playback) {
+            return false;
+        }
+
+        let changed = self.mounted;
+        self.mounted = false;
+        self.exit_playback = None;
+        #[cfg(feature = "tracing")]
+        tracing::debug!(
+            target: "aura_anim::presence",
+            value_type = std::any::type_name::<T>(),
+            "unmounted completed hidden presence from runtime event"
+        );
+        changed
+    }
+
     /// Unmounts hidden content after its animation completes.
     pub fn sync(&mut self, runtime: &MotionRuntime) -> Result<(), MotionError> {
         if !self.shown && self.motion.is_completed(runtime)? {
             self.mounted = false;
+            self.exit_playback = None;
             #[cfg(feature = "tracing")]
             tracing::debug!(
                 target: "aura_anim::presence",

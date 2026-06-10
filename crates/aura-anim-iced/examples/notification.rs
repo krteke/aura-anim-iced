@@ -99,7 +99,9 @@ impl NotificationExample {
         match message {
             Message::Frame(now) => {
                 aura_anim_iced::frame(&mut self.runtime, now);
-                self.toast.sync(&self.runtime).unwrap();
+                for event in self.runtime.take_events() {
+                    self.toast.handle_event(&event);
+                }
             }
             Message::Show(kind) => {
                 self.kind = kind;
