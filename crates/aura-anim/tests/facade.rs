@@ -99,7 +99,7 @@ fn prelude_exports_composition_types() {
 }
 
 #[test]
-fn prelude_exports_motion_binding_and_boxed_factories() {
+fn prelude_exports_motion_binding_and_transition_helpers() {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum State {
         Idle,
@@ -108,7 +108,7 @@ fn prelude_exports_motion_binding_and_boxed_factories() {
 
     let binding = MotionBinding::new(State::Idle, 0.0_f32)
         .when(State::Active, 1.0)
-        .fallback(|context| Tween::between(context.from, context.to, Timing::new(20.0)).boxed());
+        .fallback(|context| context.tween(Timing::new(20.0)));
     let mut runtime = MotionRuntime::new();
     let (motion, mut state) = binding.create_motion(&mut runtime);
 

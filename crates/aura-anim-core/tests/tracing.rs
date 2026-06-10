@@ -5,7 +5,7 @@
 use std::sync::{Arc, Mutex};
 
 use aura_anim_core::{
-    AnimationExt, MotionBinding, MotionRuntime, Presence, Tween,
+    MotionBinding, MotionRuntime, Presence,
     timing::{Duration, Timing},
 };
 use tracing::{
@@ -68,9 +68,7 @@ fn tracing_feature_emits_runtime_binding_and_presence_events() {
 
         let binding = MotionBinding::new(State::Idle, 0.0_f32)
             .when(State::Active, 1.0)
-            .fallback(|context| {
-                Tween::between(context.from, context.to, Timing::new(100.0)).boxed()
-            });
+            .fallback(|context| context.tween(Timing::new(100.0)));
         let (bound_motion, mut state) = binding.create_motion(&mut runtime);
         binding
             .set_state(&mut state, State::Active, bound_motion, &mut runtime)

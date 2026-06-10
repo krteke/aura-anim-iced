@@ -311,14 +311,12 @@ let button_binding = MotionBinding::new(ButtonState::Idle, idle)
     .when(ButtonState::Hovered, hovered)
     .when(ButtonState::Pressed, pressed)
     .transition(ButtonState::Idle, ButtonState::Hovered, |ctx| {
-        Tween::between(ctx.from, ctx.to, Timing::new(120.0)).boxed()
+        ctx.tween(Timing::new(120.0))
     })
     .transition(ButtonState::Hovered, ButtonState::Pressed, |ctx| {
-        Spring::new(ctx.from, ctx.to, SpringConfig::snappy()).boxed()
+        ctx.spring(SpringConfig::snappy())
     })
-    .fallback(|ctx| {
-        Tween::between(ctx.from, ctx.to, Timing::new(100.0)).boxed()
-    });
+    .fallback(|ctx| ctx.tween(Timing::new(100.0)));
 
 let motion = runtime.motion(idle);
 let mut binding_state = button_binding.state();
@@ -333,9 +331,10 @@ button_binding.set_state(
 
 On each state change the binding resolves the target, samples the motion's
 current value, selects the exact transition or fallback factory, constructs
-the boxed animation, calls `motion.play(...)`, and records the new business
-state only after playback succeeds. Factories can return Tween, Spring,
-Keyframes, Timeline, or any custom `Animation<T>`.
+the animation, calls `motion.play(...)`, and records the new business state
+only after playback succeeds. Factories can return concrete Tween, Spring,
+Keyframes, Timeline, or any custom `Animation<T>`; the binding handles type
+erasure internally.
 
 One binding configuration can be cloned or shared and reused with independent
 `MotionBindingState` values.

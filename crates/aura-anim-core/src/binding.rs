@@ -6,7 +6,10 @@ mod error;
 
 pub use error::MotionBindingError;
 
-use crate::{Animatable, BoxAnimation, Motion, MotionRuntime};
+use crate::{
+    Animatable, Animation, BoxAnimation, Motion, MotionRuntime, Spring, SpringConfig, Tween,
+    timing::Timing,
+};
 
 /// Owned values supplied to a [`MotionBinding`] transition factory.
 ///
@@ -23,6 +26,20 @@ pub struct TransitionContext<S, T> {
     pub from: T,
     /// Target value associated with `to_state`.
     pub to: T,
+}
+
+impl<S, T: Animatable> TransitionContext<S, T> {
+    /// Builds a tween from the current sampled value to the resolved target.
+    #[must_use]
+    pub fn tween(self, timing: Timing) -> Tween<T> {
+        Tween::between(self.from, self.to, timing)
+    }
+
+    /// Builds a spring from the current sampled value to the resolved target.
+    #[must_use]
+    pub fn spring(self, config: SpringConfig) -> Spring<T> {
+        Spring::new(self.from, self.to, config)
+    }
 }
 
 /// Per-consumer state used with a reusable [`MotionBinding`].
@@ -66,10 +83,7 @@ struct Transition<S, T: Animatable> {
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::{
-///     AnimationExt, MotionBinding, MotionRuntime, Tween,
-///     timing::{Duration, Timing},
-/// };
+/// use aura_anim_core::{MotionBinding, MotionRuntime, timing::{Duration, Timing}};
 ///
 /// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// enum ButtonState {
@@ -80,11 +94,9 @@ struct Transition<S, T: Animatable> {
 /// let binding = MotionBinding::new(ButtonState::Idle, 0.8_f32)
 ///     .when(ButtonState::Hovered, 1.0)
 ///     .transition(ButtonState::Idle, ButtonState::Hovered, |context| {
-///         Tween::between(context.from, context.to, Timing::new(120.0)).boxed()
+///         context.tween(Timing::ease_out(120.0))
 ///     })
-///     .fallback(|context| {
-///         Tween::between(context.from, context.to, Timing::new(100.0)).boxed()
-///     });
+///     .fallback(|context| context.tween(Timing::linear(100.0)));
 ///
 /// let mut runtime = MotionRuntime::new();
 /// let (motion, mut state) = binding.create_motion(&mut runtime);
@@ -145,14 +157,20 @@ where
     }
 
     /// Adds or replaces an exact `(from, to)` transition factory.
+    ///
+    /// The factory may return any concrete [`Animation`];
+    /// the binding handles type erasure internally.
     #[must_use]
-    pub fn transition(
+    pub fn transition<A>(
         mut self,
         from: S,
         to: S,
-        factory: impl Fn(TransitionContext<S, T>) -> BoxAnimation<T> + 'static,
-    ) -> Self {
-        let factory = Arc::new(factory);
+        factory: impl Fn(TransitionContext<S, T>) -> A + 'static,
+    ) -> Self
+    where
+        A: Animation<T>,
+    {
+        let factory: TransitionFactory<S, T> = Arc::new(move |context| Box::new(factory(context)));
         if let Some(existing) = self
             .transitions
             .iter_mut()
@@ -166,12 +184,15 @@ where
     }
 
     /// Sets the factory used when no exact transition is configured.
+    ///
+    /// The factory may return any concrete [`Animation`];
+    /// the binding handles type erasure internally.
     #[must_use]
-    pub fn fallback(
-        mut self,
-        factory: impl Fn(TransitionContext<S, T>) -> BoxAnimation<T> + 'static,
-    ) -> Self {
-        self.fallback = Some(Arc::new(factory));
+    pub fn fallback<A>(mut self, factory: impl Fn(TransitionContext<S, T>) -> A + 'static) -> Self
+    where
+        A: Animation<T>,
+    {
+        self.fallback = Some(Arc::new(move |context| Box::new(factory(context))));
         self
     }
 
@@ -292,7 +313,7 @@ where
 mod tests {
     use super::{MotionBinding, MotionBindingError};
     use crate::{
-        AnimationExt, MotionRuntime, Sequence, Spring, SpringConfig, Tween,
+        AnimationExt, MotionRuntime, Sequence, SpringConfig, Tween,
         keyframes::Keyframes,
         timing::{Duration, Timing},
     };
@@ -311,12 +332,12 @@ mod tests {
             .when(State::Hovered, 10.0)
             .when(State::Pressed, 20.0)
             .transition(State::Idle, State::Hovered, |context| {
-                Tween::between(context.from, context.to, Timing::new(100.0)).boxed()
+                context.tween(Timing::new(100.0))
             })
             .transition(State::Hovered, State::Pressed, |context| {
-                Spring::new(context.from, context.to, SpringConfig::default()).boxed()
+                context.spring(SpringConfig::default())
             })
-            .fallback(|context| Tween::between(context.from, context.to, Timing::new(50.0)).boxed())
+            .fallback(|context| context.tween(Timing::new(50.0)))
     }
 
     #[test]
@@ -427,12 +448,14 @@ mod tests {
             .when(State::Hovered, 10.0)
             .when(State::Pressed, 20.0)
             .transition(State::Idle, State::Hovered, |context| {
-                Keyframes::new(context.from).push(100.0, context.to).boxed()
+                Keyframes::new(context.from).push(100.0, context.to)
             })
             .transition(State::Hovered, State::Pressed, |context| {
-                Sequence::new(context.from)
-                    .then(Tween::between(context.from, context.to, Timing::new(100.0)))
-                    .boxed()
+                Sequence::new(context.from).then(Tween::between(
+                    context.from,
+                    context.to,
+                    Timing::new(100.0),
+                ))
             });
         let mut runtime = MotionRuntime::new();
         let (motion, mut state) = binding.create_motion(&mut runtime);
@@ -448,5 +471,21 @@ mod tests {
             .unwrap();
         runtime.tick(Duration::from_millis(100.0));
         assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 20.0);
+    }
+
+    #[test]
+    fn boxed_factories_remain_supported() {
+        let binding = MotionBinding::new(State::Idle, 0.0_f32)
+            .when(State::Hovered, 10.0)
+            .fallback(|context| context.tween(Timing::new(100.0)).boxed());
+        let mut runtime = MotionRuntime::new();
+        let (motion, mut state) = binding.create_motion(&mut runtime);
+
+        binding
+            .set_state(&mut state, State::Hovered, motion, &mut runtime)
+            .unwrap();
+        runtime.tick(Duration::from_millis(100.0));
+
+        assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 10.0);
     }
 }

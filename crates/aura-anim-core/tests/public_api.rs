@@ -1,10 +1,9 @@
 //! Integration tests for the public aura-anim-core API.
 
 use aura_anim_core::{
-    Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
-    InterruptionReason, MotionBinding, MotionError, MotionEventKind, MotionRuntime, Parallel,
-    Presence, RemovalReason, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field,
-    fields,
+    Animatable, Animation, AnimationCommand, AnimationState, Hold, Interpolate, InterruptionReason,
+    MotionBinding, MotionError, MotionEventKind, MotionRuntime, Parallel, Presence, RemovalReason,
+    RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field, fields,
     keyframes::{Keyframe, Keyframes},
     spring_to,
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
@@ -294,9 +293,9 @@ fn motion_binding_drives_existing_motion_from_business_state() {
         .when(State::Hovered, 10.0)
         .when(State::Pressed, 20.0)
         .transition(State::Idle, State::Hovered, |context| {
-            Tween::between(context.from, context.to, Timing::new(100.0)).boxed()
+            context.tween(Timing::new(100.0))
         })
-        .fallback(|context| Tween::between(context.from, context.to, Timing::new(50.0)).boxed());
+        .fallback(|context| context.tween(Timing::new(50.0)));
     let mut runtime = MotionRuntime::new();
     let motion = runtime.motion(-10.0_f32);
     let mut state = binding.state();

@@ -3,8 +3,8 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, AnimationExt, Motion, MotionBinding, MotionBindingState, MotionRuntime, Spring,
-    SpringConfig, Tween, timing::Timing,
+    Animatable, Motion, MotionBinding, MotionBindingState, MotionRuntime, SpringConfig,
+    timing::Timing,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
@@ -179,12 +179,12 @@ fn button_binding() -> MotionBinding<ButtonState, ButtonMotion> {
         .when(ButtonState::Hovered, hovered())
         .when(ButtonState::Pressed, pressed())
         .transition(ButtonState::Idle, ButtonState::Hovered, |context| {
-            Tween::between(context.from, context.to, Timing::new(170.0)).boxed()
+            context.tween(Timing::new(170.0))
         })
         .transition(ButtonState::Hovered, ButtonState::Pressed, |context| {
-            Spring::new(context.from, context.to, SpringConfig::snappy()).boxed()
+            context.spring(SpringConfig::snappy())
         })
-        .fallback(|context| Tween::between(context.from, context.to, Timing::new(120.0)).boxed())
+        .fallback(|context| context.tween(Timing::new(120.0)))
 }
 
 fn resting() -> ButtonMotion {

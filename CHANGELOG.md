@@ -33,6 +33,9 @@
   current sampled value, and resolved target value.
 - Added exact state-pair transition factories and fallback factories supporting
   Tween, Spring, Keyframes, Timeline, and custom animation sources.
+- Added `TransitionContext::tween` and `TransitionContext::spring` helpers.
+  Motion binding factories can now return concrete animation values directly;
+  bindings handle type erasure internally while retaining `.boxed()` support.
 - Added `BoxAnimation<T>` and `AnimationExt::boxed()` for type-erased
   transition factory results.
 - Added `SpringConfig::snappy()` as a responsive control-animation preset.
