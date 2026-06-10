@@ -320,6 +320,50 @@ fn motion_binding_drives_existing_motion_from_business_state() {
 }
 
 #[test]
+fn motion_binding_tracked_state_changes_match_runtime_events() {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum State {
+        Idle,
+        Active,
+    }
+
+    let binding = MotionBinding::new(State::Idle, 0.0_f32)
+        .when(State::Active, 1.0)
+        .fallback(|context| context.tween(Timing::new(20.0)));
+    let mut runtime = MotionRuntime::new();
+    let (motion, mut state) = binding.create_motion(&mut runtime);
+
+    let active_playback = binding
+        .set_state_tracked(&mut state, State::Active, motion, &mut runtime)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        binding
+            .set_state_tracked(&mut state, State::Active, motion, &mut runtime)
+            .unwrap(),
+        None
+    );
+
+    let idle_playback = binding
+        .set_state_tracked(&mut state, State::Idle, motion, &mut runtime)
+        .unwrap()
+        .unwrap();
+    let interrupted = runtime.take_events().pop().unwrap();
+
+    assert!(interrupted.is_for(active_playback));
+    assert_eq!(
+        interrupted.kind(),
+        MotionEventKind::Interrupted(InterruptionReason::Replaced)
+    );
+
+    runtime.tick(Duration::from_millis(20.0));
+    let completed = runtime.take_events().pop().unwrap();
+
+    assert!(completed.is_completed_for(idle_playback));
+    assert_eq!(state.current(), &State::Idle);
+}
+
+#[test]
 fn play_once_drops_settled_animation() {
     let mut runtime = MotionRuntime::new();
     let retained = runtime.motion_count();

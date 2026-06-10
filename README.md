@@ -321,12 +321,21 @@ let button_binding = MotionBinding::new(ButtonState::Idle, idle)
 let motion = runtime.motion(idle);
 let mut binding_state = button_binding.state();
 
-button_binding.set_state(
-    &mut binding_state,
-    ButtonState::Hovered,
-    motion,
-    &mut runtime,
-)?;
+let playback = button_binding
+    .set_state_tracked(
+        &mut binding_state,
+        ButtonState::Hovered,
+        motion,
+        &mut runtime,
+    )?
+    .expect("state changed");
+
+// In a later update, after the runtime has been ticked:
+for event in runtime.take_events() {
+    if event.is_completed_for(playback) {
+        // The Hovered transition completed.
+    }
+}
 ```
 
 On each state change the binding resolves the target, samples the motion's
@@ -335,6 +344,11 @@ the animation, calls `motion.play(...)`, and records the new business state
 only after playback succeeds. Factories can return concrete Tween, Spring,
 Keyframes, Timeline, or any custom `Animation<T>`; the binding handles type
 erasure internally.
+
+`set_state` returns whether a transition was started.
+`set_state_tracked` returns `None` for an unchanged state or the exact
+`PlaybackId` for a newly started transition, allowing completion and
+interruption events to be matched without polling the motion.
 
 One binding configuration can be cloned or shared and reused with independent
 `MotionBindingState` values.

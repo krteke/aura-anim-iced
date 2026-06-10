@@ -112,12 +112,14 @@ fn prelude_exports_motion_binding_and_transition_helpers() {
     let mut runtime = MotionRuntime::new();
     let (motion, mut state) = binding.create_motion(&mut runtime);
 
-    binding
-        .set_state(&mut state, State::Active, motion, &mut runtime)
+    let playback = binding
+        .set_state_tracked(&mut state, State::Active, motion, &mut runtime)
+        .unwrap()
         .unwrap();
     runtime.tick(Duration::from_millis(20.0));
 
     assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 1.0);
+    assert!(runtime.take_events()[0].is_completed_for(playback));
 }
 
 #[test]

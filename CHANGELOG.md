@@ -29,6 +29,9 @@
   states to target values and transition factories.
 - Added per-consumer `MotionBindingState<S>` tracking so one binding
   configuration can drive multiple independent controls.
+- Added `MotionBinding::set_state_tracked`, returning the exact `PlaybackId`
+  for event-driven completion and interruption handling while unchanged
+  states return `None`.
 - Added `TransitionContext<S, T>` with the previous and next business states,
   current sampled value, and resolved target value.
 - Added exact state-pair transition factories and fallback factories supporting

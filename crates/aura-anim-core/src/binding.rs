@@ -7,8 +7,8 @@ mod error;
 pub use error::MotionBindingError;
 
 use crate::{
-    Animatable, Animation, BoxAnimation, Motion, MotionRuntime, Spring, SpringConfig, Tween,
-    timing::Timing,
+    Animatable, Animation, BoxAnimation, Motion, MotionRuntime, PlaybackId, Spring, SpringConfig,
+    Tween, timing::Timing,
 };
 
 /// Owned values supplied to a [`MotionBinding`] transition factory.
@@ -100,17 +100,19 @@ struct Transition<S, T: Animatable> {
 ///
 /// let mut runtime = MotionRuntime::new();
 /// let (motion, mut state) = binding.create_motion(&mut runtime);
-/// binding
-///     .set_state(
+/// let playback = binding
+///     .set_state_tracked(
 ///         &mut state,
 ///         ButtonState::Hovered,
 ///         motion,
 ///         &mut runtime,
 ///     )
+///     .unwrap()
 ///     .unwrap();
 /// runtime.tick(Duration::from_millis(120.0));
 ///
 /// assert_eq!(motion.value(&runtime).unwrap(), 1.0);
+/// assert!(runtime.take_events()[0].is_completed_for(playback));
 /// ```
 #[derive(Clone)]
 pub struct MotionBinding<S, T: Animatable> {
@@ -235,8 +237,8 @@ where
     /// Applies `next_state` to an existing motion.
     ///
     /// Returns `Ok(false)` when the requested state is already current.
-    /// Target and transition lookup happen before the motion is modified.
-    /// The state tracker is updated only after `motion.play` succeeds.
+    /// Use [`MotionBinding::set_state_tracked`] when the concrete playback ID
+    /// is needed for event matching.
     pub fn set_state(
         &self,
         binding_state: &mut MotionBindingState<S>,
@@ -244,6 +246,22 @@ where
         motion: Motion<T>,
         runtime: &mut MotionRuntime,
     ) -> Result<bool, MotionBindingError<S>> {
+        self.set_state_tracked(binding_state, next_state, motion, runtime)
+            .map(|playback| playback.is_some())
+    }
+
+    /// Applies `next_state` and returns the concrete playback ID.
+    ///
+    /// Returns `Ok(None)` when the requested state is already current.
+    /// Target and transition lookup happen before the motion is modified.
+    /// The state tracker is updated only after `motion.play_tracked` succeeds.
+    pub fn set_state_tracked(
+        &self,
+        binding_state: &mut MotionBindingState<S>,
+        next_state: S,
+        motion: Motion<T>,
+        runtime: &mut MotionRuntime,
+    ) -> Result<Option<PlaybackId>, MotionBindingError<S>> {
         if binding_state.previous == next_state {
             #[cfg(feature = "tracing")]
             tracing::trace!(
@@ -252,7 +270,7 @@ where
                 value_type = std::any::type_name::<T>(),
                 "motion binding state is unchanged"
             );
-            return Ok(false);
+            return Ok(None);
         }
 
         let target = self.target(&next_state).cloned()?;
@@ -295,7 +313,7 @@ where
             to: target,
         });
 
-        motion.play(animation, runtime)?;
+        let playback = motion.play_tracked(animation, runtime)?;
 
         binding_state.previous = next_state;
         #[cfg(feature = "tracing")]
@@ -305,7 +323,7 @@ where
             value_type = std::any::type_name::<T>(),
             "committed motion binding state"
         );
-        Ok(true)
+        Ok(Some(playback))
     }
 }
 
@@ -372,6 +390,31 @@ mod tests {
         runtime.tick(Duration::from_millis(50.0));
 
         assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 20.0);
+    }
+
+    #[test]
+    fn tracked_state_change_returns_playback_for_completion_event() {
+        let binding = binding();
+        let mut runtime = MotionRuntime::new();
+        let (motion, mut state) = binding.create_motion(&mut runtime);
+
+        let playback = binding
+            .set_state_tracked(&mut state, State::Hovered, motion, &mut runtime)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(motion.playback(&runtime).unwrap(), playback);
+        assert_eq!(
+            binding
+                .set_state_tracked(&mut state, State::Hovered, motion, &mut runtime)
+                .unwrap(),
+            None
+        );
+
+        runtime.tick(Duration::from_millis(100.0));
+        let events = runtime.take_events();
+        assert_eq!(events.len(), 1);
+        assert!(events[0].is_completed_for(playback));
     }
 
     #[test]
