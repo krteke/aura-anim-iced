@@ -3,7 +3,7 @@
 use crate::{
     runtime::{Motion, MotionError, MotionEvent, MotionRuntime, PlaybackId},
     timing::Timing,
-    traits::{Animatable, Animation},
+    traits::{Animatable, IntoMotionAnimation},
 };
 
 /// Coordinates mounting and visibility around enter and exit animations.
@@ -108,12 +108,15 @@ impl<T: Animatable> Presence<T> {
         Ok(())
     }
 
-    /// Mounts the content and plays a custom enter animation.
-    pub fn show_with(
+    /// Mounts the content and plays a custom enter animation source.
+    pub fn show_with<P, Kind>(
         &mut self,
-        animation: impl Animation<T>,
+        animation: P,
         runtime: &mut MotionRuntime,
-    ) -> Result<(), MotionError> {
+    ) -> Result<(), MotionError>
+    where
+        P: IntoMotionAnimation<T, Kind>,
+    {
         self.motion.play_tracked(animation, runtime)?;
         self.mounted = true;
         self.shown = true;
@@ -129,12 +132,15 @@ impl<T: Animatable> Presence<T> {
         Ok(())
     }
 
-    /// Plays a custom exit animation.
-    pub fn hide_with(
+    /// Plays a custom exit animation source.
+    pub fn hide_with<P, Kind>(
         &mut self,
-        animation: impl Animation<T>,
+        animation: P,
         runtime: &mut MotionRuntime,
-    ) -> Result<(), MotionError> {
+    ) -> Result<(), MotionError>
+    where
+        P: IntoMotionAnimation<T, Kind>,
+    {
         let playback = self.motion.play_tracked(animation, runtime)?;
         self.shown = false;
         self.exit_playback = Some(playback);

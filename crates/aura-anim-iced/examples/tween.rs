@@ -2,10 +2,7 @@
 
 use std::time::Instant;
 
-use aura_anim_core::{
-    Animatable, Motion, MotionRuntime, Tween,
-    timing::{Easing, Timing},
-};
+use aura_anim_core::{Animatable, Motion, MotionRuntime, Tween, timing::Timing, tween_to};
 use iced::{
     Background, Border, Color, Element, Fill, Padding, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, row, text},
@@ -56,15 +53,10 @@ impl TweenExample {
     }
 
     fn animate_to(&mut self, at_end: bool) {
-        let current = self.dot.value(&self.runtime).unwrap();
         let target = if at_end { end() } else { start() };
         self.dot
             .play(
-                Tween::between(
-                    current,
-                    target,
-                    Timing::new(900.0).with_easing(Easing::EaseInOut),
-                ),
+                tween_to(target, Timing::ease_in_out(900.0)),
                 &mut self.runtime,
             )
             .unwrap();
@@ -78,11 +70,7 @@ impl TweenExample {
             Message::Replay => {
                 self.dot
                     .play(
-                        Tween::between(
-                            start(),
-                            end(),
-                            Timing::new(900.0).with_easing(Easing::EaseInOut),
-                        ),
+                        Tween::between(start(), end(), Timing::ease_in_out(900.0)),
                         &mut self.runtime,
                     )
                     .unwrap();

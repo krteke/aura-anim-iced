@@ -54,9 +54,10 @@ fn prelude_exports_field_animation_api() {
 
     panel
         .play(
-            fields().animate(field!(PanelMotion::opacity), |from| {
-                Tween::between(from, 1.0, Timing::new(100.0))
-            }),
+            fields().animate(
+                field!(PanelMotion::opacity),
+                tween_to(1.0, Timing::linear(100.0)),
+            ),
             &mut runtime,
         )
         .unwrap();
@@ -65,6 +66,24 @@ fn prelude_exports_field_animation_api() {
     let value = panel.value(&runtime).unwrap();
     assert_approx_eq!(f32, value.opacity, 0.5, epsilon = 0.000_1);
     assert_approx_eq!(f32, value.scale, 0.8, epsilon = 0.000_1);
+}
+
+#[test]
+fn prelude_exports_target_factories_and_timing_constructors() {
+    let mut runtime = MotionRuntime::new();
+    let value = runtime.motion(0.0_f32);
+
+    value
+        .play(tween_to(1.0, Timing::ease_out(100.0)), &mut runtime)
+        .unwrap();
+    runtime.tick(Duration::from_millis(100.0));
+    assert_approx_eq!(f32, value.value(&runtime).unwrap(), 1.0);
+
+    value
+        .play(spring_to(2.0, SpringConfig::snappy()), &mut runtime)
+        .unwrap();
+    value.finish(&mut runtime).unwrap();
+    assert_approx_eq!(f32, value.value(&runtime).unwrap(), 2.0);
 }
 
 #[test]

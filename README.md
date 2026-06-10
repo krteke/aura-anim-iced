@@ -66,7 +66,7 @@ let button = runtime.motion_with(
         opacity: 0.5,
         scale: 0.95,
     },
-    Timing::new(160.0).with_easing(Easing::EaseOut),
+    Timing::ease_out(160.0),
 );
 
 button.transition_to(
@@ -87,6 +87,30 @@ hover, press, menu and route animations do not jump back to a stale origin.
 Motion access and mutation return `Result<_, MotionError>` so removed, stale,
 out-of-bounds, and type-mismatched handles remain distinguishable.
 
+`Timing::linear`, `Timing::ease_in`, `Timing::ease_out`, and
+`Timing::ease_in_out` cover the common duration/easing combinations while
+remaining normal `Timing` values that can be extended with delay, iterations,
+or direction.
+
+Use a deferred target factory when replacing the current animation:
+
+```rust
+button.play(
+    tween_to(
+        ButtonMotion {
+            opacity: 0.0,
+            scale: 0.9,
+        },
+        Timing::ease_in(120.0),
+    ),
+    &mut runtime,
+)?;
+# Ok::<(), MotionError>(())
+```
+
+`tween_to` and `spring_to` sample the motion's current value when playback
+starts, so callers do not need to read or clone it manually.
+
 ## Independent Field Animations
 
 `#[derive(Animatable)]` also generates typed field descriptors. A struct can
@@ -104,24 +128,23 @@ let position = runtime.motion(Position { x: 0.0, y: 0.0 });
 
 position.play(
     fields()
-        .animate(field!(Position::x), |from| {
-            Tween::between(
-                from,
-                100.0,
-                Timing::new(100.0).with_easing(Easing::EaseIn),
-            )
-        })
-        .animate(PositionFields::y, |from| {
-            Spring::new(from, 200.0, SpringConfig::snappy())
-        }),
+        .animate(
+            field!(Position::x),
+            tween_to(100.0, Timing::ease_in(100.0)),
+        )
+        .animate(
+            PositionFields::y,
+            spring_to(200.0, SpringConfig::snappy()),
+        ),
     &mut runtime,
 )?;
 # Ok::<(), MotionError>(())
 ```
 
-The factory receives the field's current sampled value when `play` is called.
-Interrupted field animations therefore continue from the visible value.
-Fields not included in the plan retain their current values.
+Target factories receive the field's current sampled value when `play` is
+called. Custom `|from| ...` factories remain supported. Interrupted field
+animations therefore continue from the visible value, while fields not
+included in the plan retain their current values.
 
 For a named struct, the derive generates `PositionFields::x`,
 `PositionFields::y`, and equivalent `field!(Position::x)` descriptors. Tuple

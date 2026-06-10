@@ -1,6 +1,6 @@
 //! Type-safe field descriptors and independent struct field animations.
 
-use crate::{Animatable, Animation, AnimationState, timing::Duration};
+use crate::{Animatable, Animation, AnimationState, IntoMotionAnimation, timing::Duration};
 
 /// Describes an animatable field on `S`.
 ///
@@ -47,25 +47,26 @@ trait FieldAnimationFactory<S>: 'static {
     fn build(self: Box<Self>, initial: &S) -> Box<dyn FieldAnimation<S>>;
 }
 
-struct TypedFieldAnimationFactory<S, V, F> {
+struct TypedFieldAnimationFactory<S, V, Source, Kind> {
     field: Field<S, V>,
-    factory: F,
+    source: Source,
+    marker: std::marker::PhantomData<fn() -> Kind>,
 }
 
-impl<S, V, A, F> FieldAnimationFactory<S> for TypedFieldAnimationFactory<S, V, F>
+impl<S, V, Source, Kind> FieldAnimationFactory<S> for TypedFieldAnimationFactory<S, V, Source, Kind>
 where
     S: Animatable,
     V: Animatable,
-    A: Animation<V>,
-    F: FnOnce(V) -> A + 'static,
+    Source: IntoMotionAnimation<V, Kind> + 'static,
+    Kind: 'static,
 {
     fn name(&self) -> &'static str {
         self.field.name()
     }
 
     fn build(self: Box<Self>, initial: &S) -> Box<dyn FieldAnimation<S>> {
-        let Self { field, factory } = *self;
-        let animation = factory(field.get(initial).clone());
+        let Self { field, source, .. } = *self;
+        let animation = source.into_motion_animation(field.get(initial));
 
         Box::new(TypedFieldAnimation { field, animation })
     }
@@ -156,15 +157,21 @@ impl<S: Animatable> Fields<S> {
 
     /// Adds an independently animated field.
     ///
+    /// `source` may be an animation, a `|from| ...` factory, or a deferred
+    /// target factory such as [`crate::tween_to`] or [`crate::spring_to`].
     /// Registering the same field name again replaces the earlier animation.
     #[must_use]
-    pub fn animate<V, A, F>(mut self, field: Field<S, V>, factory: F) -> Self
+    pub fn animate<V, Source, Kind>(mut self, field: Field<S, V>, source: Source) -> Self
     where
         V: Animatable,
-        A: Animation<V>,
-        F: FnOnce(V) -> A + 'static,
+        Source: IntoMotionAnimation<V, Kind> + 'static,
+        Kind: 'static,
     {
-        let factory = Box::new(TypedFieldAnimationFactory { field, factory });
+        let factory = Box::new(TypedFieldAnimationFactory {
+            field,
+            source,
+            marker: std::marker::PhantomData::<fn() -> Kind>,
+        });
         if let Some(existing) = self.factories.iter_mut().find(|f| f.name() == field.name()) {
             *existing = factory;
         } else {

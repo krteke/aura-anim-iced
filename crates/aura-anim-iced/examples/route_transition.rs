@@ -3,8 +3,7 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Motion, MotionRuntime, PlaybackId, Tween,
-    timing::{Easing, Timing},
+    Animatable, Motion, MotionRuntime, PlaybackId, Tween, timing::Timing, tween_to,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Subscription, Theme,
@@ -103,7 +102,7 @@ impl RouteExample {
                                     Tween::between(
                                         hidden_right(),
                                         visible(),
-                                        Timing::new(260.0).with_easing(Easing::EaseOut),
+                                        Timing::ease_out(260.0),
                                     ),
                                     &mut self.runtime,
                                 )
@@ -117,15 +116,10 @@ impl RouteExample {
                     return;
                 }
 
-                let current = self.motion.value(&self.runtime).unwrap();
                 self.playback = Some(
                     self.motion
                         .play_tracked(
-                            Tween::between(
-                                current,
-                                hidden_left(),
-                                Timing::new(150.0).with_easing(Easing::EaseIn),
-                            ),
+                            tween_to(hidden_left(), Timing::ease_in(150.0)),
                             &mut self.runtime,
                         )
                         .unwrap(),

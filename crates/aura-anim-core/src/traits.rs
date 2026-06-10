@@ -158,8 +158,12 @@ pub enum DirectAnimation {}
 #[doc(hidden)]
 pub enum FieldAnimationPlan {}
 
+/// Dispatch marker for building an animation from the current sampled value.
+#[doc(hidden)]
+pub enum AnimationFactory {}
+
 mod private {
-    use super::{Animatable, Animation, DirectAnimation, FieldAnimationPlan};
+    use super::{Animatable, Animation, AnimationFactory, DirectAnimation, FieldAnimationPlan};
     use crate::Fields;
 
     pub trait Sealed<T: Animatable, Kind> {}
@@ -172,13 +176,22 @@ mod private {
     }
 
     impl<T: Animatable> Sealed<T, FieldAnimationPlan> for Fields<T> {}
+
+    impl<T, A, F> Sealed<T, AnimationFactory> for F
+    where
+        T: Animatable,
+        A: Animation<T>,
+        F: FnOnce(T) -> A,
+    {
+    }
 }
 
 /// Converts a playback value into an animation for an existing motion.
 ///
-/// This trait is implemented for every [`Animation`] and for [`Fields`].
-/// It exists so [`crate::Motion::play`] can accept both already constructed
-/// animations and field plans that need the motion's current sampled value.
+/// This trait is implemented for every [`Animation`], for factories receiving
+/// the current sampled value, and for [`Fields`]. It exists so
+/// [`crate::Motion::play`] can accept both already constructed and deferred
+/// animation sources.
 pub trait IntoMotionAnimation<T: Animatable, Kind>: private::Sealed<T, Kind> {
     /// The concrete animation stored by the runtime.
     type Animation: Animation<T>;
@@ -205,6 +218,19 @@ impl<T: Animatable> IntoMotionAnimation<T, FieldAnimationPlan> for Fields<T> {
 
     fn into_motion_animation(self, current: &T) -> Self::Animation {
         self.build(current)
+    }
+}
+
+impl<T, A, F> IntoMotionAnimation<T, AnimationFactory> for F
+where
+    T: Animatable,
+    A: Animation<T>,
+    F: FnOnce(T) -> A,
+{
+    type Animation = A;
+
+    fn into_motion_animation(self, current: &T) -> Self::Animation {
+        self(current.clone())
     }
 }
 

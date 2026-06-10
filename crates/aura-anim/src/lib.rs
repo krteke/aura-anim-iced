@@ -9,7 +9,8 @@ pub use aura_anim_core::{
     IntoMotionAnimation, Motion, MotionBinding, MotionBindingError, MotionBindingState,
     MotionError, MotionEvent, MotionEventKind, MotionEventTarget, MotionId, MotionRuntime,
     Parallel, PlaybackId, Presence, RemovalReason, RetainPolicy, Sequence, Spring, SpringConfig,
-    Timeline, TransitionContext, Tween, TweenState, field, fields, keyframes::Keyframes,
+    Timeline, TransitionContext, Tween, TweenState, field, fields, keyframes::Keyframes, spring_to,
+    tween_to,
 };
 
 /// Common animation and Iced integration imports.
@@ -22,7 +23,9 @@ pub mod prelude {
         Parallel, PlaybackId, Presence, RemovalReason, RetainPolicy, Sequence, Spring,
         SpringConfig, Timeline, TransitionContext, Tween, TweenState, field, fields,
         keyframes::Keyframes,
+        spring_to,
         timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
+        tween_to,
     };
     pub use aura_anim_iced::{TickPolicy, subscription, subscription_with_policy};
 }

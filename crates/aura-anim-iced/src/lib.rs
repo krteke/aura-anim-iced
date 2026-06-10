@@ -85,7 +85,9 @@ pub mod prelude {
         Parallel, PlaybackId, Presence, RemovalReason, RetainPolicy, Sequence, Spring,
         SpringConfig, Timeline, TransitionContext, Tween, TweenState, field, fields,
         keyframes::Keyframes,
+        spring_to,
         timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
+        tween_to,
     };
 
     pub use crate::{TickPolicy, frame, subscription, subscription_with_policy};

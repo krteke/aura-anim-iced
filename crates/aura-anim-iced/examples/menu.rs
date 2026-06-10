@@ -3,8 +3,7 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, MotionRuntime, Presence, Spring, SpringConfig,
-    timing::{Easing, Timing},
+    Animatable, MotionRuntime, Presence, SpringConfig, spring_to, timing::Timing,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
@@ -62,12 +61,7 @@ fn main() -> iced::Result {
 impl MenuExample {
     fn new() -> Self {
         let mut runtime = MotionRuntime::new();
-        let menu = Presence::new(
-            &mut runtime,
-            hidden(),
-            visible(),
-            Timing::new(190.0).with_easing(Easing::EaseOut),
-        );
+        let menu = Presence::new(&mut runtime, hidden(), visible(), Timing::ease_out(190.0));
 
         Self {
             runtime,
@@ -85,14 +79,12 @@ impl MenuExample {
                 }
             }
             Message::Toggle => {
-                let current = self.menu.value(&self.runtime).unwrap().clone();
                 let target = if self.menu.is_visible() {
                     hidden()
                 } else {
                     visible()
                 };
-                let spring = Spring::new(
-                    current,
+                let spring = spring_to(
                     target,
                     SpringConfig {
                         stiffness: 300.0,

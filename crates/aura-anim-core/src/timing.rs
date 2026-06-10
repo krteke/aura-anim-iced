@@ -16,11 +16,10 @@ pub use lilt::Easing;
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::timing::{Delay, Direction, Easing, Timing};
+/// use aura_anim_core::timing::{Delay, Direction, Timing};
 ///
-/// let timing = Timing::new(250.0)
+/// let timing = Timing::ease_out(250.0)
 ///     .with_delay(Delay::from_millis(50.0))
-///     .with_easing(Easing::EaseOut)
 ///     .with_direction(Direction::Alternate)
 ///     .with_iterations(2);
 ///
@@ -49,6 +48,30 @@ impl Timing {
             duration: Duration::from_millis(duration_ms),
             ..Self::default()
         }
+    }
+
+    /// Creates a linear timing with a duration in milliseconds.
+    #[must_use]
+    pub fn linear(duration_ms: f64) -> Self {
+        Self::new(duration_ms)
+    }
+
+    /// Creates an ease-in timing with a duration in milliseconds.
+    #[must_use]
+    pub fn ease_in(duration_ms: f64) -> Self {
+        Self::new(duration_ms).with_easing(Easing::EaseIn)
+    }
+
+    /// Creates an ease-out timing with a duration in milliseconds.
+    #[must_use]
+    pub fn ease_out(duration_ms: f64) -> Self {
+        Self::new(duration_ms).with_easing(Easing::EaseOut)
+    }
+
+    /// Creates an ease-in-out timing with a duration in milliseconds.
+    #[must_use]
+    pub fn ease_in_out(duration_ms: f64) -> Self {
+        Self::new(duration_ms).with_easing(Easing::EaseInOut)
     }
 
     /// Returns the duration of the timing.

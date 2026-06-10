@@ -6,7 +6,9 @@ use aura_anim_core::{
     Presence, RemovalReason, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field,
     fields,
     keyframes::{Keyframe, Keyframes},
+    spring_to,
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
+    tween_to,
 };
 use float_cmp::assert_approx_eq;
 
@@ -81,6 +83,51 @@ fn motion_plays_fields_with_independent_timings() {
     runtime.tick(Duration::from_millis(100.0));
     assert_position(&motion.value(&runtime).unwrap(), 100.0, 200.0);
     assert_eq!(motion.state(&runtime), Ok(AnimationState::Completed));
+}
+
+#[test]
+fn target_factories_drive_motions_and_fields_from_current_values() {
+    let mut runtime = MotionRuntime::new();
+    let scalar = runtime.motion(0.0_f32);
+
+    scalar
+        .play(tween_to(100.0, Timing::linear(100.0)), &mut runtime)
+        .unwrap();
+    runtime.tick(Duration::from_millis(40.0));
+    assert_approx_eq!(f32, scalar.value(&runtime).unwrap(), 40.0);
+
+    scalar
+        .play(tween_to(200.0, Timing::linear(100.0)), &mut runtime)
+        .unwrap();
+    runtime.tick(Duration::from_millis(50.0));
+    assert_approx_eq!(f32, scalar.value(&runtime).unwrap(), 120.0);
+
+    scalar
+        .play(spring_to(300.0, SpringConfig::snappy()), &mut runtime)
+        .unwrap();
+    assert_approx_eq!(f32, scalar.value(&runtime).unwrap(), 120.0);
+    scalar.finish(&mut runtime).unwrap();
+    assert_approx_eq!(f32, scalar.value(&runtime).unwrap(), 300.0);
+
+    let position = runtime.motion(Position { x: 10.0, y: 20.0 });
+    position
+        .play(
+            fields()
+                .animate(field!(Position::x), tween_to(110.0, Timing::linear(100.0)))
+                .animate(
+                    field!(Position::y),
+                    spring_to(220.0, SpringConfig::snappy()),
+                ),
+            &mut runtime,
+        )
+        .unwrap();
+    runtime.tick(Duration::from_millis(50.0));
+
+    let halfway = position.value(&runtime).unwrap();
+    assert_approx_eq!(f32, halfway.x, 60.0);
+    assert!(halfway.y > 20.0);
+    position.finish(&mut runtime).unwrap();
+    assert_position(&position.value(&runtime).unwrap(), 110.0, 220.0);
 }
 
 #[test]
@@ -468,6 +515,29 @@ fn timing_builders_and_duration_accessors_are_consistent() {
     assert_eq!(timing.iterations().finite_count(), Some(3));
     assert_approx_eq!(f64, timing.active_duration().unwrap().as_millis(), 375.0);
     assert_approx_eq!(f64, timing.total_duration().unwrap().as_millis(), 400.0);
+}
+
+#[test]
+fn timing_easing_constructors_preserve_composition() {
+    let linear = Timing::linear(100.0);
+    let ease_in = Timing::ease_in(120.0);
+    let ease_out = Timing::ease_out(140.0);
+    let ease_in_out = Timing::ease_in_out(160.0)
+        .with_delay(Delay::from_millis(20.0))
+        .with_iterations(2);
+
+    assert_eq!(linear.easing(), Easing::Linear);
+    assert_eq!(ease_in.easing(), Easing::EaseIn);
+    assert_eq!(ease_out.easing(), Easing::EaseOut);
+    assert_eq!(ease_in_out.easing(), Easing::EaseInOut);
+    assert_approx_eq!(f64, linear.duration().as_millis(), 100.0);
+    assert_approx_eq!(f64, ease_in.duration().as_millis(), 120.0);
+    assert_approx_eq!(f64, ease_out.duration().as_millis(), 140.0);
+    assert_approx_eq!(
+        f64,
+        ease_in_out.total_duration().unwrap().as_millis(),
+        340.0
+    );
 }
 
 #[test]
@@ -963,13 +1033,13 @@ fn presence_accepts_custom_enter_and_exit_animations() {
     let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
 
     presence
-        .show_with(Tween::between(0.0, 2.0, Timing::new(50.0)), &mut runtime)
+        .show_with(tween_to(2.0, Timing::linear(50.0)), &mut runtime)
         .unwrap();
     runtime.tick(Duration::from_millis(50.0));
     assert_approx_eq!(f32, *presence.value(&runtime).unwrap(), 2.0);
 
     presence
-        .hide_with(Tween::between(2.0, -1.0, Timing::new(50.0)), &mut runtime)
+        .hide_with(tween_to(-1.0, Timing::linear(50.0)), &mut runtime)
         .unwrap();
     runtime.tick(Duration::from_millis(50.0));
     presence.sync(&runtime).unwrap();

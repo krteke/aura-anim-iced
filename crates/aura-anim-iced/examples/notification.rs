@@ -3,8 +3,7 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, MotionRuntime, Presence, Spring, SpringConfig, Tween,
-    timing::{Easing, Timing},
+    Animatable, MotionRuntime, Presence, SpringConfig, spring_to, timing::Timing, tween_to,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
@@ -81,12 +80,7 @@ fn main() -> iced::Result {
 impl NotificationExample {
     fn new() -> Self {
         let mut runtime = MotionRuntime::new();
-        let toast = Presence::new(
-            &mut runtime,
-            hidden(),
-            visible(),
-            Timing::new(180.0).with_easing(Easing::EaseOut),
-        );
+        let toast = Presence::new(&mut runtime, hidden(), visible(), Timing::ease_out(180.0));
 
         Self {
             runtime,
@@ -105,11 +99,9 @@ impl NotificationExample {
             }
             Message::Show(kind) => {
                 self.kind = kind;
-                let current = self.toast.value(&self.runtime).unwrap().clone();
                 self.toast
                     .show_with(
-                        Spring::new(
-                            current,
+                        spring_to(
                             visible(),
                             SpringConfig {
                                 stiffness: 330.0,
@@ -122,14 +114,9 @@ impl NotificationExample {
                     .unwrap();
             }
             Message::Dismiss => {
-                let current = self.toast.value(&self.runtime).unwrap().clone();
                 self.toast
                     .hide_with(
-                        Tween::between(
-                            current,
-                            hidden(),
-                            Timing::new(160.0).with_easing(Easing::EaseIn),
-                        ),
+                        tween_to(hidden(), Timing::ease_in(160.0)),
                         &mut self.runtime,
                     )
                     .unwrap();

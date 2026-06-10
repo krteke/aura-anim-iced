@@ -9,6 +9,7 @@ pub mod keyframes;
 pub mod presence;
 pub mod runtime;
 pub mod spring;
+mod target;
 pub mod timeline;
 pub mod timing;
 pub mod traits;
@@ -24,6 +25,7 @@ pub use runtime::{
     MotionEventTarget, MotionId, MotionRuntime, PlaybackId, RemovalReason, RetainPolicy,
 };
 pub use spring::{Spring, SpringConfig};
+pub use target::{spring_to, tween_to};
 pub use timeline::{Hold, Parallel, Sequence, Timeline};
 pub use traits::{
     Animatable, Animation, AnimationExt, AnimationState, BoxAnimation, Interpolate,

@@ -4,6 +4,11 @@
 
 ### Added
 
+- Added `Timing::linear`, `ease_in`, `ease_out`, and `ease_in_out` constructors
+  for common duration/easing combinations.
+- Added deferred `tween_to` and `spring_to` target factories. They sample the
+  current motion or field value when playback begins and work with
+  `Motion::play`, `Fields::animate`, and Presence custom animations.
 - Added queued `MotionEvent` lifecycle events for completion, cancellation,
   interruption, and motion removal.
 - Added `MotionId` and per-playback `PlaybackId` identifiers, plus

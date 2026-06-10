@@ -3,10 +3,12 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Hold, Motion, MotionRuntime, Parallel, PlaybackId, Presence, Sequence, Spring,
+    Animatable, Hold, Motion, MotionRuntime, Parallel, PlaybackId, Presence, Sequence,
     SpringConfig, Tween,
     keyframes::Keyframes,
+    spring_to,
     timing::{Direction, Easing, IterationCount, Timing},
+    tween_to,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
@@ -107,7 +109,7 @@ impl Showcase {
                 glow: 0.18,
                 accent: Color::from_rgb(0.39, 0.45, 1.0),
             },
-            Timing::new(180.0).with_easing(Easing::EaseOut),
+            Timing::ease_out(180.0),
         );
         let menu = Presence::new(
             &mut runtime,
@@ -119,7 +121,7 @@ impl Showcase {
                 width: 236.0,
                 opacity: 1.0,
             },
-            Timing::new(180.0).with_easing(Easing::EaseOut),
+            Timing::ease_out(180.0),
         );
         let route_motion = runtime.motion(RouteMotion {
             opacity: 1.0,
@@ -228,11 +230,9 @@ impl Showcase {
                     .unwrap();
             }
             Message::HeroPress => {
-                let current = self.hero.value(&self.runtime).unwrap();
                 self.hero
                     .play(
-                        Spring::new(
-                            current,
+                        spring_to(
                             HeroMotion {
                                 width: 414.0,
                                 lift: 2.0,
@@ -263,7 +263,6 @@ impl Showcase {
                     .unwrap();
             }
             Message::ToggleMenu => {
-                let current = self.menu.value(&self.runtime).unwrap().clone();
                 let target = if self.menu.is_visible() {
                     MenuMotion {
                         width: 0.0,
@@ -275,8 +274,7 @@ impl Showcase {
                         opacity: 1.0,
                     }
                 };
-                let animation = Spring::new(
-                    current,
+                let animation = spring_to(
                     target,
                     SpringConfig {
                         stiffness: 300.0,
@@ -295,21 +293,13 @@ impl Showcase {
                     return;
                 }
 
-                let current = self.route_motion.value(&self.runtime).unwrap();
                 let hidden = RouteMotion {
                     opacity: 0.0,
                     offset: Vector::new(-18.0, 0.0),
                 };
                 self.route_playback = Some(
                     self.route_motion
-                        .play_tracked(
-                            Tween::between(
-                                current,
-                                hidden,
-                                Timing::new(130.0).with_easing(Easing::EaseIn),
-                            ),
-                            &mut self.runtime,
-                        )
+                        .play_tracked(tween_to(hidden, Timing::ease_in(130.0)), &mut self.runtime)
                         .unwrap(),
                 );
                 self.pending_route = Some(route);
