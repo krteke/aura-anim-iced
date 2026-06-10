@@ -88,11 +88,11 @@ fn prelude_exports_target_factories_and_timing_constructors() {
 
 #[test]
 fn prelude_exports_composition_types() {
-    let mut sequence = Sequence::new(0.0_f32)
-        .then(Tween::between(0.0, 1.0, Timing::new(25.0)))
+    let mut sequence = Tween::between(0.0_f32, 1.0, Timing::new(25.0))
+        .delay(Duration::from_millis(25.0))
         .then(Tween::between(1.0, 2.0, Timing::new(25.0)));
 
-    sequence.tick(Duration::from_millis(50.0));
+    sequence.tick(Duration::from_millis(75.0));
 
     assert_eq!(sequence.state(), AnimationState::Completed);
     assert_approx_eq!(f32, *sequence.value(), 2.0);

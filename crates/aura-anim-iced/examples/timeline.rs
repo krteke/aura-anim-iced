@@ -3,7 +3,7 @@
 use std::time::{Duration, Instant};
 
 use aura_anim_core::{
-    Animatable, Hold, Motion, MotionRuntime, Parallel, Sequence, Tween,
+    Animatable, AnimationExt, Hold, Motion, MotionRuntime, Parallel, Tween,
     timing::{Easing, Timing},
 };
 use iced::{
@@ -54,16 +54,15 @@ impl TimelineExample {
 
     fn replay(&mut self) {
         let start = start();
-        let enter_x = Sequence::new(start.clone())
-            .then(Hold::new(start.clone(), Duration::from_millis(180)))
-            .then(Tween::between(
-                start.clone(),
-                Card {
-                    x: 390.0,
-                    ..start.clone()
-                },
-                Timing::new(520.0).with_easing(Easing::EaseOut),
-            ));
+        let enter_x = Tween::between(
+            start.clone(),
+            Card {
+                x: 390.0,
+                ..start.clone()
+            },
+            Timing::new(520.0).with_easing(Easing::EaseOut),
+        )
+        .delay(Duration::from_millis(180));
         let enter_y = Tween::between(
             start.clone(),
             Card {
@@ -87,8 +86,7 @@ impl TimelineExample {
             width: 230.0,
             opacity: 1.0,
         };
-        let timeline = Sequence::new(start)
-            .then(enter)
+        let timeline = enter
             .then(Hold::new(settled.clone(), Duration::from_millis(420)))
             .then(Tween::between(
                 settled,

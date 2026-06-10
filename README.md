@@ -540,6 +540,19 @@ let parallel = Parallel::new(start.clone(), |outputs: &[Position]| Position {
 Sequence propagates unused frame time into following children. Parallel
 completes when its longest branch completes.
 
+Concrete animations can start a sequence directly through `AnimationExt`:
+
+```rust
+let timeline = Tween::between(hidden, visible, Timing::ease_out(180.0))
+    .delay(80.0)
+    .then(Hold::new(visible.clone(), 240.0))
+    .then(Tween::between(visible, hidden, Timing::ease_in(120.0)));
+```
+
+`delay` inserts a `Hold` before the animation. Both combinators return the
+existing `Sequence<T>` type, so lifecycle, seeking, rate changes, and overflow
+propagation retain the same behavior as manually constructing a sequence.
+
 ## Lifecycle
 
 Normal motions retain their final value:

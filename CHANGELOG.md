@@ -47,6 +47,8 @@
 - Added `Animation::rate(multiplier)` for duration-based animation sources.
   Tween, Keyframes, Hold, Sequence, and Parallel directly scale their stored
   durations, while Spring keeps its physical timing unchanged.
+- Added `AnimationExt::then` and `AnimationExt::delay` combinators for creating
+  `Sequence` timelines directly from concrete animations.
 - Added an optional `tracing` feature, forwarded by the core, Iced, and facade
   crates, with diagnostics for runtime lifecycle operations, invalid handles,
   motion bindings, and Presence state changes.

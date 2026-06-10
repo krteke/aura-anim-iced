@@ -1,9 +1,10 @@
 //! Integration tests for the public aura-anim-core API.
 
 use aura_anim_core::{
-    Animatable, Animation, AnimationCommand, AnimationState, Hold, Interpolate, InterruptionReason,
-    MotionBinding, MotionError, MotionEventKind, MotionRuntime, Parallel, Presence, RemovalReason,
-    RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field, fields,
+    Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
+    InterruptionReason, MotionBinding, MotionError, MotionEventKind, MotionRuntime, Parallel,
+    Presence, RemovalReason, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field,
+    fields,
     keyframes::{Keyframe, Keyframes},
     spring_to,
     timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
@@ -688,6 +689,25 @@ fn sequence_with_unknown_duration_seeks_by_child_index() {
 
     assert_eq!(sequence.state(), AnimationState::Running);
     assert_approx_eq!(f32, *sequence.value(), 0.5);
+}
+
+#[test]
+fn animation_ext_composes_sequences_and_delays() {
+    let mut sequence = Tween::between(0.0_f32, 10.0, Timing::new(100.0))
+        .delay(Duration::from_millis(50.0))
+        .then(Tween::between(10.0, 20.0, Timing::new(100.0)));
+
+    assert_eq!(sequence.duration(), Some(Duration::from_millis(250.0)));
+
+    sequence.tick(Duration::from_millis(25.0));
+    assert_approx_eq!(f32, *sequence.value(), 0.0);
+
+    sequence.tick(Duration::from_millis(75.0));
+    assert_approx_eq!(f32, *sequence.value(), 5.0);
+
+    sequence.tick(Duration::from_millis(150.0));
+    assert_eq!(sequence.state(), AnimationState::Completed);
+    assert_approx_eq!(f32, *sequence.value(), 20.0);
 }
 
 #[test]

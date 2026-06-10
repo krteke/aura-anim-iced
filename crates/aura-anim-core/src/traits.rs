@@ -3,6 +3,7 @@
 use crate::{
     field::{Fields, FieldsAnimation},
     interpolate::InterpolationProgress,
+    timeline::{Hold, Sequence},
     timing::Duration,
 };
 
@@ -145,6 +146,22 @@ pub trait AnimationExt<T: Animatable>: Animation<T> + Sized {
     #[must_use]
     fn boxed(self) -> BoxAnimation<T> {
         Box::new(self)
+    }
+
+    /// Runs this animation followed by `next`.
+    #[must_use]
+    fn then(self, next: impl Animation<T>) -> Sequence<T> {
+        let initial = self.value().clone();
+        Sequence::new(initial).then(self).then(next)
+    }
+
+    /// Delays the start of this animation while holding its current value.
+    #[must_use]
+    fn delay(self, duration: impl Into<Duration>) -> Sequence<T> {
+        let initial = self.value().clone();
+        Sequence::new(initial.clone())
+            .then(Hold::new(initial, duration))
+            .then(self)
     }
 }
 
