@@ -469,6 +469,41 @@ fn presence_mounts_until_exit_animation_settles() {
 }
 
 #[test]
+fn presence_idempotent_visibility_controls_avoid_duplicate_playback() {
+    let mut runtime = MotionRuntime::new();
+    let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(100.0));
+    let initial_playback = presence.motion().playback(&runtime).unwrap();
+
+    assert!(!presence.set_visible(false, &mut runtime).unwrap());
+    assert_eq!(
+        presence.motion().playback(&runtime).unwrap(),
+        initial_playback
+    );
+
+    assert!(presence.set_visible(true, &mut runtime).unwrap());
+    let enter_playback = presence.motion().playback(&runtime).unwrap();
+    assert_ne!(enter_playback, initial_playback);
+    assert!(!presence.set_visible(true, &mut runtime).unwrap());
+    assert_eq!(
+        presence.motion().playback(&runtime).unwrap(),
+        enter_playback
+    );
+
+    assert!(presence.toggle(&mut runtime).unwrap());
+    let exit_playback = presence.motion().playback(&runtime).unwrap();
+    assert_ne!(exit_playback, enter_playback);
+    assert!(!presence.is_visible());
+
+    runtime.tick(Duration::from_millis(100.0));
+    let changed = runtime
+        .take_events()
+        .iter()
+        .any(|event| presence.handle_event(event));
+    assert!(changed);
+    assert!(!presence.is_mounted());
+}
+
+#[test]
 fn spring_can_seek_finish_and_retarget() {
     let mut spring = Spring::new(0.0_f32, 10.0, SpringConfig::default());
 
@@ -482,6 +517,18 @@ fn spring_can_seek_finish_and_retarget() {
     spring.finish();
     assert_eq!(spring.state(), AnimationState::Completed);
     assert_approx_eq!(f32, *spring.value(), 20.0);
+}
+
+#[test]
+fn spring_config_constructors_are_public() {
+    let config = SpringConfig::new(300.0, 29.0)
+        .with_mass(1.5)
+        .with_epsilon(0.005);
+
+    assert_approx_eq!(f32, config.stiffness, 300.0);
+    assert_approx_eq!(f32, config.damping, 29.0);
+    assert_approx_eq!(f32, config.mass, 1.5);
+    assert_approx_eq!(f32, config.epsilon, 0.005);
 }
 
 #[test]

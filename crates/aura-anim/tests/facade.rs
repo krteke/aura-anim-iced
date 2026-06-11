@@ -87,6 +87,18 @@ fn prelude_exports_target_factories_and_timing_constructors() {
 }
 
 #[test]
+fn prelude_exports_presence_controls_and_spring_config_builders() {
+    let mut runtime = MotionRuntime::new();
+    let mut presence = Presence::new(&mut runtime, 0.0_f32, 1.0, Timing::new(20.0));
+    let config = SpringConfig::new(300.0, 29.0).with_mass(1.5);
+
+    assert_approx_eq!(f32, config.mass, 1.5);
+    assert!(presence.set_visible(true, &mut runtime).unwrap());
+    assert!(!presence.set_visible(true, &mut runtime).unwrap());
+    assert!(presence.toggle(&mut runtime).unwrap());
+}
+
+#[test]
 fn prelude_exports_composition_types() {
     let mut sequence = Tween::between(0.0_f32, 1.0, Timing::new(25.0))
         .delay(Duration::from_millis(25.0))

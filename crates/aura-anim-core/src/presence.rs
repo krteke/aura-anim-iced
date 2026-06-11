@@ -72,6 +72,40 @@ impl<T: Animatable> Presence<T> {
         self.shown
     }
 
+    /// Updates the target visibility when it differs from the current target.
+    ///
+    /// Returns `Ok(false)` without starting a new playback when the requested
+    /// visibility is already current.
+    pub fn set_visible(
+        &mut self,
+        visible: bool,
+        runtime: &mut MotionRuntime,
+    ) -> Result<bool, MotionError> {
+        if self.shown == visible {
+            #[cfg(feature = "tracing")]
+            tracing::trace!(
+                target: "aura_anim::presence",
+                value_type = std::any::type_name::<T>(),
+                mounted = self.mounted,
+                shown = self.shown,
+                "presence visibility is unchanged"
+            );
+            return Ok(false);
+        }
+
+        if visible {
+            self.show(runtime)?;
+        } else {
+            self.hide(runtime)?;
+        }
+        Ok(true)
+    }
+
+    /// Toggles the target visibility using the default transition.
+    pub fn toggle(&mut self, runtime: &mut MotionRuntime) -> Result<bool, MotionError> {
+        self.set_visible(!self.shown, runtime)
+    }
+
     /// Mounts the content and transitions toward the visible value.
     pub fn show(&mut self, runtime: &mut MotionRuntime) -> Result<(), MotionError> {
         self.motion

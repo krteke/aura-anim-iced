@@ -101,14 +101,7 @@ impl NotificationExample {
                 self.kind = kind;
                 self.toast
                     .show_with(
-                        spring_to(
-                            visible(),
-                            SpringConfig {
-                                stiffness: 330.0,
-                                damping: 24.0,
-                                ..SpringConfig::default()
-                            },
-                        ),
+                        spring_to(visible(), SpringConfig::new(330.0, 24.0)),
                         &mut self.runtime,
                     )
                     .unwrap();

@@ -25,15 +25,35 @@ pub struct SpringConfig {
 }
 
 impl SpringConfig {
-    /// Returns a responsive preset suited to direct manipulation and controls.
+    /// Creates a spring configuration with default mass and completion epsilon.
     #[must_use]
-    pub const fn snappy() -> Self {
+    pub const fn new(stiffness: f32, damping: f32) -> Self {
         Self {
-            stiffness: 420.0,
-            damping: 28.0,
+            stiffness,
+            damping,
             mass: 1.0,
             epsilon: 0.001,
         }
+    }
+
+    /// Sets the inertial mass.
+    #[must_use]
+    pub const fn with_mass(mut self, mass: f32) -> Self {
+        self.mass = mass;
+        self
+    }
+
+    /// Sets the position and velocity completion threshold.
+    #[must_use]
+    pub const fn with_epsilon(mut self, epsilon: f32) -> Self {
+        self.epsilon = epsilon;
+        self
+    }
+
+    /// Returns a responsive preset suited to direct manipulation and controls.
+    #[must_use]
+    pub const fn snappy() -> Self {
+        Self::new(420.0, 28.0)
     }
 
     fn sanitized(self) -> Self {
@@ -57,12 +77,7 @@ impl SpringConfig {
 
 impl Default for SpringConfig {
     fn default() -> Self {
-        Self {
-            stiffness: 220.0,
-            damping: 24.0,
-            mass: 1.0,
-            epsilon: 0.001,
-        }
+        Self::new(220.0, 24.0)
     }
 }
 
@@ -149,16 +164,8 @@ type Compositor<T> = Arc<dyn Fn(&[T]) -> T>;
 ///     timing::Duration,
 /// };
 ///
-/// let soft = SpringConfig {
-///     stiffness: 80.0,
-///     damping: 18.0,
-///     ..SpringConfig::default()
-/// };
-/// let snappy = SpringConfig {
-///     stiffness: 420.0,
-///     damping: 28.0,
-///     ..SpringConfig::default()
-/// };
+/// let soft = SpringConfig::new(80.0, 18.0);
+/// let snappy = SpringConfig::new(420.0, 28.0);
 /// let mut spring = Spring::with_channels(
 ///     (0.0_f32, 0.0_f32),
 ///     (100.0, 1.0),
@@ -513,6 +520,18 @@ mod tests {
         assert!(snappy.damping > default.damping);
         assert_approx_eq!(f32, snappy.mass, default.mass);
         assert_approx_eq!(f32, snappy.epsilon, default.epsilon);
+    }
+
+    #[test]
+    fn config_builders_set_physical_parameters() {
+        let config = SpringConfig::new(300.0, 29.0)
+            .with_mass(2.0)
+            .with_epsilon(0.01);
+
+        assert_approx_eq!(f32, config.stiffness, 300.0);
+        assert_approx_eq!(f32, config.damping, 29.0);
+        assert_approx_eq!(f32, config.mass, 2.0);
+        assert_approx_eq!(f32, config.epsilon, 0.01);
     }
 
     #[test]

@@ -84,14 +84,7 @@ impl MenuExample {
                 } else {
                     visible()
                 };
-                let spring = spring_to(
-                    target,
-                    SpringConfig {
-                        stiffness: 300.0,
-                        damping: 29.0,
-                        ..SpringConfig::default()
-                    },
-                );
+                let spring = spring_to(target, SpringConfig::new(300.0, 29.0));
 
                 if self.menu.is_visible() {
                     self.menu.hide_with(spring, &mut self.runtime).unwrap();

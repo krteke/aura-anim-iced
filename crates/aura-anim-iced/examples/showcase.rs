@@ -239,11 +239,7 @@ impl Showcase {
                                 glow: 0.8,
                                 accent: Color::from_rgb(0.64, 0.36, 1.0),
                             },
-                            SpringConfig {
-                                stiffness: 240.0,
-                                damping: 10.0,
-                                ..SpringConfig::default()
-                            },
+                            SpringConfig::new(240.0, 10.0),
                         ),
                         &mut self.runtime,
                     )
@@ -274,14 +270,7 @@ impl Showcase {
                         opacity: 1.0,
                     }
                 };
-                let animation = spring_to(
-                    target,
-                    SpringConfig {
-                        stiffness: 300.0,
-                        damping: 31.0,
-                        ..SpringConfig::default()
-                    },
-                );
+                let animation = spring_to(target, SpringConfig::new(300.0, 31.0));
                 if self.menu.is_visible() {
                     self.menu.hide_with(animation, &mut self.runtime).unwrap();
                 } else {

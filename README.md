@@ -239,6 +239,19 @@ for event in runtime.take_events() {
 
 `Presence::sync` remains available for polling-based integrations.
 
+For boolean application state, `set_visible` avoids restarting an animation
+when the requested target is unchanged:
+
+```rust
+menu.set_visible(is_open, &mut runtime)?;
+menu.toggle(&mut runtime)?;
+# Ok::<(), MotionError>(())
+```
+
+Both methods return whether a new transition was started. Explicit
+`show`/`hide` and custom `show_with`/`hide_with` calls remain available when a
+transition should be replayed intentionally.
+
 ## Iced Integration
 
 Store the runtime and typed handles in application state:
@@ -478,16 +491,10 @@ struct PanelMotion {
     opacity: f32,
 }
 
-let movement = SpringConfig {
-    stiffness: 180.0,
-    damping: 20.0,
-    ..SpringConfig::default()
-};
-let fade = SpringConfig {
-    stiffness: 420.0,
-    damping: 32.0,
-    ..SpringConfig::default()
-};
+let movement = SpringConfig::new(180.0, 20.0);
+let fade = SpringConfig::new(420.0, 32.0)
+    .with_mass(1.2)
+    .with_epsilon(0.001);
 
 let spring = Spring::with_channels(
     PanelMotion {

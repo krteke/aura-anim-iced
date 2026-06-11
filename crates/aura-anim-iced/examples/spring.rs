@@ -72,18 +72,8 @@ impl SpringExample {
                 size: 58.0,
             }
         };
-        let movement = SpringConfig {
-            stiffness: 210.0,
-            damping: if self.bouncy { 11.0 } else { 30.0 },
-            mass: 1.0,
-            epsilon: 0.001,
-        };
-        let size = SpringConfig {
-            stiffness: 420.0,
-            damping: if self.bouncy { 24.0 } else { 42.0 },
-            mass: 1.0,
-            epsilon: 0.001,
-        };
+        let movement = SpringConfig::new(210.0, if self.bouncy { 11.0 } else { 30.0 });
+        let size = SpringConfig::new(420.0, if self.bouncy { 24.0 } else { 42.0 });
         self.value
             .play(
                 Spring::with_channels(current, target, [movement, size], |outputs| SpringValue {
