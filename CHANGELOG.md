@@ -1,6 +1,11 @@
 # Changelog
 
-## Unrelease
+## v0.3.0 - 2026-06-11
+
+This release expands the typed motion runtime with independent field
+animations, structured lifecycle events, business-state bindings, and
+lower-boilerplate composition APIs. It also tightens runtime error reporting
+and improves retained-animation storage and tween sampling.
 
 ### Added
 
@@ -88,10 +93,15 @@
 
 ### Testing
 
-- Added unit and public API coverage for exact and fallback transitions,
-  interrupted sampled values, reusable binding configurations, error handling,
-  boxed Keyframes and Timeline factories, facade exports, and the snappy spring
-  preset.
+- Added unit, public API, facade, feature-gated, and documentation coverage for
+  field descriptors and independent field animation plans.
+- Added lifecycle event coverage for completion, cancellation, interruption,
+  removal, stale playback matching, and Presence exit handling.
+- Added coverage for exact and fallback bindings, tracked state transitions,
+  interrupted sampled values, reusable configurations, and error handling.
+- Added coverage for runtime-wide commands, concrete binding factories,
+  timeline combinators, idempotent Presence controls, SpringConfig builders,
+  facade exports, and optional tracing diagnostics.
 
 ## v0.2.2 - 2026-06-08
 

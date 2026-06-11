@@ -43,7 +43,7 @@ For Iced applications:
 
 ```toml
 [dependencies]
-aura-anim = "0.2.2"
+aura-anim = "0.3.0"
 iced = "0.14"
 ```
 
@@ -402,14 +402,14 @@ The active `rgba` or `oklaba` color feature additionally enables:
 RGBA component interpolation is enabled by default:
 
 ```toml
-aura-anim = "0.2.2"
+aura-anim = "0.3.0"
 ```
 
 For Oklab RGB interpolation with independently interpolated alpha:
 
 ```toml
 aura-anim = {
-    version = "0.2.2",
+    version = "0.3.0",
     default-features = false,
     features = ["oklaba"]
 }
@@ -431,7 +431,7 @@ installing or configuring a subscriber inside the library:
 
 ```toml
 aura-anim = {
-    version = "0.2.2",
+    version = "0.3.0",
     features = ["tracing"]
 }
 ```

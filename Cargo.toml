@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.2.2"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.88"
 authors = ["krteke"]
@@ -22,9 +22,9 @@ float-cmp = "0.10.0"
 criterion = "0.8.2"
 thiserror = "2.0.18"
 tracing = "0.1.44"
-aura-anim-core = { version = "0.2.2", path = "crates/aura-anim-core" }
-aura-anim-iced = { version = "0.2.2", path = "crates/aura-anim-iced", default-features = false }
-aura-anim-macros = { version = "0.2.2", path = "crates/aura-anim-macros" }
+aura-anim-core = { version = "0.3.0", path = "crates/aura-anim-core" }
+aura-anim-iced = { version = "0.3.0", path = "crates/aura-anim-iced", default-features = false }
+aura-anim-macros = { version = "0.3.0", path = "crates/aura-anim-macros" }
 
 [workspace.lints.rust]
 missing_docs = "warn"
