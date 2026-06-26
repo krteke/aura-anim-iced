@@ -161,7 +161,7 @@ impl<S: Animatable> Fields<S> {
     /// Adds an independently animated field.
     ///
     /// `source` may be an animation, a `|from| ...` factory, or a deferred
-    /// target factory such as [`crate::tween_to`] or [`crate::spring_to`].
+    /// target factory such as [`crate::target::tween_to`] or [`crate::target::spring_to`].
     /// Registering the same field name again replaces the earlier animation.
     #[must_use]
     pub fn animate<V, Source, Kind>(mut self, field: Field<S, V>, source: Source) -> Self

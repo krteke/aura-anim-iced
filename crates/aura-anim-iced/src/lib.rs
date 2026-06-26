@@ -1,4 +1,4 @@
-//! Iced subscriptions and frame handling for [`aura_anim_core::MotionRuntime`].
+//! Iced subscriptions and frame handling for [`aura_anim_core::runtime::MotionRuntime`].
 
 use std::time::{Duration, Instant};
 

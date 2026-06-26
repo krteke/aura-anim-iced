@@ -207,7 +207,7 @@ mod private {
 ///
 /// This trait is implemented for every [`Animation`], for factories receiving
 /// the current sampled value, and for [`Fields`]. It exists so
-/// [`crate::Motion::play`] can accept both already constructed and deferred
+/// [`crate::runtime::Motion::play`] can accept both already constructed and deferred
 /// animation sources.
 pub trait IntoMotionAnimation<T: Animatable, Kind>: private::Sealed<T, Kind> {
     /// The concrete animation stored by the runtime.
