@@ -1,4 +1,8 @@
-use crate::{Animatable, Animation, AnimationState, timeline::normalized, timing::Duration};
+use crate::{
+    timeline::normalized,
+    timing::Duration,
+    traits::{Animatable, Animation, AnimationState},
+};
 
 type Compositor<T> = Box<dyn Fn(&[T]) -> T>;
 
@@ -180,7 +184,11 @@ impl<T: Animatable> Animation<T> for Parallel<T> {
 #[cfg(test)]
 mod tests {
     use super::Parallel;
-    use crate::{Animation, AnimationState, Tween, timing::Timing};
+    use crate::{
+        timing::Timing,
+        traits::{Animation, AnimationState},
+        tween::Tween,
+    };
     use float_cmp::assert_approx_eq;
 
     #[test]

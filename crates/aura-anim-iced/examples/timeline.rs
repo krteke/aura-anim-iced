@@ -3,9 +3,13 @@
 use std::time::{Duration, Instant};
 
 use aura_anim_core::{
-    Animatable, AnimationExt, Hold, Motion, MotionRuntime, Parallel, Tween,
+    macros::Animatable,
+    runtime::{Motion, MotionRuntime},
     timing::{Easing, Timing},
+    traits::AnimationExt,
+    tween::Tween,
 };
+use aura_anim_iced::prelude::{Hold, Parallel};
 use iced::{
     Background, Border, Color, Element, Fill, Subscription, Theme,
     widget::{button, column, container, row, text},

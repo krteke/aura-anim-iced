@@ -778,8 +778,8 @@ fn trace_motion_error(id: MotionId, error: &MotionError) {
 mod tests {
     use super::MotionRuntime;
     use crate::{
-        Tween,
         timing::{Duration, Timing},
+        tween::Tween,
     };
 
     #[test]

@@ -1,4 +1,4 @@
-use crate::MotionError;
+use crate::runtime::MotionError;
 
 /// Failure returned while applying a motion binding.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

@@ -292,8 +292,8 @@ impl<T: Animatable> Animation<T> for Tween<T> {
 mod tests {
     use super::Tween;
     use crate::{
-        Animation, AnimationState,
         timing::{Delay, Direction, Duration, IterationCount, Timing},
+        traits::{Animation, AnimationState},
     };
     use float_cmp::assert_approx_eq;
 

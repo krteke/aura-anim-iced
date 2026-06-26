@@ -1,6 +1,12 @@
 //! Integration tests for the aura-anim facade crate.
 
 use aura_anim::prelude::*;
+use aura_anim_core::{
+    binding::MotionBinding,
+    presence::Presence,
+    target::{spring_to, tween_to},
+    traits::{AnimationState, Interpolate},
+};
 use float_cmp::assert_approx_eq;
 
 #[derive(Clone, Debug, Animatable)]

@@ -3,7 +3,10 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Motion, MotionBinding, MotionBindingState, MotionRuntime, SpringConfig,
+    binding::{MotionBinding, MotionBindingState},
+    macros::Animatable,
+    runtime::{Motion, MotionRuntime},
+    spring::SpringConfig,
     timing::Timing,
 };
 use iced::{

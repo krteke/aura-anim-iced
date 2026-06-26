@@ -43,34 +43,34 @@ pub struct Timing {
 impl Timing {
     /// Creates a timing value with a duration in milliseconds.
     #[must_use]
-    pub fn new(duration_ms: f64) -> Self {
+    pub fn new(duration_ms: impl Into<Duration>) -> Self {
         Self {
-            duration: Duration::from_millis(duration_ms),
+            duration: duration_ms.into(),
             ..Self::default()
         }
     }
 
     /// Creates a linear timing with a duration in milliseconds.
     #[must_use]
-    pub fn linear(duration_ms: f64) -> Self {
+    pub fn linear(duration_ms: impl Into<Duration>) -> Self {
         Self::new(duration_ms)
     }
 
     /// Creates an ease-in timing with a duration in milliseconds.
     #[must_use]
-    pub fn ease_in(duration_ms: f64) -> Self {
+    pub fn ease_in(duration_ms: impl Into<Duration>) -> Self {
         Self::new(duration_ms).with_easing(Easing::EaseIn)
     }
 
     /// Creates an ease-out timing with a duration in milliseconds.
     #[must_use]
-    pub fn ease_out(duration_ms: f64) -> Self {
+    pub fn ease_out(duration_ms: impl Into<Duration>) -> Self {
         Self::new(duration_ms).with_easing(Easing::EaseOut)
     }
 
     /// Creates an ease-in-out timing with a duration in milliseconds.
     #[must_use]
-    pub fn ease_in_out(duration_ms: f64) -> Self {
+    pub fn ease_in_out(duration_ms: impl Into<Duration>) -> Self {
         Self::new(duration_ms).with_easing(Easing::EaseInOut)
     }
 
@@ -102,6 +102,13 @@ impl Timing {
     #[must_use]
     pub const fn iterations(&self) -> IterationCount {
         self.iterations
+    }
+
+    /// Sets the duration.
+    #[must_use]
+    pub const fn with_duration(mut self, duration: Duration) -> Self {
+        self.duration = duration;
+        self
     }
 
     /// Sets the start delay.
@@ -146,11 +153,6 @@ impl Timing {
         let active = self.active_duration()?;
 
         active.checked_add_delay(self.delay)
-    }
-
-    pub(crate) fn with_duration(mut self, duration: Duration) -> Self {
-        self.duration = duration;
-        self
     }
 
     pub(crate) fn with_rate(mut self, rate: f64) -> Self {

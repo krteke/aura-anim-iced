@@ -2,7 +2,13 @@
 
 use std::time::Instant;
 
-use aura_anim_core::{Animatable, Motion, MotionRuntime, Tween, timing::Timing, tween_to};
+use aura_anim_core::{
+    macros::Animatable,
+    runtime::{Motion, MotionRuntime},
+    target::tween_to,
+    timing::Timing,
+    tween::Tween,
+};
 use iced::{
     Background, Border, Color, Element, Fill, Padding, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, row, text},

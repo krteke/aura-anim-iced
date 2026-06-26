@@ -3,13 +3,16 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Hold, Motion, MotionRuntime, Parallel, PlaybackId, Presence, Sequence,
-    SpringConfig, Tween,
     keyframes::Keyframes,
-    spring_to,
+    macros::Animatable,
+    presence::Presence,
+    runtime::{Motion, MotionRuntime, PlaybackId},
+    spring::SpringConfig,
+    target::{spring_to, tween_to},
     timing::{Direction, Easing, IterationCount, Timing},
-    tween_to,
+    tween::Tween,
 };
+use aura_anim_iced::prelude::{Hold, Parallel, Sequence};
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, mouse_area, row, text},

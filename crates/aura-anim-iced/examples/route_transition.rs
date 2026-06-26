@@ -3,7 +3,11 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Motion, MotionRuntime, PlaybackId, Tween, timing::Timing, tween_to,
+    macros::Animatable,
+    runtime::{Motion, MotionRuntime, PlaybackId},
+    target::tween_to,
+    timing::Timing,
+    tween::Tween,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Subscription, Theme,

@@ -2,7 +2,11 @@
 
 use std::time::Instant;
 
-use aura_anim_core::{Animatable, Motion, MotionRuntime, Spring, SpringConfig};
+use aura_anim_core::{
+    macros::Animatable,
+    runtime::{Motion, MotionRuntime},
+    spring::{Spring, SpringConfig},
+};
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, row, text},

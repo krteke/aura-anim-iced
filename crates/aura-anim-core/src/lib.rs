@@ -9,26 +9,13 @@ pub mod keyframes;
 pub mod presence;
 pub mod runtime;
 pub mod spring;
-mod target;
+pub mod target;
 pub mod timeline;
 pub mod timing;
 pub mod traits;
 pub mod tween;
 
-pub use aura_anim_macros::{Animatable, field};
-pub use binding::{MotionBinding, MotionBindingError, MotionBindingState, TransitionContext};
-pub use field::{Field, Fields, FieldsAnimation, fields};
-pub use interpolate::InterpolationProgress;
-pub use presence::Presence;
-pub use runtime::{
-    AnimationCommand, InterruptionReason, Motion, MotionError, MotionEvent, MotionEventKind,
-    MotionEventTarget, MotionId, MotionRuntime, PlaybackId, RemovalReason, RetainPolicy,
-};
-pub use spring::{Spring, SpringConfig};
-pub use target::{spring_to, tween_to};
-pub use timeline::{Hold, Parallel, Sequence, Timeline};
-pub use traits::{
-    Animatable, Animation, AnimationExt, AnimationState, BoxAnimation, Interpolate,
-    IntoMotionAnimation,
-};
-pub use tween::{Tween, TweenState};
+/// Re-exports the `Animatable` and `field` macros from `aura_anim_macros`.
+pub mod macros {
+    pub use aura_anim_macros::{Animatable, field};
+}

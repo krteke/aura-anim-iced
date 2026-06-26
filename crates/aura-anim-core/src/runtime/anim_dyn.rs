@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::{AnimationCommand, AnimationState, timing::Duration};
+use crate::{runtime::AnimationCommand, timing::Duration, traits::AnimationState};
 
 pub(super) trait AnimationDyn {
     fn advance(&mut self, delta: Duration);

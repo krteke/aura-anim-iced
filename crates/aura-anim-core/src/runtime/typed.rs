@@ -1,8 +1,9 @@
 use std::any::Any;
 
 use crate::{
-    Animatable, Animation, AnimationCommand, AnimationState, runtime::AnimationDyn,
+    runtime::{AnimationCommand, AnimationDyn},
     timing::Duration,
+    traits::{Animatable, Animation, AnimationState},
 };
 
 enum AnimationStorage<T: Animatable> {
@@ -122,7 +123,11 @@ mod tests {
     };
 
     use super::{AnimationDyn, AnimationStorage, TypedAnimation};
-    use crate::{Animation, AnimationState, Interpolate, InterpolationProgress, timing::Duration};
+    use crate::{
+        interpolate::InterpolationProgress,
+        timing::Duration,
+        traits::{Animation, AnimationState, Interpolate},
+    };
 
     struct TrackedValue {
         value: i32,

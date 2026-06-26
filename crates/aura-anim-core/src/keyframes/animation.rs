@@ -257,7 +257,7 @@ impl<T: Animatable> Animation<T> for Keyframes<T> {
 #[cfg(test)]
 mod tests {
     use super::Keyframes;
-    use crate::{Animation, timing::Duration};
+    use crate::{timing::Duration, traits::Animation};
     use float_cmp::assert_approx_eq;
 
     #[test]

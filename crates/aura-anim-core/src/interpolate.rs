@@ -164,8 +164,9 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::traits::Interpolate;
+
     use super::InterpolationProgress;
-    use crate::Interpolate;
     use float_cmp::assert_approx_eq;
 
     #[test]

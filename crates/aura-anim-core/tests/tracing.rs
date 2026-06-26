@@ -5,7 +5,9 @@
 use std::sync::{Arc, Mutex};
 
 use aura_anim_core::{
-    MotionBinding, MotionRuntime, Presence,
+    binding::MotionBinding,
+    presence::Presence,
+    runtime::MotionRuntime,
     timing::{Duration, Timing},
 };
 use tracing::{

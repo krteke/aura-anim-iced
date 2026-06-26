@@ -3,10 +3,15 @@
 use std::hint::black_box;
 
 use aura_anim_core::{
-    Animatable, Animation, AnimationCommand, Hold, Interpolate, Motion, MotionRuntime, Parallel,
-    Presence, RetainPolicy, Sequence, Spring, SpringConfig, Tween,
     keyframes::Keyframes,
+    macros::Animatable,
+    presence::Presence,
+    runtime::{AnimationCommand, Motion, MotionRuntime, RetainPolicy},
+    spring::{Spring, SpringConfig},
+    timeline::{Hold, Parallel, Sequence},
     timing::{Delay, Direction, Duration, Easing, Timing},
+    traits::{Animation, Interpolate},
+    tween::Tween,
 };
 use criterion::{BatchSize, BenchmarkId, Criterion, criterion_group, criterion_main};
 

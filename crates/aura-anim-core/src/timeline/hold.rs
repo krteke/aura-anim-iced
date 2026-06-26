@@ -1,4 +1,8 @@
-use crate::{Animatable, Animation, AnimationState, timeline::normalized, timing::Duration};
+use crate::{
+    timeline::normalized,
+    timing::Duration,
+    traits::{Animatable, Animation, AnimationState},
+};
 
 /// An animation that keeps a value unchanged for a fixed duration.
 #[derive(Debug, Clone)]
@@ -97,7 +101,10 @@ impl<T: Animatable> Animation<T> for Hold<T> {
 #[cfg(test)]
 mod tests {
     use super::Hold;
-    use crate::{Animation, AnimationState, timing::Duration};
+    use crate::{
+        timing::Duration,
+        traits::{Animation, AnimationState},
+    };
 
     #[test]
     fn advance_returns_overflow_after_completion() {

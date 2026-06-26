@@ -3,8 +3,9 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, Motion, MotionRuntime,
     keyframes::Keyframes,
+    macros::Animatable,
+    runtime::{Motion, MotionRuntime},
     timing::{Easing, IterationCount},
 };
 use iced::{

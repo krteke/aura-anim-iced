@@ -181,7 +181,7 @@ pub enum AnimationFactory {}
 
 mod private {
     use super::{Animatable, Animation, AnimationFactory, DirectAnimation, FieldAnimationPlan};
-    use crate::Fields;
+    use crate::field::Fields;
 
     pub trait Sealed<T: Animatable, Kind> {}
 

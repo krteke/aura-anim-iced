@@ -1,6 +1,11 @@
 //! Deferred animation factories that start from the current sampled value.
 
-use crate::{Spring, SpringConfig, Tween, timing::Timing, traits::Animatable};
+use crate::{
+    spring::{Spring, SpringConfig},
+    timing::Timing,
+    traits::Animatable,
+    tween::Tween,
+};
 
 /// Creates a deferred tween toward `target`.
 ///

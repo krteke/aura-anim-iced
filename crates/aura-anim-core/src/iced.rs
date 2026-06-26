@@ -3,7 +3,7 @@ use iced_core::{Padding, Point, Rectangle, Size, Vector, border::Radius};
 #[cfg(any(feature = "rgba", feature = "oklaba"))]
 use iced_core::{Border, Color, Shadow};
 
-use crate::{Interpolate, InterpolationProgress};
+use crate::{interpolate::InterpolationProgress, traits::Interpolate};
 
 #[cfg(all(feature = "rgba", feature = "oklaba"))]
 compile_error!("features `rgba` and `oklaba` are mutually exclusive");
@@ -121,9 +121,10 @@ impl Interpolate for Color {
 
 #[cfg(test)]
 mod tests {
-    use crate::Interpolate;
     use float_cmp::assert_approx_eq;
     use iced_core::{Padding, Point, Rectangle, Size, Vector, border::Radius};
+
+    use crate::traits::Interpolate;
 
     #[test]
     fn interpolates_geometry_types() {

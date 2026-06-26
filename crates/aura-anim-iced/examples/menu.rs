@@ -3,7 +3,8 @@
 use std::time::Instant;
 
 use aura_anim_core::{
-    Animatable, MotionRuntime, Presence, SpringConfig, spring_to, timing::Timing,
+    macros::Animatable, presence::Presence, runtime::MotionRuntime, spring::SpringConfig,
+    target::spring_to, timing::Timing,
 };
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,

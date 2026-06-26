@@ -7,8 +7,11 @@ mod error;
 pub use error::MotionBindingError;
 
 use crate::{
-    Animatable, Animation, BoxAnimation, Motion, MotionRuntime, PlaybackId, Spring, SpringConfig,
-    Tween, timing::Timing,
+    runtime::{Motion, MotionRuntime, PlaybackId},
+    spring::{Spring, SpringConfig},
+    timing::Timing,
+    traits::{Animatable, Animation, BoxAnimation},
+    tween::Tween,
 };
 
 /// Owned values supplied to a [`MotionBinding`] transition factory.
@@ -331,9 +334,13 @@ where
 mod tests {
     use super::{MotionBinding, MotionBindingError};
     use crate::{
-        AnimationExt, MotionRuntime, Sequence, SpringConfig, Tween,
         keyframes::Keyframes,
+        runtime::{MotionError, MotionRuntime},
+        spring::SpringConfig,
+        timeline::Sequence,
         timing::{Duration, Timing},
+        traits::AnimationExt,
+        tween::Tween,
     };
     use float_cmp::assert_approx_eq;
 
@@ -480,7 +487,7 @@ mod tests {
 
         assert_eq!(
             error,
-            MotionBindingError::Motion(crate::MotionError::Removed { slot: 0 })
+            MotionBindingError::Motion(MotionError::Removed { slot: 0 })
         );
         assert_eq!(state.current(), &State::Idle);
     }

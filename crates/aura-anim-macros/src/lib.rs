@@ -32,7 +32,27 @@ pub fn field(input: TokenStream) -> TokenStream {
 }
 
 fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-    let path = crate_path();
+    let base = crate_base_path();
+    let via = via_core();
+
+    let field_path = if via {
+        quote!(#base::core::field)
+    } else {
+        quote!(#base::field)
+    };
+
+    let traits_path = if via {
+        quote!(#base::core::traits)
+    } else {
+        quote!(#base::traits)
+    };
+
+    let interpolate_path = if via {
+        quote!(#base::core::interpolate)
+    } else {
+        quote!(#base::interpolate)
+    };
+
     let name = input.ident;
     let visibility = input.vis;
     let generated_fields_type = fields_name(&input.attrs, &name)?;
@@ -54,7 +74,7 @@ fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     for field_type in &field_types {
         where_clause
             .predicates
-            .push(parse_quote!(#field_type: #path::Animatable));
+            .push(parse_quote!(#field_type: #traits_path::Animatable));
     }
     let (impl_generics, type_generics, where_clause) = interpolation_generics.split_for_impl();
 
@@ -68,7 +88,7 @@ fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
             quote! {
                 Self {
                     #(
-                        #names: #path::Interpolate::interpolate_progress(
+                        #names: #traits_path::Interpolate::interpolate_progress(
                             &from.#names,
                             &to.#names,
                             progress,
@@ -84,7 +104,7 @@ fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
             quote! {
                 Self(
                     #(
-                        #path::Interpolate::interpolate_progress(
+                        #traits_path::Interpolate::interpolate_progress(
                             &from.#indexes,
                             &to.#indexes,
                             progress,
@@ -97,7 +117,7 @@ fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     };
 
     let field_descriptors = expand_field_descriptors(
-        &path,
+        &field_path,
         &name,
         &visibility,
         &descriptor_generics,
@@ -106,11 +126,11 @@ fn expand(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     );
 
     let interpolate_impl = quote! {
-        impl #impl_generics #path::Interpolate for #name #type_generics #where_clause {
+        impl #impl_generics #traits_path::Interpolate for #name #type_generics #where_clause {
             fn interpolate_progress(
                 from: &Self,
                 to: &Self,
-                progress: #path::InterpolationProgress,
+                progress: #interpolate_path::InterpolationProgress,
             ) -> Self {
                 #interpolate_body
             }
@@ -240,14 +260,23 @@ fn expand_field(input: proc_macro2::TokenStream) -> syn::Result<proc_macro2::Tok
 
     let field_type = syn::parse2::<Type>(tokens[..separator].iter().cloned().collect())?;
     let member = syn::parse2::<Member>(tokens[separator + 2..].iter().cloned().collect())?;
-    let path = crate_path();
+
+    let base = crate_base_path();
+    let via = via_core();
+
+    let field_path = if via {
+        quote!(#base::core::field)
+    } else {
+        quote!(#base::field)
+    };
+
     let name = match &member {
         Member::Named(identifier) => identifier.to_string(),
         Member::Unnamed(index) => index.index.to_string(),
     };
 
     Ok(quote! {
-        #path::Field::new(
+        #field_path::Field::new(
             #name,
             |value: &#field_type| &value.#member,
             |value: &mut #field_type| &mut value.#member,
@@ -255,7 +284,7 @@ fn expand_field(input: proc_macro2::TokenStream) -> syn::Result<proc_macro2::Tok
     })
 }
 
-fn crate_path() -> proc_macro2::TokenStream {
+fn crate_base_path() -> proc_macro2::TokenStream {
     for package in ["aura-anim-core", "aura-anim"] {
         if let Ok(found) = crate_name(package) {
             return match found {
@@ -270,4 +299,19 @@ fn crate_path() -> proc_macro2::TokenStream {
     }
 
     quote!(::aura_anim)
+}
+
+fn via_core() -> bool {
+    for package in ["aura-anim-core", "aura-anim"] {
+        if let Ok(found) = crate_name(package) {
+            if let (FoundCrate::Itself | FoundCrate::Name(_), "aura-anim-core") = (&found, package)
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    true
 }

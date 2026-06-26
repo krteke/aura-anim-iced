@@ -2,7 +2,7 @@
 
 use std::time::{Duration, Instant};
 
-use aura_anim_core::MotionRuntime;
+use aura_anim_core::runtime::MotionRuntime;
 use iced::Subscription;
 
 /// Controls how an Iced subscription schedules animation ticks.
@@ -78,25 +78,23 @@ pub fn frame(runtime: &mut MotionRuntime, now: Instant) {
 /// Common animation and Iced integration imports.
 pub mod prelude {
     pub use aura_anim_core::{
-        Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, BoxAnimation, Field,
-        Fields, FieldsAnimation, Hold, Interpolate, InterpolationProgress, InterruptionReason,
-        IntoMotionAnimation, Motion, MotionBinding, MotionBindingError, MotionBindingState,
-        MotionError, MotionEvent, MotionEventKind, MotionEventTarget, MotionId, MotionRuntime,
-        Parallel, PlaybackId, Presence, RemovalReason, RetainPolicy, Sequence, Spring,
-        SpringConfig, Timeline, TransitionContext, Tween, TweenState, field, fields,
+        field::fields,
         keyframes::Keyframes,
-        spring_to,
+        macros::{Animatable, field},
+        runtime::{AnimationCommand, Motion, MotionRuntime},
+        spring::{Spring, SpringConfig},
+        target::{spring_to, tween_to},
+        timeline::{Hold, Parallel, Sequence, Timeline},
         timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
-        tween_to,
+        traits::{Animation, AnimationExt},
+        tween::Tween,
     };
-
-    pub use crate::{TickPolicy, frame, subscription, subscription_with_policy};
 }
 
 #[cfg(test)]
 mod tests {
     use super::{TickPolicy, frame, subscription, subscription_with_policy};
-    use aura_anim_core::{MotionRuntime, timing::Timing};
+    use aura_anim_core::{runtime::MotionRuntime, timing::Timing};
     use float_cmp::assert_approx_eq;
     use std::time::{Duration, Instant};
 

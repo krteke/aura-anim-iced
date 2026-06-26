@@ -409,7 +409,10 @@ fn overdamped(
 #[cfg(test)]
 mod tests {
     use super::{Spring, SpringConfig};
-    use crate::{Animation, AnimationState, timing::Duration};
+    use crate::{
+        timing::Duration,
+        traits::{Animation, AnimationState},
+    };
     use float_cmp::assert_approx_eq;
 
     #[test]

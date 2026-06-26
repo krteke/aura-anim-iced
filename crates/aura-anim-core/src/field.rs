@@ -1,6 +1,9 @@
 //! Type-safe field descriptors and independent struct field animations.
 
-use crate::{Animatable, Animation, AnimationState, IntoMotionAnimation, timing::Duration};
+use crate::{
+    timing::Duration,
+    traits::{Animatable, Animation, AnimationState, IntoMotionAnimation},
+};
 
 /// Describes an animatable field on `S`.
 ///
@@ -367,8 +370,10 @@ impl<S: Animatable> Animation<S> for FieldsAnimation<S> {
 mod tests {
     use super::{Field, fields};
     use crate::{
-        Animation, AnimationState, Tween,
+        interpolate::InterpolationProgress,
         timing::{Duration, Timing},
+        traits::{Animation, AnimationState, Interpolate},
+        tween::Tween,
     };
     use float_cmp::assert_approx_eq;
 
@@ -379,12 +384,8 @@ mod tests {
         fixed: f32,
     }
 
-    impl crate::Interpolate for Position {
-        fn interpolate_progress(
-            from: &Self,
-            to: &Self,
-            progress: crate::InterpolationProgress,
-        ) -> Self {
+    impl Interpolate for Position {
+        fn interpolate_progress(from: &Self, to: &Self, progress: InterpolationProgress) -> Self {
             Self {
                 x: f32::interpolate_progress(&from.x, &to.x, progress),
                 y: f32::interpolate_progress(&from.y, &to.y, progress),

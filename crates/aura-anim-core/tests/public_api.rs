@@ -1,14 +1,18 @@
 //! Integration tests for the public aura-anim-core API.
 
 use aura_anim_core::{
-    Animatable, Animation, AnimationCommand, AnimationExt, AnimationState, Hold, Interpolate,
-    InterruptionReason, MotionBinding, MotionError, MotionEventKind, MotionRuntime, Parallel,
-    Presence, RemovalReason, RetainPolicy, Sequence, Spring, SpringConfig, Timeline, Tween, field,
-    fields,
+    binding::MotionBinding,
+    field::fields,
     keyframes::{Keyframe, Keyframes},
-    spring_to,
-    timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
-    tween_to,
+    macros::{Animatable, field},
+    presence::Presence,
+    runtime::*,
+    spring::{Spring, SpringConfig},
+    target::{spring_to, tween_to},
+    timeline::*,
+    timing::*,
+    traits::{Animation, AnimationExt, AnimationState, Interpolate},
+    tween::*,
 };
 use float_cmp::assert_approx_eq;
 

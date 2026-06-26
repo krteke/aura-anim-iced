@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-    Animatable, AnimationCommand, AnimationState, IntoMotionAnimation, MotionError, MotionRuntime,
+    runtime::{AnimationCommand, MotionError, MotionRuntime},
+    traits::{Animatable, AnimationState, IntoMotionAnimation},
 };
 
 use super::{MotionId, PlaybackId};

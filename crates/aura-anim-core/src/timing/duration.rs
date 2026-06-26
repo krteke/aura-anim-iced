@@ -101,6 +101,36 @@ impl From<StdDuration> for Duration {
     }
 }
 
+impl From<f32> for Duration {
+    fn from(value: f32) -> Self {
+        Duration::from_millis(f64::from(value))
+    }
+}
+
+impl From<f64> for Duration {
+    fn from(value: f64) -> Self {
+        Duration::from_millis(value)
+    }
+}
+
+impl From<i32> for Duration {
+    fn from(value: i32) -> Self {
+        Duration::from_millis(f64::from(value))
+    }
+}
+
+impl From<u32> for Duration {
+    fn from(value: u32) -> Self {
+        Self(StdDuration::from_millis(u64::from(value)))
+    }
+}
+
+impl From<u64> for Duration {
+    fn from(value: u64) -> Self {
+        Self(StdDuration::from_millis(value))
+    }
+}
+
 /// A non-negative animation start delay.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Delay(StdDuration);
@@ -131,6 +161,36 @@ impl Delay {
 impl From<StdDuration> for Delay {
     fn from(value: StdDuration) -> Self {
         Self(value)
+    }
+}
+
+impl From<f32> for Delay {
+    fn from(value: f32) -> Self {
+        Delay::from_millis(f64::from(value))
+    }
+}
+
+impl From<f64> for Delay {
+    fn from(value: f64) -> Self {
+        Delay::from_millis(value)
+    }
+}
+
+impl From<i32> for Delay {
+    fn from(value: i32) -> Self {
+        Delay::from_millis(f64::from(value))
+    }
+}
+
+impl From<u32> for Delay {
+    fn from(value: u32) -> Self {
+        Self(StdDuration::from_millis(u64::from(value)))
+    }
+}
+
+impl From<u64> for Delay {
+    fn from(value: u64) -> Self {
+        Self(StdDuration::from_millis(value))
     }
 }
 
