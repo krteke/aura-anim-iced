@@ -7,6 +7,7 @@ use aura_anim_core::{
     runtime::{Motion, MotionRuntime},
     spring::{Spring, SpringConfig},
 };
+use aura_anim_iced::Subscribe;
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, row, text},
@@ -91,7 +92,7 @@ impl SpringExample {
 
     fn update(&mut self, message: Message) {
         match message {
-            Message::Frame(now) => aura_anim_iced::frame(&mut self.runtime, now),
+            Message::Frame(now) => self.runtime.frame(now),
             Message::Retarget => self.retarget(),
             Message::ToggleDamping => {
                 self.bouncy = !self.bouncy;
@@ -101,7 +102,7 @@ impl SpringExample {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        aura_anim_iced::subscription(&self.runtime).map(Message::Frame)
+        self.runtime.subscription().map(Message::Frame)
     }
 
     fn view(&self) -> Element<'_, Message> {

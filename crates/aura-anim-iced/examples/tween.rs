@@ -9,6 +9,7 @@ use aura_anim_core::{
     timing::Timing,
     tween::Tween,
 };
+use aura_anim_iced::Subscribe;
 use iced::{
     Background, Border, Color, Element, Fill, Padding, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, row, text},
@@ -71,7 +72,7 @@ impl TweenExample {
 
     fn update(&mut self, message: Message) {
         match message {
-            Message::Frame(now) => aura_anim_iced::frame(&mut self.runtime, now),
+            Message::Frame(now) => self.runtime.frame(now),
             Message::Toggle => self.animate_to(!self.at_end),
             Message::Replay => {
                 self.dot
@@ -86,7 +87,7 @@ impl TweenExample {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        aura_anim_iced::subscription(&self.runtime).map(Message::Frame)
+        self.runtime.subscription().map(Message::Frame)
     }
 
     fn view(&self) -> Element<'_, Message> {

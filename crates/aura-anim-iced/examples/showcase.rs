@@ -9,10 +9,11 @@ use aura_anim_core::{
     runtime::{Motion, MotionRuntime, PlaybackId},
     spring::SpringConfig,
     target::{spring_to, tween_to},
+    timeline::{Hold, Parallel, Sequence},
     timing::{Direction, Easing, IterationCount, Timing},
     tween::Tween,
 };
-use aura_anim_iced::prelude::{Hold, Parallel, Sequence};
+use aura_anim_iced::{Subscribe, TickPolicy};
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, mouse_area, row, text},
@@ -166,7 +167,7 @@ impl Showcase {
     fn update(&mut self, message: Message) {
         match message {
             Message::Frame(now) => {
-                aura_anim_iced::frame(&mut self.runtime, now);
+                self.runtime.frame(now);
 
                 for event in self.runtime.take_events() {
                     self.menu.handle_event(&event);
@@ -350,7 +351,8 @@ impl Showcase {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        aura_anim_iced::subscription_with_policy(&self.runtime, aura_anim_iced::TickPolicy::fps(60))
+        self.runtime
+            .subscription_with_policy(TickPolicy::fps(60))
             .map(Message::Frame)
     }
 

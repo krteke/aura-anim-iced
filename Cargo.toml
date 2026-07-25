@@ -22,6 +22,11 @@ float-cmp = "0.10.0"
 criterion = "0.8.2"
 thiserror = "2.0.18"
 tracing = "0.1.44"
+proc-macro-crate = "3.5"
+proc-macro2 = "1"
+quote = "1"
+syn = "2"
+
 aura-anim-core = { version = "0.3.0", path = "crates/aura-anim-core" }
 aura-anim-iced = { version = "0.3.0", path = "crates/aura-anim-iced", default-features = false }
 aura-anim-macros = { version = "0.3.0", path = "crates/aura-anim-macros" }

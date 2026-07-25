@@ -3,7 +3,7 @@
 use std::time::{Duration, Instant};
 
 use aura_anim_core::runtime::MotionRuntime;
-use iced::Subscription;
+use iced::{Event, Subscription, event, window};
 
 /// Controls how an Iced subscription schedules animation ticks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -29,6 +29,8 @@ impl TickPolicy {
     }
 
     /// Returns a fixed-interval policy for the requested frame rate.
+    ///
+    /// A rate of zero is treated as one frame per second.
     #[must_use]
     pub fn fps(frames_per_second: u16) -> Self {
         Self::Interval(Duration::from_secs_f64(
@@ -37,63 +39,129 @@ impl TickPolicy {
     }
 }
 
-/// Creates a frame-driven subscription while the runtime has active animations.
-pub fn subscription(runtime: &MotionRuntime) -> Subscription<Instant> {
-    subscription_with_policy(runtime, TickPolicy::Frames)
+/// A timestamped animation tick associated with an Iced window.
+///
+/// Window-specific subscriptions yield this value so applications can update the
+/// matching runtime with [`Subscribe::frame`] and retain the window identity.
+pub struct WindowFrame {
+    /// The window that requested the redraw or owns the interval tick.
+    pub window: iced::window::Id,
+    /// The instant at which the tick occurred.
+    pub at: Instant,
 }
 
-/// Creates a subscription using `tick_policy` while the runtime has active animations.
+/// Extends [`MotionRuntime`] with Iced frame handling and subscriptions.
 ///
-/// # Examples
-///
-/// ```
-/// use aura_anim_core::MotionRuntime;
-/// use aura_anim_iced::{TickPolicy, subscription_with_policy};
-///
-/// let runtime = MotionRuntime::new();
-/// let subscription = subscription_with_policy(&runtime, TickPolicy::fps(60));
-/// # let _ = subscription;
-/// ```
-pub fn subscription_with_policy(
-    runtime: &MotionRuntime,
-    tick_policy: TickPolicy,
-) -> Subscription<Instant> {
-    if runtime.has_active() {
+/// Import this trait to call its methods on a runtime. Rebuild the returned
+/// subscription from an application's subscription function so it is active
+/// only while the runtime has animations to advance.
+pub trait Subscribe {
+    /// Advances the runtime using an Iced frame timestamp.
+    fn frame(&mut self, now: Instant);
+
+    /// Creates a frame-driven subscription while the runtime has active animations.
+    ///
+    /// The subscription yields Iced frame timestamps without window identity.
+    fn subscription(&self) -> Subscription<Instant>;
+
+    /// Creates a subscription using `tick_policy` while the runtime has active animations.
+    ///
+    /// The subscription yields timestamps without window identity.
+    fn subscription_with_policy(&self, tick_policy: TickPolicy) -> Subscription<Instant>;
+
+    /// Creates a frame-driven subscription for one window while animations are active.
+    ///
+    /// The subscription yields only redraw ticks for `window`.
+    fn subscription_for(&self, window: iced::window::Id) -> Subscription<WindowFrame>;
+
+    /// Creates a window-specific subscription using `tick_policy` while animations are active.
+    ///
+    /// Frame-driven ticks are filtered to `window`; interval ticks are labelled
+    /// with `window` in the returned [`WindowFrame`].
+    fn subscription_with_policy_for(
+        &self,
+        tick_policy: TickPolicy,
+        window: iced::window::Id,
+    ) -> Subscription<WindowFrame>;
+}
+
+impl Subscribe for MotionRuntime {
+    fn frame(&mut self, now: Instant) {
+        self.tick_at(now);
+    }
+
+    /// Creates a frame-driven subscription while the runtime has active animations.
+    fn subscription(&self) -> Subscription<Instant> {
+        self.subscription_with_policy(TickPolicy::Frames)
+    }
+
+    /// Creates a subscription using `tick_policy` while the runtime has active animations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aura_anim_core::runtime::MotionRuntime;
+    /// use aura_anim_iced::{Subscribe, TickPolicy};
+    ///
+    /// let runtime = MotionRuntime::new();
+    /// let subscription = runtime.subscription_with_policy(TickPolicy::fps(60));
+    /// # let _ = subscription;
+    /// ```
+    fn subscription_with_policy(&self, tick_policy: TickPolicy) -> Subscription<Instant> {
+        if !self.has_active() {
+            return Subscription::none();
+        }
+
         match tick_policy {
             TickPolicy::Frames => iced::window::frames(),
             TickPolicy::Interval(duration) => {
                 iced::time::every(duration.max(Duration::from_millis(1)))
             }
         }
-    } else {
-        Subscription::none()
     }
-}
 
-/// Advances the runtime using an Iced frame timestamp.
-pub fn frame(runtime: &mut MotionRuntime, now: Instant) {
-    runtime.tick_at(now);
-}
+    fn subscription_for(&self, window: iced::window::Id) -> Subscription<WindowFrame> {
+        self.subscription_with_policy_for(TickPolicy::Frames, window)
+    }
 
-/// Common animation and Iced integration imports.
-pub mod prelude {
-    pub use aura_anim_core::{
-        field::fields,
-        keyframes::Keyframes,
-        macros::{Animatable, field},
-        runtime::{AnimationCommand, Motion, MotionRuntime},
-        spring::{Spring, SpringConfig},
-        target::{spring_to, tween_to},
-        timeline::{Hold, Parallel, Sequence, Timeline},
-        timing::{Delay, Direction, Duration, Easing, IterationCount, Timing},
-        traits::{Animation, AnimationExt},
-        tween::Tween,
-    };
+    fn subscription_with_policy_for(
+        &self,
+        tick_policy: TickPolicy,
+        window: iced::window::Id,
+    ) -> Subscription<WindowFrame> {
+        if !self.has_active() {
+            return Subscription::none();
+        }
+
+        match tick_policy {
+            TickPolicy::Frames => event::listen_raw(|event, _, window| match event {
+                Event::Window(window::Event::RedrawRequested(at)) => {
+                    Some(WindowFrame { window, at })
+                }
+                _ => None,
+            })
+            .with(window)
+            .filter_map(|(window, frame)| {
+                if window == frame.window {
+                    Some(frame)
+                } else {
+                    None
+                }
+            }),
+            TickPolicy::Interval(duration) => {
+                iced::time::every(duration.max(Duration::from_millis(1)))
+                    .with(window)
+                    .map(|(window, at)| WindowFrame { window, at })
+            }
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{TickPolicy, frame, subscription, subscription_with_policy};
+    use crate::Subscribe;
+
+    use super::TickPolicy;
     use aura_anim_core::{runtime::MotionRuntime, timing::Timing};
     use float_cmp::assert_approx_eq;
     use std::time::{Duration, Instant};
@@ -130,9 +198,9 @@ mod tests {
     fn subscriptions_can_be_built_for_idle_runtime() {
         let runtime = MotionRuntime::new();
 
-        let frames = subscription(&runtime);
+        let frames = runtime.subscription();
         let interval =
-            subscription_with_policy(&runtime, TickPolicy::interval(Duration::from_millis(10)));
+            runtime.subscription_with_policy(TickPolicy::Interval(Duration::from_millis(10)));
 
         let _ = (frames, interval);
     }
@@ -144,8 +212,8 @@ mod tests {
         assert!(motion.transition_to(10.0, &mut runtime).is_ok());
         let start = Instant::now();
 
-        frame(&mut runtime, start);
-        frame(&mut runtime, start + Duration::from_millis(50));
+        runtime.frame(start);
+        runtime.frame(start + Duration::from_millis(50));
 
         assert_approx_eq!(f32, motion.value(&runtime).unwrap(), 5.0, epsilon = 0.001);
     }

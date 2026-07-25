@@ -1,24 +1,21 @@
 # aura-anim
 
-Typed animation primitives and Iced integration for Rust desktop interfaces.
+为 Rust 桌面界面提供的强类型动画原语及 Iced 集成。
 
-The application stores lightweight `Motion<T>` handles while `MotionRuntime`
-owns and advances the actual animation sources. Animated values remain ordinary
-Rust structs, and `#[derive(Animatable)]` generates field-by-field
-interpolation.
+应用程序存储轻量级的 `Motion<T>` 句柄，而 `MotionRuntime` 则拥有并推进实际的动画源。动画值保持为普通的 Rust 结构体，通过 `#[derive(Animatable)]` 生成逐字段的插值。
 
 ```text
 Application
-├── explicit UI state
-├── Motion<T> handles
-└── event-driven transition_to / play calls
+├── 显式 UI 状态
+├── Motion<T> 句柄
+└── 事件驱动的 transition_to / play 调用
 
 MotionRuntime
-├── owns type-erased animation slots
-├── ticks active slots only
-├── per-motion and batch pause / resume / seek / cancel / finish
-├── generation-checked handle reuse
-└── completion compaction and optional auto-removal
+├── 拥有类型擦除的动画槽位
+├── 仅对活跃槽位进行 Tick 驱动
+├── 针对单个动画及批量的 暂停 / 恢复 / 跳转 / 取消 / 完成 操作
+├── 基于代际检查 (Generation-checked) 的句柄重用
+└── 完成后的压缩及可选的自动移除
 
 Animation<T>
 ├── Tween<T>
@@ -29,17 +26,16 @@ Animation<T>
 └── Hold<T>
 ```
 
-## Workspace Crates
+## 工作区 Crate
 
-- `aura-anim-core`: runtime, handles, interpolation, animation sources and
-  timeline composition.
-- `aura-anim-iced`: Iced value integration and frame subscriptions.
-- `aura-anim`: a small facade exposing the `core` and `iced` namespaces.
-- `aura-anim-macros`: `Animatable` derive implementation.
+- `aura-anim-core`: 运行时、句柄、插值、动画源及时间线组合。
+- `aura-anim-iced`: Iced 值集成及帧订阅。
+- `aura-anim`: 一个暴露 `core` 和 `iced` 命名空间的小型门面 (facade)。
+- `aura-anim-macros`: `Animatable` 派生宏实现。
 
-## Installation
+## 安装
 
-For Iced applications:
+对于 Iced 应用程序：
 
 ```toml
 [dependencies]
@@ -47,9 +43,9 @@ aura-anim = "0.3.0"
 iced = "0.14"
 ```
 
-Use `aura-anim-core` directly when no Iced integration is required.
+在不需要 Iced 集成时，可以直接使用 `aura-anim-core`。
 
-## Typed Motion
+## 强类型动画 (Typed Motion)
 
 ```rust
 use aura_anim::core::{
@@ -87,17 +83,11 @@ runtime.tick(std::time::Duration::from_millis(80));
 let visual = button.value(&runtime).unwrap();
 ```
 
-`transition_to` retargets from the currently sampled value, so interrupted
-hover, press, menu and route animations do not jump back to a stale origin.
-Motion access and mutation return `Result<_, MotionError>` so removed, stale,
-out-of-bounds, and type-mismatched handles remain distinguishable.
+`transition_to` 从当前采样值开始重新定向，因此被中断的悬停、按压、菜单和路由动画不会跳回过时的起点。动画的访问和更改返回 `Result<_, MotionError>`，以便区分已移除、过期、越界及类型不匹配的句柄。
 
-`Timing::linear`, `Timing::ease_in`, `Timing::ease_out`, and
-`Timing::ease_in_out` cover the common duration/easing combinations while
-remaining normal `Timing` values that can be extended with delay, iterations,
-or direction.
+`Timing::linear`、`Timing::ease_in`、`Timing::ease_out` 和 `Timing::ease_in_out` 涵盖了常见的时长/缓动组合，同时保持为普通的 `Timing` 值，可以扩展延迟 (delay)、迭代 (iterations) 或方向 (direction)。
 
-Use a deferred target factory when replacing the current animation:
+在替换当前动画时，可以使用延迟目标工厂：
 
 ```rust
 button
@@ -114,11 +104,9 @@ button
     .expect("motion belongs to this runtime");
 ```
 
-`tween_to` and `spring_to` sample the motion's current value when playback
-starts, so callers do not need to read or clone it manually.
+`tween_to` 和 `spring_to` 在播放开始时采样动画的当前值，因此调用者无需手动读取或克隆它。
 
-Runtime-wide commands are available for application lifecycle and accessibility
-policies:
+运行时范围的命令可用于应用程序生命周期和无障碍策略：
 
 ```rust
 runtime.command_all(AnimationCommand::Pause);
@@ -126,14 +114,11 @@ runtime.command_all(AnimationCommand::Resume);
 runtime.command_all(AnimationCommand::Finish);
 ```
 
-`command_all` applies to every stored motion, including paused and idle
-motions. Completion, cancellation, and `DropWhenSettled` removal events use the
-same semantics as commands sent through an individual `Motion<T>`.
+`command_all` 应用于每个存储的动画，包括已暂停和空闲的动画。完成、取消和 `DropWhenSettled` 移除事件使用与通过单个 `Motion<T>` 发送的命令相同的语义。
 
-## Independent Field Animations
+## 独立的字段动画
 
-`#[derive(Animatable)]` also generates typed field descriptors. A struct can
-remain one `Motion<T>` while each selected field uses a different animation:
+`#[derive(Animatable)]` 还会生成强类型的字段描述符。一个结构体可以保持为一个 `Motion<T>`，而每个选定的字段可以使用不同的动画：
 
 ```rust
 use aura_anim::core::{
@@ -170,16 +155,9 @@ position
     .expect("motion belongs to this runtime");
 ```
 
-Target factories receive the field's current sampled value when `play` is
-called. Custom `|from| ...` factories remain supported. Interrupted field
-animations therefore continue from the visible value, while fields not
-included in the plan retain their current values.
+目标工厂在调用 `play` 时接收字段的当前采样值。自定义 `|from| ...` 工厂仍然受支持。因此，被中断的字段动画会从可见值继续，而未包含在计划中的字段将保留其当前值。
 
-For a named struct, the derive generates `PositionFields::x`,
-`PositionFields::y`, and equivalent `field!(Position::x)` descriptors. Tuple
-struct descriptors use `_0`, `_1`, and so on, while `field!(Offset::0)` uses
-the tuple index directly. A generated descriptor type can be renamed when
-necessary:
+对于命名的结构体，派生宏会生成 `PositionFields::x`、`PositionFields::y` 以及等效的 `field!(Position::x)` 描述符。元组结构体描述符使用 `_0`、`_1` 等，而 `field!(Offset::0)` 直接使用元组索引。生成的描述符类型在必要时可以重命名：
 
 ```rust
 #[derive(Clone, Animatable)]
@@ -190,11 +168,9 @@ struct Position {
 }
 ```
 
-## Animation Events
+## 动画事件
 
-`MotionRuntime` queues structured lifecycle events when playbacks complete,
-cancel, are interrupted, or leave runtime storage. Events are emitted once per
-state transition and remain queued until the application takes or clears them:
+当播放完成、取消、被中断或离开运行时存储时，`MotionRuntime` 会排队结构化的生命周期事件。事件在状态转换时触发一次，并保持在队列中，直到应用程序获取 (take) 或清除它们：
 
 ```rust
 use aura_anim::iced::Subscribe;
@@ -203,14 +179,12 @@ runtime.frame(now);
 
 for event in runtime.take_events() {
     if event.is_completed_for(motion) {
-        // Run one-time completion logic.
+        // 运行一次性完成逻辑。
     }
 }
 ```
 
-Matching a `Motion<T>` is sufficient for simple cleanup. Multi-stage flows
-should track the exact playback so an older queued event cannot complete a
-newer animation on the same motion:
+对于简单的清理工作，匹配 `Motion<T>` 就足够了。多阶段流程应追踪精确的播放 ID，以便旧的排队事件不会完成同一动画句柄上较新的动画：
 
 ```rust
 let exit = motion
@@ -220,7 +194,7 @@ let exit = motion
     )
     .expect("motion belongs to this runtime");
 
-// In a later frame update:
+// 在稍后的帧更新中：
 for event in runtime.take_events() {
     if event.is_completed_for(exit) {
         let _enter = motion
@@ -233,22 +207,18 @@ for event in runtime.take_events() {
 }
 ```
 
-`play_tracked` and `transition_to_tracked` return a `PlaybackId`. Existing
-`play` and `transition_to` calls remain unchanged when playback identity is not
-needed.
+`play_tracked` 和 `transition_to_tracked` 返回一个 `PlaybackId`。当不需要播放标识时，现有的 `play` 和 `transition_to` 调用保持不变。
 
-Event kinds include:
+事件类型包括：
 
 - `Completed`
 - `Canceled`
 - `Interrupted(Replaced | Retargeted | Removed)`
 - `Removed(Explicit | Settled)`
 
-`DropWhenSettled` motions emit their terminal event before their removal event,
-so completion remains observable after the handle becomes invalid.
+`DropWhenSettled` 动画在其移除事件之前发出终端事件，因此在句柄失效后仍可观察到完成。
 
-`Presence::handle_event` uses the current exit playback ID to avoid stale exit
-events unmounting content that has already been shown again:
+`Presence::handle_event` 使用当前的退出播放 ID，以避免过时的退出事件卸载已经重新显示的内容：
 
 ```rust
 for event in runtime.take_events() {
@@ -257,10 +227,9 @@ for event in runtime.take_events() {
 }
 ```
 
-`Presence::sync` remains available for polling-based integrations.
+`Presence::sync` 仍可用于基于轮询的集成。
 
-For boolean application state, `set_visible` avoids restarting an animation
-when the requested target is unchanged:
+对于布尔类型的应用程序状态，`set_visible` 在请求的目标未改变时避免重启动画：
 
 ```rust
 let _started = menu
@@ -271,13 +240,11 @@ let _toggled = menu
     .expect("presence motion belongs to this runtime");
 ```
 
-Both methods return whether a new transition was started. Explicit
-`show`/`hide` and custom `show_with`/`hide_with` calls remain available when a
-transition should be replayed intentionally.
+这两个方法都返回是否开始了新的过渡。当需要有意重新播放过渡时，显式的 `show`/`hide` 和自定义的 `show_with`/`hide_with` 调用仍然可用。
 
-## Iced Integration
+## Iced 集成
 
-Store the runtime and typed handles in application state:
+在应用程序状态中存储运行时和强类型句柄：
 
 ```rust
 use std::time::Instant;
@@ -335,10 +302,9 @@ impl App {
 }
 ```
 
-When no animation is active, the subscription returns `Subscription::none()`
-and does not continue waking the application.
+当没有活跃动画时，订阅返回 `Subscription::none()` 并且不会继续唤醒应用程序。
 
-`TickPolicy` supports:
+`TickPolicy` 支持：
 
 ```rust
 TickPolicy::Frames
@@ -346,8 +312,7 @@ TickPolicy::fps(60)
 TickPolicy::interval(std::time::Duration::from_millis(32))
 ```
 
-For a runtime associated with one particular window, use the window-specific
-subscription. `WindowFrame` preserves both the target window and timestamp:
+对于与特定窗口关联的运行时，请使用窗口特定的订阅。`WindowFrame` 保留了目标窗口和时间戳：
 
 ```rust
 use aura_anim::{
@@ -368,16 +333,11 @@ fn advance(runtime: &mut MotionRuntime, frame: WindowFrame) {
 }
 ```
 
-Use one tick source for each runtime. If a runtime is intentionally shared by
-multiple windows, choose or combine their frame messages so the runtime is not
-advanced more than once for the same update cycle.
+每个运行时使用一个 tick 源。如果一个运行时被多个窗口有意共享，请选择或组合它们的帧消息，以确保运行时不会在同一个更新周期内推进多次。
 
-## Motion Binding
+## 动画绑定 (Motion Binding)
 
-`MotionBinding<S, T>` maps reusable business states to visual targets and
-transition factories. The binding is immutable configuration; each button,
-menu item, or route owns a small `MotionBindingState<S>` that records its last
-successfully applied state.
+`MotionBinding<S, T>` 将可复用的业务状态映射到视觉目标和过渡工厂。绑定是不可变的配置；每个按钮、菜单项或路由拥有一个小型的 `MotionBindingState<S>`，用于记录其上次成功应用的状态。
 
 ```rust
 use aura_anim::core::{
@@ -418,33 +378,24 @@ let playback = button_binding
     .expect("binding and motion are compatible")
     .expect("state changed");
 
-// In a later update, after the runtime has been ticked:
+// 在稍后的更新中，运行时 tick 之后：
 for event in runtime.take_events() {
     if event.is_completed_for(playback) {
-        // The Hovered transition completed.
+        // Hovered 过渡完成。
     }
 }
 ```
 
-On each state change the binding resolves the target, samples the motion's
-current value, selects the exact transition or fallback factory, constructs
-the animation, calls `motion.play(...)`, and records the new business state
-only after playback succeeds. Factories can return concrete Tween, Spring,
-Keyframes, Timeline, or any custom `Animation<T>`; the binding handles type
-erasure internally.
+在每次状态改变时，绑定会解析目标、采样动画的当前值、选择精确的过渡或回退工厂、构建动画、调用 `motion.play(...)`，并且仅在播放成功后记录新的业务状态。工厂可以返回具体的 Tween、Spring、Keyframes、Timeline 或任何自定义的 `Animation<T>`；绑定在内部处理类型擦除。
 
-`set_state` returns whether a transition was started.
-`set_state_tracked` returns `None` for an unchanged state or the exact
-`PlaybackId` for a newly started transition, allowing completion and
-interruption events to be matched without polling the motion.
+`set_state` 返回是否开始了过渡。
+`set_state_tracked` 对于未改变的状态返回 `None`，对于新开始的过渡返回精确的 `PlaybackId`，从而允许在不轮询动画的情况下匹配完成和中断事件。
 
-One binding configuration can be cloned or shared and reused with independent
-`MotionBindingState` values.
+一个绑定配置可以被克隆或共享，并与独立的 `MotionBindingState` 值一起复用。
 
-## Iced Animatable Types
+## Iced 可动画类型
 
-With the core `iced` integration enabled, these types can be fields in an
-`Animatable` struct:
+在启用核心 `iced` 集成后，这些类型可以作为 `Animatable` 结构体中的字段：
 
 - `iced::Vector<T>`
 - `iced::Point<T>`
@@ -453,21 +404,21 @@ With the core `iced` integration enabled, these types can be fields in an
 - `iced::Padding`
 - `iced::border::Radius`
 
-The active `rgba` or `oklaba` color feature additionally enables:
+激活 `rgba` 或 `oklaba` 颜色特性后，还支持：
 
 - `iced::Color`
 - `iced::Shadow`
 - `iced::Border`
 
-## Color Interpolation
+## 颜色插值
 
-RGBA component interpolation is enabled by default:
+默认启用 RGBA 分量插值：
 
 ```toml
 aura-anim = "0.3.0"
 ```
 
-For Oklab RGB interpolation with independently interpolated alpha:
+对于具有独立插值 Alpha 通道的 Oklab RGB 插值：
 
 ```toml
 aura-anim = {
@@ -477,19 +428,18 @@ aura-anim = {
 }
 ```
 
-`rgba` and `oklaba` are mutually exclusive. Oklaba conversion follows:
+`rgba` 和 `oklaba` 是互斥的。Oklaba 转换流程如下：
 
 ```text
 Iced sRGB
 → palette sRGB
-→ Oklab interpolation
+→ Oklab 插值
 → display sRGB
 ```
 
-## Tracing
+## 追踪 (Tracing)
 
-Enable the optional `tracing` feature to emit runtime diagnostics without
-installing or configuring a subscriber inside the library:
+启用可选的 `tracing` 特性以发出运行时诊断信息，无需在库内部安装或配置订阅者：
 
 ```toml
 aura-anim = {
@@ -498,13 +448,9 @@ aura-anim = {
 }
 ```
 
-The runtime, binding, and presence components report motion allocation and
-reuse, playback commands, lifecycle changes, invalid handles, binding
-transition selection, and presence mounting. Per-tick diagnostics use the
-`TRACE` level; lifecycle and error diagnostics use `DEBUG`. Applications remain
-responsible for installing a compatible `tracing` subscriber.
+运行时、绑定和呈现组件会报告动画的分配与重用、播放命令、生命周期变化、无效句柄、绑定过渡选择以及呈现挂载。每 tick 驱动的诊断使用 `TRACE` 级别；生命周期和错误诊断使用 `DEBUG`。应用程序仍负责安装兼容的 `tracing` 订阅者。
 
-## Animation Sources
+## 动画源
 
 ### Tween
 
@@ -515,10 +461,7 @@ motion.play(
 );
 ```
 
-Timing supports delay, easing, finite or infinite iterations, and playback
-direction. `Animation::rate` directly scales stored durations: `2.0` halves
-duration and `0.5` doubles it. It recursively updates existing Timeline
-children, while Spring ignores rate because its motion is physics-based.
+Timing 支持延迟、缓动、有限或无限次迭代以及播放方向。`Animation::rate` 直接缩放存储的时长：`2.0` 使时长减半，`0.5` 使时长翻倍。它会递归更新现有的时间线子节点，而 Spring 会忽略速率，因为它的运动是基于物理的。
 
 ### Keyframes
 
@@ -540,10 +483,9 @@ motion.play(
 );
 ```
 
-Spring interpolation may overshoot and can be retargeted while active.
+弹簧插值可能会产生过冲 (overshoot)，并且可以在活跃时重新定向。
 
-For values whose fields need different physical responses, create independent
-spring channels and explicitly compose their outputs:
+对于字段需要不同物理响应的值，请创建独立的弹簧通道并显式组合它们的输出：
 
 ```rust
 #[derive(Clone, Debug, Animatable)]
@@ -574,14 +516,11 @@ let spring = Spring::with_channels(
 );
 ```
 
-Each channel owns its own position, velocity and `SpringConfig`. Spring
-advancement uses the analytic damped-oscillator solution, so long frame
-intervals are fully consumed instead of being truncated.
+每个通道拥有自己的位置、速度和 `SpringConfig`。弹簧推进使用解析阻尼振荡器解 (analytic damped-oscillator solution)，因此长帧间隔会被完全消耗而不会被截断。
 
-## Timeline Composition
+## 时间线组合
 
-`Sequence`, `Parallel` and `Hold` all implement `Animation<T>`, so composition
-is recursive:
+`Sequence`、`Parallel` 和 `Hold` 都实现了 `Animation<T>`，因此组合是递归的：
 
 ```text
 Sequence(
@@ -593,8 +532,7 @@ Sequence(
 )
 ```
 
-Parallel branches produce complete `T` values. A compositor explicitly selects
-which fields each branch owns:
+并行分支产生完整的 `T` 值。组合器显式选择每个分支拥有的字段：
 
 ```rust
 let parallel = Parallel::new(start.clone(), |outputs: &[Position]| Position {
@@ -605,10 +543,9 @@ let parallel = Parallel::new(start.clone(), |outputs: &[Position]| Position {
 .with(y_sequence);
 ```
 
-Sequence propagates unused frame time into following children. Parallel
-completes when its longest branch completes.
+Sequence 会将未使用的帧时间传播到后续子节点。Parallel 在其最长分支完成时完成。
 
-Concrete animations can start a sequence directly through `AnimationExt`:
+具体动画可以通过 `AnimationExt` 直接开始一个序列：
 
 ```rust
 let timeline = Tween::between(hidden, visible, Timing::ease_out(180.0))
@@ -617,39 +554,35 @@ let timeline = Tween::between(hidden, visible, Timing::ease_out(180.0))
     .then(Tween::between(visible, hidden, Timing::ease_in(120.0)));
 ```
 
-`delay` inserts a `Hold` before the animation. Both combinators return the
-existing `Sequence<T>` type, so lifecycle, seeking, rate changes, and overflow
-propagation retain the same behavior as manually constructing a sequence.
+`delay` 在动画之前插入一个 `Hold`。这两个组合器都返回现有的 `Sequence<T>` 类型，因此生命周期、跳转、速率变化和溢出传播保持与手动构建序列相同的行为。
 
-## Lifecycle
+## 生命周期
 
-Normal motions retain their final value:
+普通的动画句柄保留其最终值：
 
 ```rust
 let motion = runtime.motion(initial);
 ```
 
-Completed sources are compacted to the final value, releasing keyframe and
-timeline trees while keeping the handle valid.
+已完成的源被压缩为最终值，释放关键帧和时间线树，同时保持句柄有效。
 
-Transient animations can remove their slot automatically:
+瞬时动画可以自动移除其槽位：
 
 ```rust
 let transient = runtime.play_once(animation);
 ```
 
-Slots are reused with generation counters, preventing stale handles from
-accessing a newly allocated motion.
+槽位通过代际计数器进行重用，防止陈旧句柄访问新分配的动画。
 
-## Examples
+## 示例
 
-Run the Iced showcase:
+运行 Iced 展示案例：
 
 ```sh
 cargo run -p aura-anim-iced --example showcase
 ```
 
-Run the focused visual examples:
+运行专项视觉示例：
 
 ```sh
 cargo run -p aura-anim-iced --example tween
@@ -658,7 +591,7 @@ cargo run -p aura-anim-iced --example timeline
 cargo run -p aura-anim-iced --example spring
 ```
 
-Run the interactive UI examples:
+运行交互式 UI 示例：
 
 ```sh
 cargo run -p aura-anim-iced --example button
@@ -667,7 +600,7 @@ cargo run -p aura-anim-iced --example notification
 cargo run -p aura-anim-iced --example route_transition
 ```
 
-Run the showcase with perceptual color interpolation:
+使用感知颜色插值运行展示案例：
 
 ```sh
 cargo run -p aura-anim-iced \

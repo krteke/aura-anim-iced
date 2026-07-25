@@ -10,8 +10,10 @@ use crate::{
 ///
 /// ```
 /// use aura_anim_core::{
-///     Animation, Sequence, Tween,
+///     timeline::Sequence,
 ///     timing::{Duration, Timing},
+///     traits::Animation,
+///     tween::Tween,
 /// };
 ///
 /// let mut sequence = Sequence::new(0.0_f32)

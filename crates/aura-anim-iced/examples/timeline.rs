@@ -5,11 +5,12 @@ use std::time::{Duration, Instant};
 use aura_anim_core::{
     macros::Animatable,
     runtime::{Motion, MotionRuntime},
+    timeline::{Hold, Parallel},
     timing::{Easing, Timing},
     traits::AnimationExt,
     tween::Tween,
 };
-use aura_anim_iced::prelude::{Hold, Parallel};
+use aura_anim_iced::Subscribe;
 use iced::{
     Background, Border, Color, Element, Fill, Subscription, Theme,
     widget::{button, column, container, row, text},
@@ -107,13 +108,13 @@ impl TimelineExample {
 
     fn update(&mut self, message: Message) {
         match message {
-            Message::Frame(now) => aura_anim_iced::frame(&mut self.runtime, now),
+            Message::Frame(now) => self.runtime.frame(now),
             Message::Replay => self.replay(),
         }
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        aura_anim_iced::subscription(&self.runtime).map(Message::Frame)
+        self.runtime.subscription().map(Message::Frame)
     }
 
     fn view(&self) -> Element<'_, Message> {

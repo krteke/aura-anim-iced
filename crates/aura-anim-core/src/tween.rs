@@ -13,7 +13,7 @@ pub type TweenState = AnimationState;
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::{Tween, timing::Timing};
+/// use aura_anim_core::{timing::Timing, traits::Animation, tween::Tween};
 /// use std::time::Duration;
 ///
 /// let mut tween = Tween::between(0.0_f32, 10.0, Timing::new(100.0));

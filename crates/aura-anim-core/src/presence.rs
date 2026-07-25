@@ -11,7 +11,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::{MotionRuntime, Presence, timing::Timing};
+/// use aura_anim_core::{presence::Presence, runtime::MotionRuntime, timing::Timing};
 /// use std::time::Duration;
 ///
 /// let mut runtime = MotionRuntime::new();

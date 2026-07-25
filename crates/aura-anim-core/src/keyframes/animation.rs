@@ -13,7 +13,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::{Animation, keyframes::Keyframes, timing::Duration};
+/// use aura_anim_core::{traits::Animation, keyframes::Keyframes, timing::Duration};
 ///
 /// let mut animation = Keyframes::new(0.0_f32)
 ///     .push(100.0, 1.0)

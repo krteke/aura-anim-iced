@@ -10,6 +10,7 @@ use aura_anim_core::{
     target::{spring_to, tween_to},
     timing::Timing,
 };
+use aura_anim_iced::Subscribe;
 use iced::{
     Background, Border, Color, Element, Fill, Shadow, Subscription, Theme, Vector,
     widget::{button, column, container, row, text},
@@ -97,7 +98,7 @@ impl NotificationExample {
     fn update(&mut self, message: Message) {
         match message {
             Message::Frame(now) => {
-                aura_anim_iced::frame(&mut self.runtime, now);
+                self.runtime.frame(now);
                 for event in self.runtime.take_events() {
                     self.toast.handle_event(&event);
                 }
@@ -123,7 +124,7 @@ impl NotificationExample {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        aura_anim_iced::subscription(&self.runtime).map(Message::Frame)
+        self.runtime.subscription().map(Message::Frame)
     }
 
     fn view(&self) -> Element<'_, Message> {

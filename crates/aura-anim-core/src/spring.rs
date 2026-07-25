@@ -160,8 +160,9 @@ type Compositor<T> = Arc<dyn Fn(&[T]) -> T>;
 ///
 /// ```
 /// use aura_anim_core::{
-///     Animation, Spring, SpringConfig,
+///     spring::{Spring, SpringConfig},
 ///     timing::Duration,
+///     traits::Animation,
 /// };
 ///
 /// let soft = SpringConfig::new(80.0, 18.0);

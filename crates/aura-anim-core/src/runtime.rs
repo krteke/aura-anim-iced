@@ -50,7 +50,7 @@ struct AnimationSlot {
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::{MotionRuntime, timing::Timing};
+/// use aura_anim_core::{runtime::MotionRuntime, timing::Timing};
 /// use std::time::Duration;
 ///
 /// let mut runtime = MotionRuntime::new();

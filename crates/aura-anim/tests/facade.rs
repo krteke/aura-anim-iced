@@ -1,11 +1,16 @@
 //! Integration tests for the aura-anim facade crate.
 
-use aura_anim::prelude::*;
 use aura_anim_core::{
     binding::MotionBinding,
+    field::fields,
+    macros::{Animatable, field},
     presence::Presence,
+    runtime::{AnimationCommand, MotionRuntime},
+    spring::SpringConfig,
     target::{spring_to, tween_to},
-    traits::{AnimationState, Interpolate},
+    timing::{Duration, Timing},
+    traits::{Animation, AnimationExt, AnimationState, Interpolate},
+    tween::Tween,
 };
 use float_cmp::assert_approx_eq;
 

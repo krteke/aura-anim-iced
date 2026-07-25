@@ -86,7 +86,11 @@ struct Transition<S, T: Animatable> {
 /// # Examples
 ///
 /// ```
-/// use aura_anim_core::{MotionBinding, MotionRuntime, timing::{Duration, Timing}};
+/// use aura_anim_core::{
+///     binding::MotionBinding,
+///     runtime::MotionRuntime,
+///     timing::{Duration, Timing},
+/// };
 ///
 /// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// enum ButtonState {
