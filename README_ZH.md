@@ -39,7 +39,7 @@ Animation<T>
 
 ```toml
 [dependencies]
-aura-anim = "0.3.0"
+aura-anim = "0.3.1"
 iced = "0.14"
 ```
 
@@ -415,14 +415,14 @@ for event in runtime.take_events() {
 默认启用 RGBA 分量插值：
 
 ```toml
-aura-anim = "0.3.0"
+aura-anim = "0.3.1"
 ```
 
 对于具有独立插值 Alpha 通道的 Oklab RGB 插值：
 
 ```toml
 aura-anim = {
-    version = "0.3.0",
+    version = "0.3.1",
     default-features = false,
     features = ["oklaba"]
 }
@@ -443,7 +443,7 @@ Iced sRGB
 
 ```toml
 aura-anim = {
-    version = "0.3.0",
+    version = "0.3.1",
     features = ["tracing"]
 }
 ```
